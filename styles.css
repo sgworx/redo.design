@@ -260,6 +260,14 @@ body:active {
 	z-index: 10;
 }
 
+/* Disable transitions during drag */
+.step-slider.no-transition .progress-line,
+.step-slider.no-transition .progress-circle,
+.step-slider.no-transition::before,
+.step-slider.no-transition::after {
+	transition: none !important;
+}
+
 /* Progress circle that moves along the line */
 .progress-circle {
     position: absolute;
@@ -398,25 +406,27 @@ body:active {
     height: 100%;
     position: absolute;
     top: 0;
-    left: 100%;
+    left: 0;
     transition: transform 0.5s ease-in-out;
     padding: 40px;
     box-sizing: border-box;
-    transform: translateX(0);
+    transform: translateX(100%);
+}
+
+/* Disable slide transitions during drag */
+.step-slider.no-transition .step-slide {
+    transition: transform 0s !important;
 }
 
 .step-slide.active {
-    left: 0;
     transform: translateX(0);
 }
 
 .step-slide.prev {
-    left: 0;
     transform: translateX(-100%);
 }
 
 .step-slide.next {
-    left: 0;
     transform: translateX(100%);
 }
 

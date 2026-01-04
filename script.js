@@ -21,6 +21,7 @@ class Scene3D {
         this.targetSliderValue = 1; // target value from input
         this.sliderAnimating = false;
         this.isUserSliding = false; // true while user holds the slider
+        this.imageSelected = false; // track if image is selected (required for dragging)
         
         this.modelFiles = [
             'Assets/1.glb',
@@ -432,12 +433,44 @@ class Scene3D {
         slider.classList.remove('hidden');
         logo.classList.add('visible');
         
-        // Reset to step 1 and update progress line
+        // Reset to step 1 position (75vw)
         this.currentStep = 1;
         stepRange.value = 1;
         this.currentSliderValue = 1;
         this.targetSliderValue = 1;
-        this.applySliderVisuals(1);
+        
+        // Reset slider position to 75vw (Step 1 boundary)
+        document.documentElement.style.setProperty('--slider-left', '75vw');
+        const progressLine = document.querySelector('.progress-line');
+        if (progressLine) {
+            progressLine.style.left = '75vw';
+        }
+        
+        // Reset Step 2 slide to hidden position
+        const step2Slide = document.querySelector('.step-slide[data-step="2"]');
+        if (step2Slide) {
+            step2Slide.style.transform = 'translateX(100%)';
+        }
+        
+        // Check if an image is already selected (from HTML default)
+        const selectedThumbnail = document.querySelector('.image-thumbnail.selected');
+        if (selectedThumbnail) {
+            // Show selected image in upload box
+            const thumbnailImg = selectedThumbnail.querySelector('img');
+            const uploadBox = document.querySelector('.upload-box');
+            const uploadBoxImg = uploadBox ? uploadBox.querySelector('img') : null;
+            if (uploadBox && uploadBoxImg && thumbnailImg) {
+                uploadBoxImg.src = thumbnailImg.src;
+                uploadBox.classList.add('has-image');
+                uploadBoxImg.style.display = 'block';
+            }
+            
+            this.imageSelected = true;
+            this.enableSliderDragging();
+        } else {
+            this.imageSelected = false;
+            this.sliderDragEnabled = false;
+        }
     }
     
     hideStepSlider() {
@@ -485,6 +518,10 @@ class Scene3D {
                     uploadBoxImg.style.display = 'block'; // force visible in case of stale styles
                 }
                 
+                // Enable dragging after image selection
+                this.imageSelected = true;
+                this.enableSliderDragging();
+                
                 console.log(`Selected image: ${imageName}`);
             });
         });
@@ -504,6 +541,10 @@ class Scene3D {
                     uploadBox.classList.add('has-image');
                     uploadBoxImg.style.display = 'block';
                 }
+                
+                // Enable dragging after image selection
+                this.imageSelected = true;
+                this.enableSliderDragging();
             });
         }
         
@@ -524,43 +565,9 @@ class Scene3D {
             });
         });
         
-        // Custom precise dragging: prevent native jump-on-click
-        stepRange.style.touchAction = 'none';
-        this.dragStartX = 0;
-        
-        const startDrag = (e) => {
-            this.isUserSliding = true;
-            e.preventDefault();
-            this.dragStartX = (e.touches && e.touches[0] ? e.touches[0].clientX : e.clientX);
-            // Do not update on simple click; wait for move
-        };
-        const moveDrag = (e) => {
-            if (!this.isUserSliding) return;
-            e.preventDefault();
-            this._updateFromPointer(e, stepRange, false); // update visuals without snapping slides
-        };
-        const endDrag = (e) => {
-            if (!this.isUserSliding) return;
-            this.isUserSliding = false;
-            // Snap to nearest step on release
-            const finalStep = Math.round(this.currentSliderValue || 1);
-            this.slideToStep(finalStep);
-        };
-        stepRange.addEventListener('pointerdown', startDrag);
-        document.addEventListener('pointermove', moveDrag);
-        document.addEventListener('pointerup', endDrag);
-        // Support touch events
-        stepRange.addEventListener('touchstart', startDrag, { passive: false });
-        document.addEventListener('touchmove', moveDrag, { passive: false });
-        document.addEventListener('touchend', endDrag, { passive: true });
-        
-        // Remove native input handling (we manage it ourselves)
-        
-        // Also handle change event for final positioning (fallback)
-        stepRange.addEventListener('change', (e) => {
-            const newStep = Math.round(parseFloat(e.target.value));
-            this.slideToStep(newStep);
-        });
+        // Setup will be done in enableSliderDragging() after image selection
+        // Keep the old range input hidden for now
+        stepRange.style.display = 'none';
         
         // Close slider with Escape key
         document.addEventListener('keydown', (e) => {
@@ -568,6 +575,136 @@ class Scene3D {
                 this.hideStepSlider();
             }
         });
+    }
+    
+    enableSliderDragging() {
+        // Only enable if image is selected and not already enabled
+        if (!this.imageSelected || this.sliderDragEnabled) return;
+        this.sliderDragEnabled = true;
+        
+        const progressCircle = document.querySelector('.progress-circle');
+        const progressLine = document.querySelector('.progress-line');
+        const stepSlider = document.querySelector('.step-slider');
+        
+        if (!progressCircle || !progressLine || !stepSlider) return;
+        
+        // Initial position: 75vw (Step 1 boundary)
+        const minPosition = 75; // 75vw - start of Step 1
+        const maxPosition = 100; // 100vw - end of Step 2
+        let isDragging = false;
+        let startX = 0;
+        let startPosition = 75; // current position in vw
+        
+        // Disable transitions during drag
+        const disableTransitions = () => {
+            progressLine.style.transition = 'none';
+            progressCircle.style.transition = 'none';
+            stepSlider.classList.add('no-transition');
+        };
+        
+        // Re-enable transitions after drag
+        const enableTransitions = () => {
+            progressLine.style.transition = '';
+            progressCircle.style.transition = '';
+            stepSlider.classList.remove('no-transition');
+        };
+        
+        // Update slider position directly (no animation)
+        const updateSliderPosition = (positionVw) => {
+            // Clamp between min and max
+            positionVw = Math.max(minPosition, Math.min(maxPosition, positionVw));
+            
+            // Update CSS variable for canvas boundaries
+            document.documentElement.style.setProperty('--slider-left', `${positionVw}vw`);
+            
+            // Update progress line position
+            progressLine.style.left = `${positionVw}vw`;
+            
+            // Calculate progress ratio (0 = Step 1, 1 = Step 2)
+            const progress = (positionVw - minPosition) / (maxPosition - minPosition);
+            
+            // Update Step 2 slide position proportionally
+            const step2Slide = document.querySelector('.step-slide[data-step="2"]');
+            if (step2Slide) {
+                // Slide Step 2 in from right: 0% = fully hidden, 100% = fully visible
+                step2Slide.style.transform = `translateX(${(1 - progress) * 100}%)`;
+            }
+        };
+        
+        // Mouse down on progress circle
+        const startDrag = (e) => {
+            if (!this.imageSelected) return; // Only drag if image is selected
+            
+            isDragging = true;
+            this.isUserSliding = true;
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Get starting mouse position
+            startX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+            
+            // Get current slider position from CSS variable
+            const currentLeft = parseFloat(getComputedStyle(document.documentElement)
+                .getPropertyValue('--slider-left')) || 75;
+            startPosition = currentLeft;
+            
+            disableTransitions();
+            
+            // Change cursor
+            progressCircle.style.cursor = 'grabbing';
+            document.body.style.cursor = 'grabbing';
+        };
+        
+        // Mouse move during drag
+        const moveDrag = (e) => {
+            if (!isDragging || !this.imageSelected) return;
+            
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Get current mouse position
+            const currentX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+            
+            // Calculate delta in pixels
+            const deltaX = currentX - startX;
+            
+            // Convert pixels to viewport width (vw)
+            // 1vw = window.innerWidth / 100
+            const deltaVw = (deltaX / window.innerWidth) * 100;
+            
+            // Calculate new position
+            const newPosition = startPosition + deltaVw;
+            
+            // Update slider position directly
+            updateSliderPosition(newPosition);
+        };
+        
+        // Mouse up - end drag
+        const endDrag = (e) => {
+            if (!isDragging) return;
+            
+            isDragging = false;
+            this.isUserSliding = false;
+            
+            enableTransitions();
+            
+            // Reset cursor
+            progressCircle.style.cursor = 'grab';
+            document.body.style.cursor = '';
+            
+            // No snapping - stay where released
+        };
+        
+        // Attach event listeners to progress circle
+        progressCircle.style.cursor = 'grab';
+        progressCircle.addEventListener('pointerdown', startDrag);
+        progressCircle.addEventListener('touchstart', startDrag, { passive: false });
+        
+        // Use document for move/up to handle mouse leaving element
+        document.addEventListener('pointermove', moveDrag);
+        document.addEventListener('pointerup', endDrag);
+        document.addEventListener('touchmove', moveDrag, { passive: false });
+        document.addEventListener('touchend', endDrag);
     }
     
     slideToNextStep() {
