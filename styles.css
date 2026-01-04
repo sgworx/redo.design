@@ -229,7 +229,7 @@ body:active {
 /* Next step badge (white circle outline with white number) */
 .next-step-badge {
 	position: absolute;
-	left: var(--slider-left, 75vw); /* Position it on the left side of the 2nd canvas */
+	left: var(--slider-right, 75vw); /* Position it on the left side of the next canvas */
 	top: 114px; /* Same level as the "1" circle (70px + 16px + 10px + 18px) */
 	width: 44px;
 	height: 44px;
@@ -248,16 +248,51 @@ body:active {
 
 .next-step-badge.hidden { display: none; }
 
-/* Progress line that slides left to right */
+/* Previous step badge (for left slider) */
+.prev-step-badge {
+	position: absolute;
+	right: var(--slider-left, 0vw); /* Position it on the right side of the previous canvas */
+	top: 114px;
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+	background: transparent;
+	border: 2px solid #fff;
+	color: #fff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 600;
+	font-size: 18px;
+	z-index: 15;
+	margin-right: 24px; /* space after the slider */
+}
+
+.prev-step-badge.hidden { display: none; }
+
+/* Progress line base styles */
 .progress-line {
 	position: absolute;
-	left: var(--slider-left, 75vw);
 	top: 0;
 	width: 4px;
 	height: 100vh;
 	background: #F3E831;
-	transition: left 0.6s ease-out;
+	transition: left 0.6s ease-out, right 0.6s ease-out;
 	z-index: 10;
+}
+
+/* Right slider (for forward navigation) */
+.progress-line-right {
+	left: var(--slider-right, 75vw);
+}
+
+/* Left slider (for backward navigation) */
+.progress-line-left {
+	right: var(--slider-left, 0vw);
+}
+
+.progress-line-left.hidden {
+	display: none;
 }
 
 /* Disable transitions during drag */
@@ -268,7 +303,7 @@ body:active {
 	transition: none !important;
 }
 
-/* Progress circle that moves along the line */
+/* Progress circle base styles */
 .progress-circle {
     position: absolute;
     width: 60px;
@@ -277,43 +312,72 @@ body:active {
     border: 2px solid #000; /* black border */
     border-radius: 50%;
     top: 50%;
-    left: -30px; /* Center on the line */
     transform: translateY(-50%);
     transition: all 0.6s ease-out;
     z-index: 11;
     cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .progress-circle:active {
     cursor: grabbing;
 }
 
-/* Arrow indicator pointing towards step 2 (right side) */
-.progress-circle::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 45%;
-    transform: translate(-50%, -50%);
-    width: 28px; /* arrow shaft length */
-    height: 4px;  /* arrow shaft thickness */
-    background: #000; /* black shaft */
-    border-radius: 2px;
-    pointer-events: none;
+/* Right circle (centered on right line) */
+.progress-circle-right {
+    left: -30px; /* Center on the line */
 }
 
-.progress-circle::after {
+/* Left circle (centered on left line) */
+.progress-circle-left {
+    right: -30px; /* Center on the line */
+}
+
+/* Arrow indicators */
+.arrow-right {
+    width: 28px;
+    height: 4px;
+    background: #000;
+    border-radius: 2px;
+    position: relative;
+    margin-left: 8px;
+}
+
+.arrow-right::after {
     content: '';
     position: absolute;
     top: 50%;
-    left: 62%;
-    transform: translate(-50%, -50%);
+    right: -10px;
+    transform: translateY(-50%);
     width: 0;
     height: 0;
     border-top: 7px solid transparent;
     border-bottom: 7px solid transparent;
-    border-left: 10px solid #000; /* black head */
-    pointer-events: none;
+    border-left: 10px solid #000;
+}
+
+.arrow-left {
+    width: 28px;
+    height: 4px;
+    background: #000;
+    border-radius: 2px;
+    position: relative;
+    margin-right: 8px;
+}
+
+.arrow-left::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-top: 7px solid transparent;
+    border-bottom: 7px solid transparent;
+    border-right: 10px solid #000;
 }
 
 /* Hidden manual slider for dragging functionality */
@@ -402,32 +466,42 @@ body:active {
 }
 
 .step-slide {
-    width: 100%;
     height: 100%;
     position: absolute;
     top: 0;
-    left: 0;
-    transition: transform 0.5s ease-in-out;
     padding: 40px;
     box-sizing: border-box;
-    transform: translateX(100%);
+    overflow: hidden;
+    transition: width 0.3s ease-out, left 0.3s ease-out;
 }
 
 /* Disable slide transitions during drag */
 .step-slider.no-transition .step-slide {
-    transition: transform 0s !important;
+    transition: none !important;
 }
 
-.step-slide.active {
-    transform: translateX(0);
+/* Step 1: From 0 to boundary 1-2 */
+.step-slide[data-step="1"] {
+    width: var(--boundary-1-2, 75vw);
+    left: 0;
 }
 
-.step-slide.prev {
-    transform: translateX(-100%);
+/* Step 2: From boundary 1-2 to boundary 2-3 */
+.step-slide[data-step="2"] {
+    width: calc(var(--boundary-2-3, 100vw) - var(--boundary-1-2, 75vw));
+    left: var(--boundary-1-2, 75vw);
 }
 
-.step-slide.next {
-    transform: translateX(100%);
+/* Step 3: From boundary 2-3 to boundary 3-4 */
+.step-slide[data-step="3"] {
+    width: calc(var(--boundary-3-4, 100vw) - var(--boundary-2-3, 100vw));
+    left: var(--boundary-2-3, 100vw);
+}
+
+/* Step 4: From boundary 3-4 to 100vw */
+.step-slide[data-step="4"] {
+    width: calc(100vw - var(--boundary-3-4, 100vw));
+    left: var(--boundary-3-4, 100vw);
 }
 
 /* Step header with navigation */

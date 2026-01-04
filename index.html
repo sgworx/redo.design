@@ -20,10 +20,23 @@
     
     <!-- Step slider interface -->
     <div id="step-slider" class="step-slider hidden">
-        <div class="progress-line">
-            <div class="progress-circle"></div>
+        <!-- Right slider (for Steps 1, 2, 3) -->
+        <div class="progress-line progress-line-right" id="slider-right">
+            <div class="progress-circle progress-circle-right" id="handle-right">
+                <div class="arrow-right"></div>
+            </div>
         </div>
+        
+        <!-- Left slider (for Steps 2, 3, 4) -->
+        <div class="progress-line progress-line-left hidden" id="slider-left">
+            <div class="progress-circle progress-circle-left" id="handle-left">
+                <div class="arrow-left"></div>
+            </div>
+        </div>
+        
+        <!-- Step badges -->
         <div class="next-step-badge hidden" id="next-step-badge">2</div>
+        <div class="prev-step-badge hidden" id="prev-step-badge">1</div>
         
         <!-- Top-left step indicator under logo -->
         <div class="step-top-left">
@@ -32,7 +45,7 @@
             <div class="step-top-left-title" id="step-top-left-title">Select Image</div>
         </div>
         
-        <!-- Manual slider control -->
+        <!-- Manual slider control (hidden, kept for compatibility) -->
         <div class="manual-slider">
             <input type="range" id="step-range" min="1" max="4" value="1" step="0.01" class="slider-input">
             <div class="slider-labels">
