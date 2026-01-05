@@ -201,138 +201,109 @@ body:active {
     transition: opacity 0.3s ease;
 }
 
-/* Canvas areas with different backgrounds */
-.step-slider::before {
-	content: '';
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: var(--slider-left, 75vw);
-	height: 100%;
-	background: var(--left-canvas-bg, #ffffff); /* Step 1 canvas - white by default */
-	z-index: -1;
-	transition: background 0.6s ease-out;
+/* Slider container */
+.slider-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
 }
 
-.step-slider::after {
-	content: '';
-	position: absolute;
-	top: 0;
-	left: var(--slider-left, 75vw);
-	width: calc(100% - var(--slider-left, 75vw));
-	height: 100%;
-	background: var(--right-canvas-bg, #000000); /* Step 2 canvas - black by default */
-	z-index: -1;
-	transition: background 0.6s ease-out;
+/* Canvas slide - each step's container */
+.canvas-slide {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    display: flex;
+    overflow: hidden;
 }
 
-/* Next step badge (white circle outline with white number) */
-.next-step-badge {
-	position: absolute;
-	left: var(--slider-right, 75vw); /* Position it on the left side of the next canvas */
-	top: 114px; /* Same level as the "1" circle (70px + 16px + 10px + 18px) */
-	width: 44px;
-	height: 44px;
-	border-radius: 50%;
-	background: transparent;
-	border: 2px solid #fff;
-	color: #fff;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	font-weight: 600;
-	font-size: 18px;
-	z-index: 15;
-	margin-left: 24px; /* space after the slider */
+/* Canvas backgrounds */
+.canvas-slide[data-step="1"] {
+    left: 0;
+    width: var(--canvas-1-width, 75vw);
+    background: #ffffff;
 }
 
-.next-step-badge.hidden { display: none; }
-
-/* Previous step badge (for left slider) */
-.prev-step-badge {
-	position: absolute;
-	right: var(--slider-left, 0vw); /* Position it on the right side of the previous canvas */
-	top: 114px;
-	width: 44px;
-	height: 44px;
-	border-radius: 50%;
-	background: transparent;
-	border: 2px solid #fff;
-	color: #fff;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	font-weight: 600;
-	font-size: 18px;
-	z-index: 15;
-	margin-right: 24px; /* space after the slider */
+.canvas-slide[data-step="2"] {
+    left: var(--canvas-1-width, 75vw);
+    width: var(--canvas-2-width, 25vw);
+    background: #000000;
 }
 
-.prev-step-badge.hidden { display: none; }
-
-/* Progress line base styles */
-.progress-line {
-	position: absolute;
-	top: 0;
-	width: 4px;
-	height: 100vh;
-	background: #F3E831;
-	transition: left 0.6s ease-out, right 0.6s ease-out;
-	z-index: 10;
+.canvas-slide[data-step="3"] {
+    left: calc(var(--canvas-1-width, 75vw) + var(--canvas-2-width, 25vw));
+    width: var(--canvas-3-width, 0vw);
+    background: #ffffff;
 }
 
-/* Right slider (for forward navigation) */
-.progress-line-right {
-	left: var(--slider-right, 75vw);
-}
-
-/* Left slider (for backward navigation) */
-.progress-line-left {
-	right: var(--slider-left, 0vw);
-}
-
-.progress-line-left.hidden {
-	display: none;
+.canvas-slide[data-step="4"] {
+    left: calc(var(--canvas-1-width, 75vw) + var(--canvas-2-width, 25vw) + var(--canvas-3-width, 0vw));
+    width: var(--canvas-4-width, 0vw);
+    background: #000000;
 }
 
 /* Disable transitions during drag */
-.step-slider.no-transition .progress-line,
-.step-slider.no-transition .progress-circle,
-.step-slider.no-transition::before,
-.step-slider.no-transition::after {
-	transition: none !important;
+.step-slider.no-transition .canvas-slide {
+    transition: none !important;
 }
 
-/* Progress circle base styles */
-.progress-circle {
+/* Canvas content area */
+.canvas-content {
+    flex: 1;
+    position: relative;
+    padding: 40px;
+    overflow: hidden;
+    min-width: 0;
+}
+
+/* Canvas dragger - positioned at edge */
+.canvas-dragger {
     position: absolute;
+    top: 0;
+    height: 100%;
     width: 60px;
-    height: 60px;
-    background: #ffffff; /* white background */
-    border: 2px solid #000; /* black border */
-    border-radius: 50%;
-    top: 50%;
-    transform: translateY(-50%);
-    transition: all 0.6s ease-out;
-    z-index: 11;
-    cursor: grab;
+    z-index: 100;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-.progress-circle:active {
+.dragger-right {
+    right: -30px; /* Half outside canvas */
+}
+
+.dragger-left {
+    left: -30px; /* Half outside canvas */
+}
+
+/* Dragger line (yellow vertical line) */
+.dragger-line {
+    position: absolute;
+    width: 4px;
+    height: 100%;
+    background: #F3E831;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* Dragger handle (circle with arrow) */
+.dragger-handle {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    background: #ffffff;
+    border: 2px solid #000;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    z-index: 101;
+}
+
+.dragger-handle:active {
     cursor: grabbing;
-}
-
-/* Right circle (centered on right line) */
-.progress-circle-right {
-    left: -30px; /* Center on the line */
-}
-
-/* Left circle (centered on left line) */
-.progress-circle-left {
-    right: -30px; /* Center on the line */
 }
 
 /* Arrow indicators */
@@ -380,77 +351,33 @@ body:active {
     border-right: 10px solid #000;
 }
 
-/* Hidden manual slider for dragging functionality */
-.manual-slider {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 12;
-    pointer-events: none;
-}
-
-.slider-input {
+/* Step badges (next/prev indicators) */
+.next-step-badge,
+.prev-step-badge {
     position: absolute;
-    top: 50%;
-    left: 0;
-    width: 100%;
-    height: 60px;
-    background: transparent;
-    outline: none;
-    -webkit-appearance: none;
-    appearance: none;
-    transform: translateY(-50%);
-    pointer-events: all;
-    cursor: grab;
-}
-
-.slider-input:active {
-    cursor: grabbing;
-}
-
-.slider-input::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 60px;
-    height: 60px;
+    top: 114px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     background: transparent;
-    cursor: grab;
-}
-
-.slider-input::-moz-range-thumb {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: transparent;
-    cursor: grab;
-    border: none;
-}
-
-/* Hide the labels */
-.slider-labels {
-    display: none;
-}
-
-/* Step title in bottom left */
-.step-title-bottom {
-    position: absolute;
-    bottom: 40px;
-    left: 40px;
+    border: 2px solid #fff;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
     font-size: 18px;
-    font-weight: 500;
-    color: #333;
-    z-index: 5;
+    z-index: 102;
 }
 
-@media (max-width: 768px) {
-    .step-title-bottom {
-        bottom: 30px;
-        left: 30px;
-        font-size: 16px;
-    }
+.dragger-right .next-step-badge {
+    left: 50%;
+    transform: translateX(20px);
+}
+
+.dragger-left .prev-step-badge {
+    right: 50%;
+    transform: translateX(-20px);
 }
 
 .step-slider.hidden {
@@ -458,51 +385,6 @@ body:active {
     pointer-events: none;
 }
 
-.slider-container {
-    width: 100%;
-    height: 100%;
-    position: relative;
-    overflow: hidden;
-}
-
-.step-slide {
-    height: 100%;
-    position: absolute;
-    top: 0;
-    padding: 40px;
-    box-sizing: border-box;
-    overflow: hidden;
-    transition: width 0.3s ease-out, left 0.3s ease-out;
-}
-
-/* Disable slide transitions during drag */
-.step-slider.no-transition .step-slide {
-    transition: none !important;
-}
-
-/* Step 1: From 0 to boundary 1-2 */
-.step-slide[data-step="1"] {
-    width: var(--boundary-1-2, 75vw);
-    left: 0;
-}
-
-/* Step 2: From boundary 1-2 to boundary 2-3 */
-.step-slide[data-step="2"] {
-    width: calc(var(--boundary-2-3, 100vw) - var(--boundary-1-2, 75vw));
-    left: var(--boundary-1-2, 75vw);
-}
-
-/* Step 3: From boundary 2-3 to boundary 3-4 */
-.step-slide[data-step="3"] {
-    width: calc(var(--boundary-3-4, 100vw) - var(--boundary-2-3, 100vw));
-    left: var(--boundary-2-3, 100vw);
-}
-
-/* Step 4: From boundary 3-4 to 100vw */
-.step-slide[data-step="4"] {
-    width: calc(100vw - var(--boundary-3-4, 100vw));
-    left: var(--boundary-3-4, 100vw);
-}
 
 /* Step header with navigation */
 .step-header {
@@ -584,25 +466,25 @@ body:active {
     background: #f0f0f0;
 }
 
-/* Upload area */
+/* Upload area - positioned within canvas content */
 .upload-area {
-    position: fixed;
-    top: 114px; /* Align with the top of the "1" circle */
-    left: calc(var(--slider-left, 75vw) / 2);
+    position: absolute;
+    top: 80px;
+    left: 50%;
     transform: translateX(-50%);
     z-index: 5;
 }
 
 .upload-box {
-    width: 520px;
-    height: 520px;
+    width: min(520px, 80%);
+    height: min(520px, 60vh);
     border: none;
     border-radius: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: #fff;
+    background: #f5f5f5;
     cursor: pointer;
     transition: background 0.2s ease, border-color 0.2s ease;
     position: relative;
@@ -716,11 +598,11 @@ body:active {
     margin: 0;
 }
 
-/* Bottom image thumbnails */
+/* Bottom image thumbnails - positioned within canvas content */
 .bottom-images {
-    position: fixed;
-    top: calc(50% + 220px); /* below the upload box */
-    left: calc(var(--slider-left, 75vw) / 2);
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
     transform: translateX(-50%);
     display: flex;
     justify-content: center;
@@ -766,8 +648,29 @@ body:active {
 /* Step content for other steps */
 .step-content {
     max-width: 600px;
-    margin: 0 auto;
+    margin: 80px auto 0;
     text-align: center;
+}
+
+/* Text color for different canvas backgrounds */
+.canvas-slide[data-step="1"] .step-content,
+.canvas-slide[data-step="3"] .step-content {
+    color: #333;
+}
+
+.canvas-slide[data-step="2"] .step-content,
+.canvas-slide[data-step="4"] .step-content {
+    color: #fff;
+}
+
+.canvas-slide[data-step="2"] .step-content h2,
+.canvas-slide[data-step="4"] .step-content h2 {
+    color: #fff;
+}
+
+.canvas-slide[data-step="2"] .step-content p,
+.canvas-slide[data-step="4"] .step-content p {
+    color: rgba(255, 255, 255, 0.8);
 }
 
 .step-content h2 {

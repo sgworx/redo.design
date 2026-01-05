@@ -20,24 +20,6 @@
     
     <!-- Step slider interface -->
     <div id="step-slider" class="step-slider hidden">
-        <!-- Right slider (for Steps 1, 2, 3) -->
-        <div class="progress-line progress-line-right" id="slider-right">
-            <div class="progress-circle progress-circle-right" id="handle-right">
-                <div class="arrow-right"></div>
-            </div>
-        </div>
-        
-        <!-- Left slider (for Steps 2, 3, 4) -->
-        <div class="progress-line progress-line-left hidden" id="slider-left">
-            <div class="progress-circle progress-circle-left" id="handle-left">
-                <div class="arrow-left"></div>
-            </div>
-        </div>
-        
-        <!-- Step badges -->
-        <div class="next-step-badge hidden" id="next-step-badge">2</div>
-        <div class="prev-step-badge hidden" id="prev-step-badge">1</div>
-        
         <!-- Top-left step indicator under logo -->
         <div class="step-top-left">
             <div class="step-top-left-label">STEP</div>
@@ -45,74 +27,124 @@
             <div class="step-top-left-title" id="step-top-left-title">Select Image</div>
         </div>
         
-        <!-- Manual slider control (hidden, kept for compatibility) -->
-        <div class="manual-slider">
-            <input type="range" id="step-range" min="1" max="4" value="1" step="0.01" class="slider-input">
-            <div class="slider-labels">
-                <span>1</span>
-                <span>2</span>
-                <span>3</span>
-                <span>4</span>
-            </div>
-        </div>
+        <!-- Hidden range input for compatibility -->
+        <input type="range" id="step-range" min="1" max="4" value="1" step="0.01" style="display:none;">
         
         <div class="slider-container">
-            <!-- Step 1: Select Image -->
-            <div class="step-slide active" data-step="1">
-                
-                <div class="upload-area">
-                    <div class="upload-box">
-                        <div class="corner-tr"></div>
-                        <div class="corner-bl"></div>
-                        <div class="upload-icon">
-                            <div class="plus-icon">+</div>
+            <!-- Canvas 1: Select Image -->
+            <div class="canvas-slide" data-step="1">
+                <div class="canvas-content">
+                    <div class="upload-area">
+                        <div class="upload-box">
+                            <div class="corner-tr"></div>
+                            <div class="corner-bl"></div>
+                            <div class="upload-icon">
+                                <div class="plus-icon">+</div>
+                            </div>
+                            <p class="upload-text">
+                                Upload the picture of raw material you want to turn into<br>
+                                a form, or select the image from the bottom.
+                            </p>
+                            <img src="" alt="Selected image">
                         </div>
-                        <p class="upload-text">
-                            Upload the picture of raw material you want to turn into<br>
-                            a form, or select the image from the bottom.
-                        </p>
-                        <img src="" alt="Selected image">
+                    </div>
+                    
+                    <div class="bottom-images">
+                        <div class="image-thumbnail" data-image="Click1.jpeg">
+                            <img src="Assets/Click1.jpeg" alt="Option 1">
+                        </div>
+                        <div class="image-thumbnail selected" data-image="Click2.jpeg">
+                            <img src="Assets/Click2.jpeg" alt="Option 2">
+                            <div class="selection-indicator">A</div>
+                        </div>
+                        <div class="image-thumbnail" data-image="Click3.jpeg">
+                            <img src="Assets/Click3.jpeg" alt="Option 3">
+                        </div>
                     </div>
                 </div>
                 
-                <div class="bottom-images">
-                    <div class="image-thumbnail" data-image="Click1.jpeg">
-                        <img src="Assets/Click1.jpeg" alt="Option 1">
+                <!-- Right dragger (to Step 2) -->
+                <div class="canvas-dragger dragger-right" data-direction="right">
+                    <div class="dragger-line"></div>
+                    <div class="dragger-handle">
+                        <div class="arrow-right"></div>
                     </div>
-                    <div class="image-thumbnail selected" data-image="Click2.jpeg">
-                        <img src="Assets/Click2.jpeg" alt="Option 2">
-                        <div class="selection-indicator">A</div>
-                    </div>
-                    <div class="image-thumbnail" data-image="Click3.jpeg">
-                        <img src="Assets/Click3.jpeg" alt="Option 3">
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Step 2: Design Prompt -->
-            <div class="step-slide next" data-step="2">
-                
-                <div class="step-content">
-                    <h2>Step 2: Design Prompt</h2>
-                    <p>Configure your design parameters here...</p>
+                    <div class="next-step-badge">2</div>
                 </div>
             </div>
             
-            <!-- Step 3: Choose Design -->
-            <div class="step-slide next" data-step="3">
+            <!-- Canvas 2: Design Prompt -->
+            <div class="canvas-slide" data-step="2">
+                <!-- Left dragger (to Step 1) -->
+                <div class="canvas-dragger dragger-left" data-direction="left">
+                    <div class="dragger-line"></div>
+                    <div class="dragger-handle">
+                        <div class="arrow-left"></div>
+                    </div>
+                    <div class="prev-step-badge">1</div>
+                </div>
                 
-                <div class="step-content">
-                    <h2>Step 3: Choose Design</h2>
-                    <p>Select your preferred design option...</p>
+                <div class="canvas-content">
+                    <div class="step-content">
+                        <h2>Step 2: Design Prompt</h2>
+                        <p>Configure your design parameters here...</p>
+                    </div>
+                </div>
+                
+                <!-- Right dragger (to Step 3) -->
+                <div class="canvas-dragger dragger-right" data-direction="right">
+                    <div class="dragger-line"></div>
+                    <div class="dragger-handle">
+                        <div class="arrow-right"></div>
+                    </div>
+                    <div class="next-step-badge">3</div>
                 </div>
             </div>
             
-            <!-- Step 4: Get it ready -->
-            <div class="step-slide next" data-step="4">
+            <!-- Canvas 3: Choose Design -->
+            <div class="canvas-slide" data-step="3">
+                <!-- Left dragger (to Step 2) -->
+                <div class="canvas-dragger dragger-left" data-direction="left">
+                    <div class="dragger-line"></div>
+                    <div class="dragger-handle">
+                        <div class="arrow-left"></div>
+                    </div>
+                    <div class="prev-step-badge">2</div>
+                </div>
                 
-                <div class="step-content">
-                    <h2>Step 4: Get it ready</h2>
-                    <p>Finalize and prepare your design...</p>
+                <div class="canvas-content">
+                    <div class="step-content">
+                        <h2>Step 3: Choose Design</h2>
+                        <p>Select your preferred design option...</p>
+                    </div>
+                </div>
+                
+                <!-- Right dragger (to Step 4) -->
+                <div class="canvas-dragger dragger-right" data-direction="right">
+                    <div class="dragger-line"></div>
+                    <div class="dragger-handle">
+                        <div class="arrow-right"></div>
+                    </div>
+                    <div class="next-step-badge">4</div>
+                </div>
+            </div>
+            
+            <!-- Canvas 4: Get it ready -->
+            <div class="canvas-slide" data-step="4">
+                <!-- Left dragger (to Step 3) -->
+                <div class="canvas-dragger dragger-left" data-direction="left">
+                    <div class="dragger-line"></div>
+                    <div class="dragger-handle">
+                        <div class="arrow-left"></div>
+                    </div>
+                    <div class="prev-step-badge">3</div>
+                </div>
+                
+                <div class="canvas-content">
+                    <div class="step-content">
+                        <h2>Step 4: Get it ready</h2>
+                        <p>Finalize and prepare your design...</p>
+                    </div>
                 </div>
             </div>
         </div>

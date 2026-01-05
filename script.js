@@ -24,12 +24,12 @@ class Scene3D {
         this.imageSelected = false; // track if image is selected (required for dragging)
         this.currentStep = 1; // current active step (1-4)
         
-        // Boundary positions for canvas transitions (in vw)
-        // Each boundary represents the position between two steps
-        this.boundaries = {
-            '1-2': 75,  // Boundary between Step 1 and Step 2
-            '2-3': 100, // Boundary between Step 2 and Step 3 (initially off-screen)
-            '3-4': 100  // Boundary between Step 3 and Step 4 (initially off-screen)
+        // Canvas widths in vw (total must equal 100vw)
+        this.canvasWidths = {
+            1: 75,   // Canvas 1: 75vw
+            2: 25,   // Canvas 2: 25vw
+            3: 0,    // Canvas 3: 0vw (hidden)
+            4: 0     // Canvas 4: 0vw (hidden)
         };
         
         this.modelFiles = [
@@ -448,22 +448,16 @@ class Scene3D {
         this.currentSliderValue = 1;
         this.targetSliderValue = 1;
         
-        // Reset boundaries based on current step
-        // Step 1: occupies 0-75vw, Step 2 starts at 75vw
-        this.boundaries = {
-            '1-2': 75,
-            '2-3': 100,
-            '3-4': 100
+        // Reset canvas widths (Step 1: 75vw, Step 2: 25vw, others hidden)
+        this.canvasWidths = {
+            1: 75,
+            2: 25,
+            3: 0,
+            4: 0
         };
         
-        // Initialize CSS variables
-        document.documentElement.style.setProperty('--boundary-1-2', `${this.boundaries['1-2']}vw`);
-        document.documentElement.style.setProperty('--boundary-2-3', `${this.boundaries['2-3']}vw`);
-        document.documentElement.style.setProperty('--boundary-3-4', `${this.boundaries['3-4']}vw`);
-        
-        // Update slider visibility and positions
-        this.updateSliderVisibility();
-        this.updateCanvasPositions();
+        // Update canvas CSS variables
+        this.updateCanvasWidths();
         
         // Check if an image is already selected (from HTML default)
         const selectedThumbnail = document.querySelector('.image-thumbnail.selected');
@@ -486,83 +480,36 @@ class Scene3D {
         }
     }
     
-    updateSliderVisibility() {
-        const leftSlider = document.getElementById('slider-left');
-        const rightSlider = document.getElementById('slider-right');
-        const prevBadge = document.getElementById('prev-step-badge');
-        const nextBadge = document.getElementById('next-step-badge');
+    updateCanvasWidths() {
+        // Update CSS variables for canvas widths
+        document.documentElement.style.setProperty('--canvas-1-width', `${this.canvasWidths[1]}vw`);
+        document.documentElement.style.setProperty('--canvas-2-width', `${this.canvasWidths[2]}vw`);
+        document.documentElement.style.setProperty('--canvas-3-width', `${this.canvasWidths[3]}vw`);
+        document.documentElement.style.setProperty('--canvas-4-width', `${this.canvasWidths[4]}vw`);
         
-        // Step 1: Only right slider
-        if (this.currentStep === 1) {
-            if (leftSlider) leftSlider.classList.add('hidden');
-            if (rightSlider) rightSlider.classList.remove('hidden');
-            if (prevBadge) prevBadge.classList.add('hidden');
-            if (nextBadge) {
-                nextBadge.textContent = '2';
-                nextBadge.classList.remove('hidden');
-            }
-        }
-        // Step 2: Both sliders
-        else if (this.currentStep === 2) {
-            if (leftSlider) leftSlider.classList.remove('hidden');
-            if (rightSlider) rightSlider.classList.remove('hidden');
-            if (prevBadge) {
-                prevBadge.textContent = '1';
-                prevBadge.classList.remove('hidden');
-            }
-            if (nextBadge) {
-                nextBadge.textContent = '3';
-                nextBadge.classList.remove('hidden');
-            }
-        }
-        // Step 3: Both sliders
-        else if (this.currentStep === 3) {
-            if (leftSlider) leftSlider.classList.remove('hidden');
-            if (rightSlider) rightSlider.classList.remove('hidden');
-            if (prevBadge) {
-                prevBadge.textContent = '2';
-                prevBadge.classList.remove('hidden');
-            }
-            if (nextBadge) {
-                nextBadge.textContent = '4';
-                nextBadge.classList.remove('hidden');
-            }
-        }
-        // Step 4: Only left slider
-        else if (this.currentStep === 4) {
-            if (leftSlider) leftSlider.classList.remove('hidden');
-            if (rightSlider) rightSlider.classList.add('hidden');
-            if (prevBadge) {
-                prevBadge.textContent = '3';
-                prevBadge.classList.remove('hidden');
-            }
-            if (nextBadge) nextBadge.classList.add('hidden');
-        }
+        // Update step indicator based on which canvas is largest
+        this.updateCurrentStepFromWidths();
     }
     
-    updateCanvasPositions() {
-        // Update CSS variables for boundaries
-        document.documentElement.style.setProperty('--boundary-1-2', `${this.boundaries['1-2']}vw`);
-        document.documentElement.style.setProperty('--boundary-2-3', `${this.boundaries['2-3']}vw`);
-        document.documentElement.style.setProperty('--boundary-3-4', `${this.boundaries['3-4']}vw`);
+    updateCurrentStepFromWidths() {
+        // Determine current step based on which canvas has most width
+        const widths = Object.values(this.canvasWidths);
+        const maxWidth = Math.max(...widths);
+        const maxIndex = widths.indexOf(maxWidth);
+        this.currentStep = maxIndex + 1;
         
-        // Update slider positions based on current step
-        const rightSlider = document.getElementById('slider-right');
-        const leftSlider = document.getElementById('slider-left');
-        
-        // Right slider position (for forward navigation)
-        if (rightSlider && this.currentStep < 4) {
-            const boundaryKey = `${this.currentStep}-${this.currentStep + 1}`;
-            rightSlider.style.left = `${this.boundaries[boundaryKey]}vw`;
-            document.documentElement.style.setProperty('--slider-right', `${this.boundaries[boundaryKey]}vw`);
-        }
-        
-        // Left slider position (for backward navigation)
-        if (leftSlider && this.currentStep > 1) {
-            const boundaryKey = `${this.currentStep - 1}-${this.currentStep}`;
-            const rightPosition = 100 - this.boundaries[boundaryKey];
-            leftSlider.style.right = `${rightPosition}vw`;
-            document.documentElement.style.setProperty('--slider-left', `${rightPosition}vw`);
+        // Update step indicator
+        const stepNumEl = document.getElementById('step-top-left-number');
+        const stepTitleEl = document.getElementById('step-top-left-title');
+        if (stepNumEl && stepTitleEl) {
+            stepNumEl.textContent = String(this.currentStep);
+            const titles = {
+                1: 'Select Image',
+                2: 'Design Prompt',
+                3: 'Choose Design',
+                4: 'Get it ready'
+            };
+            stepTitleEl.textContent = titles[this.currentStep] || '';
         }
     }
     
@@ -676,18 +623,16 @@ class Scene3D {
         this.sliderDragEnabled = true;
         
         const stepSlider = document.querySelector('.step-slider');
-        const rightHandle = document.getElementById('handle-right');
-        const leftHandle = document.getElementById('handle-left');
-        const rightSlider = document.getElementById('slider-right');
-        const leftSlider = document.getElementById('slider-left');
-        
         if (!stepSlider) return;
         
+        // Get all dragger handles
+        const allDraggers = document.querySelectorAll('.dragger-handle');
+        
         let isDragging = false;
-        let dragDirection = null; // 'left' or 'right'
         let startX = 0;
-        let startBoundary = 0;
-        let activeBoundary = null; // e.g., '1-2', '2-3', '3-4'
+        let draggedCanvas = null; // Which canvas's dragger we're using
+        let dragDirection = null; // 'left' or 'right'
+        let startWidths = {}; // Store initial widths
         
         // Disable transitions during drag
         const disableTransitions = () => {
@@ -699,85 +644,32 @@ class Scene3D {
             stepSlider.classList.remove('no-transition');
         };
         
-        // Update boundary position based on drag
-        const updateBoundary = (newPositionVw) => {
-            if (!activeBoundary) return;
+        // Start drag handler
+        const startDrag = (e) => {
+            if (!this.imageSelected) return;
             
-            // Clamp position based on current step and direction
-            let minPos = 0;
-            let maxPos = 100;
+            const dragger = e.target.closest('.canvas-dragger');
+            if (!dragger) return;
             
-            if (activeBoundary === '1-2') {
-                minPos = 0;
-                maxPos = 100;
-            } else if (activeBoundary === '2-3') {
-                minPos = this.boundaries['1-2'];
-                maxPos = 100;
-            } else if (activeBoundary === '3-4') {
-                minPos = this.boundaries['2-3'];
-                maxPos = 100;
-            }
-            
-            newPositionVw = Math.max(minPos, Math.min(maxPos, newPositionVw));
-            this.boundaries[activeBoundary] = newPositionVw;
-            
-            // Update canvas positions in real-time
-            this.updateCanvasPositions();
-        };
-        
-        // Start drag on right handle
-        const startDragRight = (e) => {
-            if (!this.imageSelected || this.currentStep === 4) return;
+            const canvas = dragger.closest('.canvas-slide');
+            if (!canvas) return;
             
             isDragging = true;
-            dragDirection = 'right';
             this.isUserSliding = true;
             e.preventDefault();
             e.stopPropagation();
             
-            startX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
-            
-            // Determine which boundary we're dragging
-            if (this.currentStep === 1) {
-                activeBoundary = '1-2';
-            } else if (this.currentStep === 2) {
-                activeBoundary = '2-3';
-            } else if (this.currentStep === 3) {
-                activeBoundary = '3-4';
-            }
-            
-            startBoundary = this.boundaries[activeBoundary];
-            disableTransitions();
-            
-            if (rightHandle) rightHandle.style.cursor = 'grabbing';
-            document.body.style.cursor = 'grabbing';
-        };
-        
-        // Start drag on left handle
-        const startDragLeft = (e) => {
-            if (!this.imageSelected || this.currentStep === 1) return;
-            
-            isDragging = true;
-            dragDirection = 'left';
-            this.isUserSliding = true;
-            e.preventDefault();
-            e.stopPropagation();
+            draggedCanvas = parseInt(canvas.dataset.step);
+            dragDirection = dragger.dataset.direction; // 'left' or 'right'
             
             startX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
             
-            // Determine which boundary we're dragging
-            if (this.currentStep === 2) {
-                activeBoundary = '1-2';
-            } else if (this.currentStep === 3) {
-                activeBoundary = '2-3';
-            } else if (this.currentStep === 4) {
-                activeBoundary = '3-4';
-            }
+            // Store current widths
+            startWidths = { ...this.canvasWidths };
             
-            startBoundary = this.boundaries[activeBoundary];
             disableTransitions();
             
-            if (leftHandle) leftHandle.style.cursor = 'grabbing';
+            dragger.querySelector('.dragger-handle').style.cursor = 'grabbing';
             document.body.style.cursor = 'grabbing';
         };
         
@@ -792,9 +684,48 @@ class Scene3D {
             const deltaX = currentX - startX;
             const deltaVw = (deltaX / window.innerWidth) * 100;
             
-            // Update boundary position
-            const newPosition = startBoundary + deltaVw;
-            updateBoundary(newPosition);
+            // Update canvas widths based on drag direction
+            if (dragDirection === 'right') {
+                // Dragging right dragger: current canvas grows, next shrinks
+                const nextCanvas = draggedCanvas + 1;
+                if (nextCanvas <= 4) {
+                    // Calculate new widths
+                    let newCurrentWidth = startWidths[draggedCanvas] + deltaVw;
+                    let newNextWidth = startWidths[nextCanvas] - deltaVw;
+                    
+                    // Clamp values (minimum 0, maximum depends on available space)
+                    newCurrentWidth = Math.max(0, Math.min(100, newCurrentWidth));
+                    newNextWidth = Math.max(0, Math.min(100, newNextWidth));
+                    
+                    // If next canvas is at 0 and we're still dragging right, 
+                    // need to take from the canvas after that
+                    if (newNextWidth < 0) {
+                        newNextWidth = 0;
+                        newCurrentWidth = startWidths[draggedCanvas] + startWidths[nextCanvas];
+                    }
+                    
+                    this.canvasWidths[draggedCanvas] = newCurrentWidth;
+                    this.canvasWidths[nextCanvas] = newNextWidth;
+                }
+            } else if (dragDirection === 'left') {
+                // Dragging left dragger: current canvas shrinks, previous grows
+                const prevCanvas = draggedCanvas - 1;
+                if (prevCanvas >= 1) {
+                    // Calculate new widths (note: dragging left means negative delta for current)
+                    let newCurrentWidth = startWidths[draggedCanvas] + deltaVw; // Will be negative when dragging left
+                    let newPrevWidth = startWidths[prevCanvas] - deltaVw;
+                    
+                    // Clamp values
+                    newCurrentWidth = Math.max(0, Math.min(100, newCurrentWidth));
+                    newPrevWidth = Math.max(0, Math.min(100, newPrevWidth));
+                    
+                    this.canvasWidths[draggedCanvas] = newCurrentWidth;
+                    this.canvasWidths[prevCanvas] = newPrevWidth;
+                }
+            }
+            
+            // Update CSS
+            this.updateCanvasWidths();
         };
         
         // Mouse up - end drag
@@ -802,69 +733,31 @@ class Scene3D {
             if (!isDragging) return;
             
             isDragging = false;
+            draggedCanvas = null;
             dragDirection = null;
-            activeBoundary = null;
             this.isUserSliding = false;
             
             enableTransitions();
             
-            // Update current step based on boundary positions
-            this.updateCurrentStepFromBoundaries();
-            
-            // Update slider visibility
-            this.updateSliderVisibility();
-            
             // Reset cursors
-            if (rightHandle) rightHandle.style.cursor = 'grab';
-            if (leftHandle) leftHandle.style.cursor = 'grab';
+            allDraggers.forEach(handle => {
+                handle.style.cursor = 'grab';
+            });
             document.body.style.cursor = '';
         };
         
-        // Attach event listeners
-        if (rightHandle) {
-            rightHandle.style.cursor = 'grab';
-            rightHandle.addEventListener('pointerdown', startDragRight);
-            rightHandle.addEventListener('touchstart', startDragRight, { passive: false });
-        }
-        
-        if (leftHandle) {
-            leftHandle.style.cursor = 'grab';
-            leftHandle.addEventListener('pointerdown', startDragLeft);
-            leftHandle.addEventListener('touchstart', startDragLeft, { passive: false });
-        }
+        // Attach event listeners to all draggers
+        allDraggers.forEach(handle => {
+            handle.style.cursor = 'grab';
+            handle.addEventListener('pointerdown', startDrag);
+            handle.addEventListener('touchstart', startDrag, { passive: false });
+        });
         
         // Use document for move/up to handle mouse leaving element
         document.addEventListener('pointermove', moveDrag);
         document.addEventListener('pointerup', endDrag);
         document.addEventListener('touchmove', moveDrag, { passive: false });
         document.addEventListener('touchend', endDrag);
-    }
-    
-    updateCurrentStepFromBoundaries() {
-        // Determine current step based on which canvas is most visible
-        // This is a simple heuristic - you might want to refine this
-        const step1Width = this.boundaries['1-2'];
-        const step2Width = this.boundaries['2-3'] - this.boundaries['1-2'];
-        const step3Width = this.boundaries['3-4'] - this.boundaries['2-3'];
-        const step4Width = 100 - this.boundaries['3-4'];
-        
-        const widths = [step1Width, step2Width, step3Width, step4Width];
-        const maxIndex = widths.indexOf(Math.max(...widths));
-        this.currentStep = maxIndex + 1;
-        
-        // Update step indicator
-        const stepNumEl = document.getElementById('step-top-left-number');
-        const stepTitleEl = document.getElementById('step-top-left-title');
-        if (stepNumEl && stepTitleEl) {
-            stepNumEl.textContent = String(this.currentStep);
-            const titles = {
-                1: 'Select Image',
-                2: 'Design Prompt',
-                3: 'Choose Design',
-                4: 'Get it ready'
-            };
-            stepTitleEl.textContent = titles[this.currentStep] || '';
-        }
     }
     
     slideToNextStep() {
