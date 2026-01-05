@@ -922,9 +922,14 @@ class Scene3D {
     updateStep2Image(imageSrc) {
         // Update the Step 2 image display with the selected image from Step 1
         const step2Image = document.getElementById('step-2-selected-image');
-        if (step2Image && imageSrc) {
-            step2Image.src = imageSrc;
-            step2Image.style.display = 'block';
+        if (step2Image) {
+            if (imageSrc && imageSrc.trim() !== '') {
+                step2Image.src = imageSrc;
+                step2Image.style.display = 'block';
+                console.log('Step 2 image updated:', imageSrc);
+            } else {
+                step2Image.style.display = 'none';
+            }
         }
     }
     
