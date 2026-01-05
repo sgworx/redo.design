@@ -512,7 +512,7 @@ body:active {
 
 /* Step 1: From 0 to boundary 1-2 - Light gray */
 .step-slide[data-step="1"] {
-    width: var(--boundary-1-2, 0vw);
+    width: var(--boundary-1-2, 75vw);
     left: 0;
     background: #f5f5f5; /* Light gray */
     z-index: 1;
@@ -521,8 +521,8 @@ body:active {
 
 /* Step 2: From boundary 1-2 to boundary 2-3 - Medium-light gray */
 .step-slide[data-step="2"] {
-    width: calc(var(--boundary-2-3, 25vw) - var(--boundary-1-2, 0vw));
-    left: var(--boundary-1-2, 0vw);
+    width: calc(var(--boundary-2-3, 100vw) - var(--boundary-1-2, 75vw));
+    left: var(--boundary-1-2, 75vw);
     background: #d5d5d5; /* Medium-light gray */
     z-index: 1; /* Ensure it's above background pseudo-elements */
     color: #000; /* Dark text on medium-light background */
@@ -530,8 +530,8 @@ body:active {
 
 /* Step 3: From boundary 2-3 to boundary 3-4 - Medium-dark gray */
 .step-slide[data-step="3"] {
-    width: calc(var(--boundary-3-4, 50vw) - var(--boundary-2-3, 25vw));
-    left: var(--boundary-2-3, 25vw);
+    width: calc(var(--boundary-3-4, 100vw) - var(--boundary-2-3, 100vw));
+    left: var(--boundary-2-3, 100vw);
     background: #808080; /* Medium-dark gray */
     z-index: 1;
     color: #fff; /* Light text on medium-dark background */
@@ -539,8 +539,8 @@ body:active {
 
 /* Step 4: From boundary 3-4 to 100vw - Darkest gray (black) */
 .step-slide[data-step="4"] {
-    width: calc(100vw - var(--boundary-3-4, 50vw));
-    left: var(--boundary-3-4, 50vw);
+    width: calc(100vw - var(--boundary-3-4, 100vw));
+    left: var(--boundary-3-4, 100vw);
     background: #000000; /* Darkest gray (black) */
     z-index: 1;
     color: #fff; /* Light text on black background */
@@ -819,6 +819,181 @@ body:active {
     text-align: center;
     padding: 40px;
     box-sizing: border-box;
+}
+
+/* Step 3 Content Styles - fixed size, centered */
+.step-3-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    width: auto;
+    max-width: 600px;
+    height: auto;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    overflow: visible;
+}
+
+/* Step 3 Header */
+.step-3-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: auto;
+    flex-shrink: 0;
+    margin-bottom: 40px;
+}
+
+.step-3-label {
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    color: #3333ff; /* Blue color for STEP */
+    text-transform: uppercase;
+}
+
+.step-3-circle {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid #3333ff; /* Blue border */
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 600;
+    color: #3333ff; /* Blue number */
+}
+
+.step-3-title {
+    font-size: 16px;
+    font-weight: 400;
+    color: inherit; /* Use parent color */
+    text-align: center;
+}
+
+/* Step 3 Options Container - scrollable */
+.step-3-options-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    width: auto;
+    max-height: 80vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 20px;
+    box-sizing: border-box;
+    scroll-behavior: smooth;
+    scroll-snap-type: y proximity;
+}
+
+/* Step 3 Option Images */
+.step-3-option {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.step-3-option-img {
+    display: block;
+    object-fit: contain;
+    background: #ffffff;
+}
+
+/* Top and bottom thumbnails - smaller */
+.step-3-thumbnail .step-3-option-img {
+    width: 400px; /* Fixed smaller size */
+    height: auto;
+    max-height: 300px;
+}
+
+/* Main/center image - larger */
+.step-3-main .step-3-option-img {
+    width: 520px; /* Fixed larger size */
+    height: auto;
+    max-height: 520px;
+}
+
+/* Arrow indicator on main image */
+.step-3-arrow-indicator {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    background: #ffffff;
+    border: 2px solid #000;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.2s ease;
+}
+
+.step-3-arrow-indicator:hover {
+    background: #f5f5f5;
+    transform: scale(1.1);
+}
+
+.arrow-diagonal {
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 12px solid #000;
+    transform: rotate(45deg);
+    position: relative;
+}
+
+/* Alternative: Use SVG-like approach with lines */
+/* Diagonal arrow pointing up-right */
+.arrow-diagonal {
+    width: 16px;
+    height: 16px;
+    position: relative;
+}
+
+.arrow-diagonal::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 12px;
+    height: 2px;
+    background: #000;
+    transform: translateY(-50%) rotate(45deg);
+    transform-origin: left center;
+}
+
+.arrow-diagonal::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 0;
+    height: 0;
+    border-left: 5px solid #000;
+    border-top: 3px solid transparent;
+    border-bottom: 3px solid transparent;
+    transform: rotate(45deg);
+}
+
+/* Scroll snap for better UX */
+.step-3-option {
+    scroll-snap-align: center;
 }
 
 .step-content h2 {

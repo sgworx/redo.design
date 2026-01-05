@@ -23,28 +23,14 @@ class Scene3D {
         this.isUserSliding = false; // true while user holds the slider
         this.imageSelected = false; // track if image is selected (required for dragging)
         this.currentStep = 1; // current active step (1-4)
+        this.selectedDesignOption = null; // track which design option was selected in Step 2 (1, 2, or 3)
         
         // Boundary positions for canvas transitions (in vw)
         // Each boundary represents the position between two steps
-        // Maximum stopping positions with equal gaps (25vw each)
         this.boundaries = {
-            '1-2': 0,   // Boundary between Step 1 and Step 2 (starts at 0, max at 25vw)
-            '2-3': 25,  // Boundary between Step 2 and Step 3 (starts at 25vw, max at 50vw)
-            '3-4': 50   // Boundary between Step 3 and Step 4 (starts at 50vw, max at 75vw)
-        };
-        
-        // Maximum stopping positions for each slider
-        this.maxPositions = {
-            '1-2': 25,  // Slider 1-2 stops at 25vw
-            '2-3': 50,  // Slider 2-3 stops at 50vw
-            '3-4': 75   // Slider 3-4 stops at 75vw
-        };
-        
-        // Minimum positions (starting points)
-        this.minPositions = {
-            '1-2': 0,   // Slider 1-2 starts at 0vw
-            '2-3': 25,  // Slider 2-3 starts at 25vw
-            '3-4': 50   // Slider 3-4 starts at 50vw
+            '1-2': 75,  // Boundary between Step 1 and Step 2
+            '2-3': 100, // Boundary between Step 2 and Step 3 (initially off-screen)
+            '3-4': 100  // Boundary between Step 3 and Step 4 (initially off-screen)
         };
         
         this.modelFiles = [
@@ -450,6 +436,9 @@ class Scene3D {
         
         // Setup Step 2 interactions
         this.setupStep2Interactions();
+        
+        // Setup Step 3 interactions
+        this.setupStep3Interactions();
     }
     
     showStepSlider() {
@@ -466,13 +455,12 @@ class Scene3D {
         this.currentSliderValue = 1;
         this.targetSliderValue = 1;
         
-        // Reset boundaries to initial positions
-        // Step 1 should be visible initially, so boundary 1-2 starts at max (25vw)
-        // Other boundaries start at their minimums
+        // Reset boundaries based on current step
+        // Step 1: occupies 0-75vw, Step 2 starts at 75vw
         this.boundaries = {
-            '1-2': this.maxPositions['1-2'],  // Start at 25vw (Step 1 visible at max width)
-            '2-3': this.minPositions['2-3'],  // Start at 25vw (Step 2 hidden, same as boundary 1-2)
-            '3-4': this.minPositions['3-4']   // Start at 50vw (Step 3 hidden)
+            '1-2': 75,
+            '2-3': 100,
+            '3-4': 100
         };
         
         // Initialize CSS variables
@@ -778,21 +766,21 @@ class Scene3D {
         const updateBoundary = (newPositionVw) => {
             if (!activeBoundary) return;
             
-            // Get base min and max positions for this boundary
-            let minPos = this.minPositions[activeBoundary];
-            let maxPos = this.maxPositions[activeBoundary];
+            // Clamp position based on current step and direction
+            let minPos = 0;
+            let maxPos = 100;
             
-            // Ensure boundaries don't overlap
-            // Boundary 2-3 can't go below boundary 1-2
-            if (activeBoundary === '2-3') {
-                minPos = Math.max(minPos, this.boundaries['1-2']);
-            }
-            // Boundary 3-4 can't go below boundary 2-3
-            else if (activeBoundary === '3-4') {
-                minPos = Math.max(minPos, this.boundaries['2-3']);
+            if (activeBoundary === '1-2') {
+                minPos = 0;
+                maxPos = 100;
+            } else if (activeBoundary === '2-3') {
+                minPos = this.boundaries['1-2'];
+                maxPos = 100;
+            } else if (activeBoundary === '3-4') {
+                minPos = this.boundaries['2-3'];
+                maxPos = 100;
             }
             
-            // Clamp position between min and max
             newPositionVw = Math.max(minPos, Math.min(maxPos, newPositionVw));
             this.boundaries[activeBoundary] = newPositionVw;
             
@@ -887,6 +875,11 @@ class Scene3D {
             // Update slider visibility
             this.updateSliderVisibility();
             
+            // If Step 3 is now visible and we have a selected design option, update images
+            if (this.currentStep === 3 && this.selectedDesignOption) {
+                this.updateStep3Images(this.selectedDesignOption);
+            }
+            
             // Reset cursors
             allHandles.forEach(handle => {
                 handle.style.cursor = 'grab';
@@ -954,7 +947,7 @@ class Scene3D {
         const options = document.querySelectorAll('.step-2-option');
         const designInput = document.getElementById('design-input');
         
-        options.forEach(option => {
+        options.forEach((option, index) => {
             option.addEventListener('click', () => {
                 // Remove selected class from all options
                 options.forEach(opt => opt.classList.remove('selected'));
@@ -967,6 +960,13 @@ class Scene3D {
                     const optionText = option.dataset.option || option.textContent.trim();
                     designInput.value = optionText;
                 }
+                
+                // Store selected design option (1, 2, or 3)
+                this.selectedDesignOption = index + 1;
+                console.log(`Selected design option: ${this.selectedDesignOption}`);
+                
+                // Update Step 3 images when option is selected
+                this.updateStep3Images(this.selectedDesignOption);
             });
         });
         
@@ -978,6 +978,91 @@ class Scene3D {
                 // Add functionality here if needed
             });
         }
+    }
+    
+    updateStep3Images(optionNumber) {
+        // optionNumber: 1, 2, or 3
+        const imageSet = {
+            1: ['Assets/op1_1.png', 'Assets/op1_2.png', 'Assets/op1_3.png'],
+            2: ['Assets/op2_1.png', 'Assets/op2_2.png', 'Assets/op2_3.png'],
+            3: ['Assets/op3_1.png', 'Assets/op3_2.png', 'Assets/op3_3.png']
+        };
+        
+        const images = imageSet[optionNumber];
+        if (!images) return;
+        
+        const optionElements = document.querySelectorAll('.step-3-option');
+        if (optionElements.length >= 3) {
+            // Top thumbnail (index 0)
+            const topImg = optionElements[0].querySelector('.step-3-option-img');
+            if (topImg) topImg.src = images[0];
+            
+            // Main/center image (index 1)
+            const mainImg = optionElements[1].querySelector('.step-3-option-img');
+            if (mainImg) mainImg.src = images[1];
+            
+            // Bottom thumbnail (index 2)
+            const bottomImg = optionElements[2].querySelector('.step-3-option-img');
+            if (bottomImg) bottomImg.src = images[2];
+        }
+        
+        // Auto-scroll to center image
+        const optionsContainer = document.getElementById('step-3-options');
+        const mainOption = document.querySelector('.step-3-main');
+        if (optionsContainer && mainOption) {
+            setTimeout(() => {
+                mainOption.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+        }
+    }
+    
+    setupStep3Interactions() {
+        // Handle arrow click to finalize design and go to Step 4
+        const finalizeArrow = document.getElementById('step-3-finalize-arrow');
+        if (finalizeArrow) {
+            finalizeArrow.addEventListener('click', (e) => {
+                e.stopPropagation();
+                
+                // Move boundaries to reveal Step 4
+                // Step 4 should take up the full viewport
+                this.boundaries['3-4'] = 0; // Step 4 starts at 0vw
+                this.boundaries['2-3'] = 0; // Step 3 ends at 0vw (hidden)
+                this.boundaries['1-2'] = 0; // Step 2 ends at 0vw (hidden)
+                
+                // Update canvas positions
+                this.updateCanvasPositions();
+                this.updateSliderVisibility();
+                
+                // Update current step
+                this.currentStep = 4;
+                this.updateCurrentStepFromBoundaries();
+                
+                console.log('Finalized design, moved to Step 4');
+            });
+        }
+        
+        // Handle thumbnail clicks to switch main image (optional enhancement)
+        const thumbnails = document.querySelectorAll('.step-3-thumbnail');
+        const mainOption = document.querySelector('.step-3-main');
+        
+        thumbnails.forEach(thumbnail => {
+            thumbnail.addEventListener('click', () => {
+                const thumbnailImg = thumbnail.querySelector('.step-3-option-img');
+                const mainImg = mainOption ? mainOption.querySelector('.step-3-option-img') : null;
+                
+                if (thumbnailImg && mainImg) {
+                    // Swap images
+                    const tempSrc = mainImg.src;
+                    mainImg.src = thumbnailImg.src;
+                    thumbnailImg.src = tempSrc;
+                    
+                    // Scroll to main image
+                    if (mainOption) {
+                        mainOption.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+            });
+        });
     }
     
     slideToNextStep() {
