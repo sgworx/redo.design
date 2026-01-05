@@ -948,17 +948,6 @@ body:active {
     transform: scale(1.1);
 }
 
-.arrow-diagonal {
-    width: 0;
-    height: 0;
-    border-left: 8px solid transparent;
-    border-right: 8px solid transparent;
-    border-bottom: 12px solid #000;
-    transform: rotate(45deg);
-    position: relative;
-}
-
-/* Alternative: Use SVG-like approach with lines */
 /* Diagonal arrow pointing up-right */
 .arrow-diagonal {
     width: 16px;
@@ -989,6 +978,15 @@ body:active {
     border-top: 3px solid transparent;
     border-bottom: 3px solid transparent;
     transform: rotate(45deg);
+}
+
+/* Ensure Step 3 images are visible */
+.step-3-option-img {
+    min-height: 200px; /* Ensure images have minimum height */
+}
+
+.step-3-option-img[src=""] {
+    display: none; /* Hide images with empty src */
 }
 
 /* Scroll snap for better UX */

@@ -911,7 +911,16 @@ class Scene3D {
         
         const widths = [step1Width, step2Width, step3Width, step4Width];
         const maxIndex = widths.indexOf(Math.max(...widths));
-        this.currentStep = maxIndex + 1;
+        const newStep = maxIndex + 1;
+        
+        // If Step 3 is now visible, ensure images are loaded
+        if (newStep === 3 && this.currentStep !== 3) {
+            // Use selected design option or default to option 1
+            const optionToLoad = this.selectedDesignOption || 1;
+            this.updateStep3Images(optionToLoad);
+        }
+        
+        this.currentStep = newStep;
         
         // Update step indicator
         const stepNumEl = document.getElementById('step-top-left-number');
@@ -989,21 +998,40 @@ class Scene3D {
         };
         
         const images = imageSet[optionNumber];
-        if (!images) return;
+        if (!images) {
+            console.warn(`No image set found for option ${optionNumber}`);
+            return;
+        }
         
         const optionElements = document.querySelectorAll('.step-3-option');
+        console.log(`Updating Step 3 images for option ${optionNumber}, found ${optionElements.length} option elements`);
+        
         if (optionElements.length >= 3) {
             // Top thumbnail (index 0)
             const topImg = optionElements[0].querySelector('.step-3-option-img');
-            if (topImg) topImg.src = images[0];
+            if (topImg) {
+                topImg.src = images[0];
+                topImg.style.display = 'block';
+                console.log(`Set top image: ${images[0]}`);
+            }
             
             // Main/center image (index 1)
             const mainImg = optionElements[1].querySelector('.step-3-option-img');
-            if (mainImg) mainImg.src = images[1];
+            if (mainImg) {
+                mainImg.src = images[1];
+                mainImg.style.display = 'block';
+                console.log(`Set main image: ${images[1]}`);
+            }
             
             // Bottom thumbnail (index 2)
             const bottomImg = optionElements[2].querySelector('.step-3-option-img');
-            if (bottomImg) bottomImg.src = images[2];
+            if (bottomImg) {
+                bottomImg.src = images[2];
+                bottomImg.style.display = 'block';
+                console.log(`Set bottom image: ${images[2]}`);
+            }
+        } else {
+            console.warn(`Expected 3 option elements, found ${optionElements.length}`);
         }
         
         // Auto-scroll to center image
@@ -1012,7 +1040,7 @@ class Scene3D {
         if (optionsContainer && mainOption) {
             setTimeout(() => {
                 mainOption.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 100);
+            }, 300);
         }
     }
     
