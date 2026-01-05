@@ -798,6 +798,238 @@ body:active {
     line-height: 1.6;
 }
 
+/* Step 2 Content Styles */
+.step-2-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 60px 40px 40px;
+    gap: 40px;
+}
+
+/* Step 2 Header */
+.step-2-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    max-width: 600px;
+}
+
+.step-2-label {
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    color: #333;
+    text-transform: uppercase;
+}
+
+.step-2-circle {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid #F3E831; /* Yellow border */
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 600;
+    color: #000;
+}
+
+.step-2-title {
+    font-size: 16px;
+    font-weight: 400;
+    color: #000;
+    text-align: center;
+}
+
+/* Step 2 Image Container */
+.step-2-image-container {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    justify-content: center;
+}
+
+.step-2-image-box {
+    width: 520px;
+    height: 520px;
+    position: relative;
+    background: #fff;
+    overflow: hidden;
+}
+
+.step-2-image-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: none; /* Hidden by default, shown when image is selected */
+}
+
+/* Corner brackets for Step 2 image box */
+.step-2-image-box .corner-tr,
+.step-2-image-box .corner-bl,
+.step-2-image-box .corner-tl,
+.step-2-image-box .corner-br {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #000;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.step-2-image-box .corner-tl {
+    top: 0;
+    left: 0;
+    border-right: none;
+    border-bottom: none;
+}
+
+.step-2-image-box .corner-tr {
+    top: 0;
+    right: 0;
+    border-left: none;
+    border-bottom: none;
+}
+
+.step-2-image-box .corner-bl {
+    bottom: 0;
+    left: 0;
+    border-right: none;
+    border-top: none;
+}
+
+.step-2-image-box .corner-br {
+    bottom: 0;
+    right: 0;
+    border-left: none;
+    border-top: none;
+}
+
+/* Step 2 Input Section */
+.step-2-input-section {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    justify-content: center;
+}
+
+.step-2-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+
+.step-2-input {
+    flex: 1;
+    height: 48px;
+    padding: 0 16px;
+    background: #e5e5e5; /* Light grey */
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    color: #000;
+    outline: none;
+    font-family: inherit;
+}
+
+.step-2-input::placeholder {
+    color: #666;
+}
+
+.step-2-input:focus {
+    outline: 2px solid #000;
+    outline-offset: 2px;
+}
+
+.step-2-arrow-button {
+    width: 48px;
+    height: 48px;
+    background: #ffffff;
+    border: 2px solid #000;
+    border-radius: 24px; /* Oval shape */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.step-2-arrow-button:hover {
+    background: #f5f5f5;
+}
+
+.step-2-arrow-button:active {
+    transform: scale(0.95);
+}
+
+.arrow-right-small {
+    width: 20px;
+    height: 3px;
+    background: #000;
+    border-radius: 2px;
+    position: relative;
+    margin-left: 4px;
+}
+
+.arrow-right-small::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -8px;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-left: 7px solid #000;
+}
+
+/* Step 2 Options */
+.step-2-options {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.step-2-option {
+    width: 100%;
+    height: 48px;
+    background: #e5e5e5; /* Light grey */
+    border: none;
+    border-radius: 8px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    font-size: 16px;
+    color: #000;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.step-2-option:hover {
+    background: #d5d5d5;
+    transform: translateX(4px);
+}
+
+.step-2-option:active {
+    transform: translateX(2px) scale(0.98);
+}
+
+.step-2-option.selected {
+    background: #d5d5d5;
+    border: 2px solid #000;
+}
+
 @media (max-width: 768px) {
     .step-slide {
         padding: 20px;

@@ -432,6 +432,9 @@ class Scene3D {
         
         // Setup step slider functionality
         this.setupStepSlider();
+        
+        // Setup Step 2 interactions
+        this.setupStep2Interactions();
     }
     
     showStepSlider() {
@@ -482,10 +485,16 @@ class Scene3D {
             
             this.imageSelected = true;
             this.enableSliderDragging();
+            
+            // Update Step 2 image with pre-selected image
+            this.updateStep2Image(thumbnailImg.src);
         } else {
             this.imageSelected = false;
             this.sliderDragEnabled = false;
         }
+        
+        // Setup Step 2 interactions
+        this.setupStep2Interactions();
     }
     
     updateSliderVisibility() {
@@ -661,6 +670,9 @@ class Scene3D {
                 this.imageSelected = true;
                 this.enableSliderDragging();
                 
+                // Update Step 2 image if it exists
+                this.updateStep2Image(imageSrc);
+                
                 console.log(`Selected image: ${imageName}`);
             });
         });
@@ -684,6 +696,9 @@ class Scene3D {
                 // Enable dragging after image selection
                 this.imageSelected = true;
                 this.enableSliderDragging();
+                
+                // Update Step 2 image if it exists
+                this.updateStep2Image(img.src);
             });
         }
         
@@ -901,6 +916,46 @@ class Scene3D {
                 4: 'Get it ready'
             };
             stepTitleEl.textContent = titles[this.currentStep] || '';
+        }
+    }
+    
+    updateStep2Image(imageSrc) {
+        // Update the Step 2 image display with the selected image from Step 1
+        const step2Image = document.getElementById('step-2-selected-image');
+        if (step2Image && imageSrc) {
+            step2Image.src = imageSrc;
+            step2Image.style.display = 'block';
+        }
+    }
+    
+    setupStep2Interactions() {
+        // Handle design option clicks
+        const options = document.querySelectorAll('.step-2-option');
+        const designInput = document.getElementById('design-input');
+        
+        options.forEach(option => {
+            option.addEventListener('click', () => {
+                // Remove selected class from all options
+                options.forEach(opt => opt.classList.remove('selected'));
+                
+                // Add selected class to clicked option
+                option.classList.add('selected');
+                
+                // Update input field with selected option text
+                if (designInput) {
+                    const optionText = option.dataset.option || option.textContent.trim();
+                    designInput.value = optionText;
+                }
+            });
+        });
+        
+        // Handle arrow button click (if needed for future functionality)
+        const arrowButton = document.getElementById('design-arrow-btn');
+        if (arrowButton) {
+            arrowButton.addEventListener('click', () => {
+                console.log('Design arrow button clicked');
+                // Add functionality here if needed
+            });
         }
     }
     
