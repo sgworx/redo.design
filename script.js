@@ -461,9 +461,11 @@ class Scene3D {
         document.documentElement.style.setProperty('--boundary-2-3', `${this.boundaries['2-3']}vw`);
         document.documentElement.style.setProperty('--boundary-3-4', `${this.boundaries['3-4']}vw`);
         
-        // Update slider visibility and positions
-        this.updateSliderVisibility();
+        // Update canvas positions first
         this.updateCanvasPositions();
+        
+        // Update slider visibility
+        this.updateSliderVisibility();
         
         // Check if an image is already selected (from HTML default)
         const selectedThumbnail = document.querySelector('.image-thumbnail.selected');
@@ -487,84 +489,70 @@ class Scene3D {
     }
     
     updateSliderVisibility() {
-        // First, hide all draggers
-        const allDraggers = document.querySelectorAll('.canvas-dragger');
-        console.log('Total draggers found:', allDraggers.length);
-        allDraggers.forEach(dragger => {
-            dragger.style.display = 'none';
-        });
-        
-        // Update visibility of draggers within each canvas based on current step
+        // Get all canvas sliders
         const step1 = document.querySelector('.step-slide[data-step="1"]');
         const step2 = document.querySelector('.step-slide[data-step="2"]');
         const step3 = document.querySelector('.step-slide[data-step="3"]');
         const step4 = document.querySelector('.step-slide[data-step="4"]');
         
-        console.log('Step canvases found:', {
-            step1: !!step1,
-            step2: !!step2,
-            step3: !!step3,
-            step4: !!step4
-        });
-        
         const prevBadge = document.getElementById('prev-step-badge');
         const nextBadge = document.getElementById('next-step-badge');
         
-        // Show draggers based on which canvases are visible (have width > 0)
-        // Step 1: Show right dragger if Step 1 canvas is visible
+        // Hide all sliders first
+        const allSliders = document.querySelectorAll('.canvas-slider');
+        allSliders.forEach(slider => {
+            slider.style.display = 'none';
+        });
+        
+        // Show sliders based on which canvases are visible (have width > 0)
+        // Step 1: Show right slider if Step 1 canvas is visible
         if (step1) {
             const step1Width = this.boundaries['1-2'];
             if (step1Width > 0) {
-                const rightDragger = step1.querySelector('.dragger-right');
-                if (rightDragger) {
-                    rightDragger.style.display = 'flex';
-                    console.log('Showing right dragger on Step 1, width:', step1Width);
+                const rightSlider = step1.querySelector('.slider-right');
+                if (rightSlider) {
+                    rightSlider.style.display = 'block';
                 }
             }
         }
         
-        // Step 2: Show draggers if Step 2 canvas is visible
+        // Step 2: Show sliders if Step 2 canvas is visible
         if (step2) {
             const step2Width = this.boundaries['2-3'] - this.boundaries['1-2'];
             if (step2Width > 0) {
-                const leftDragger = step2.querySelector('.dragger-left');
-                const rightDragger = step2.querySelector('.dragger-right');
-                if (leftDragger) {
-                    leftDragger.style.display = 'flex';
-                    console.log('Showing left dragger on Step 2');
+                const leftSlider = step2.querySelector('.slider-left');
+                const rightSlider = step2.querySelector('.slider-right');
+                if (leftSlider) {
+                    leftSlider.style.display = 'block';
                 }
-                if (rightDragger) {
-                    rightDragger.style.display = 'flex';
-                    console.log('Showing right dragger on Step 2');
+                if (rightSlider) {
+                    rightSlider.style.display = 'block';
                 }
             }
         }
         
-        // Step 3: Show draggers if Step 3 canvas is visible
+        // Step 3: Show sliders if Step 3 canvas is visible
         if (step3) {
             const step3Width = this.boundaries['3-4'] - this.boundaries['2-3'];
             if (step3Width > 0) {
-                const leftDragger = step3.querySelector('.dragger-left');
-                const rightDragger = step3.querySelector('.dragger-right');
-                if (leftDragger) {
-                    leftDragger.style.display = 'flex';
-                    console.log('Showing left dragger on Step 3');
+                const leftSlider = step3.querySelector('.slider-left');
+                const rightSlider = step3.querySelector('.slider-right');
+                if (leftSlider) {
+                    leftSlider.style.display = 'block';
                 }
-                if (rightDragger) {
-                    rightDragger.style.display = 'flex';
-                    console.log('Showing right dragger on Step 3');
+                if (rightSlider) {
+                    rightSlider.style.display = 'block';
                 }
             }
         }
         
-        // Step 4: Show left dragger if Step 4 canvas is visible
+        // Step 4: Show left slider if Step 4 canvas is visible
         if (step4) {
             const step4Width = 100 - this.boundaries['3-4'];
             if (step4Width > 0) {
-                const leftDragger = step4.querySelector('.dragger-left');
-                if (leftDragger) {
-                    leftDragger.style.display = 'flex';
-                    console.log('Showing left dragger on Step 4');
+                const leftSlider = step4.querySelector('.slider-left');
+                if (leftSlider) {
+                    leftSlider.style.display = 'block';
                 }
             }
         }
@@ -737,7 +725,7 @@ class Scene3D {
         if (!stepSlider) return;
         
         // Get all dragger handles from all canvases
-        const allHandles = document.querySelectorAll('.dragger-handle');
+        const allHandles = document.querySelectorAll('.canvas-slider .progress-circle');
         
         let isDragging = false;
         let dragDirection = null; // 'left' or 'right'
@@ -779,23 +767,24 @@ class Scene3D {
             
             // Update canvas positions in real-time
             this.updateCanvasPositions();
+            this.updateSliderVisibility();
         };
         
         // Start drag handler - works for both left and right handles
         const startDrag = (e) => {
             if (!this.imageSelected) return;
             
-            const handle = e.target.closest('.dragger-handle');
+            const handle = e.target.closest('.progress-circle');
             if (!handle) return;
             
-            const dragger = handle.closest('.canvas-dragger');
-            if (!dragger) return;
+            const canvasSlider = handle.closest('.canvas-slider');
+            if (!canvasSlider) return;
             
-            const canvas = dragger.closest('.step-slide');
+            const canvas = canvasSlider.closest('.step-slide');
             if (!canvas) return;
             
             const canvasStep = parseInt(canvas.dataset.step);
-            dragDirection = dragger.dataset.direction; // 'left' or 'right'
+            dragDirection = canvasSlider.dataset.direction; // 'left' or 'right'
             
             // Determine which boundary we're dragging based on canvas and direction
             if (dragDirection === 'right') {
