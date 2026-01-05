@@ -277,6 +277,7 @@ body:active {
     height: 100%;
     z-index: 1000;
     pointer-events: none; /* Let handle receive events */
+    overflow: visible; /* Slider can extend beyond canvas */
 }
 
 /* Right slider (at right edge of canvas) */
@@ -477,29 +478,37 @@ body:active {
     position: absolute;
     top: 0;
     box-sizing: border-box;
-    overflow: hidden; /* Clip content beyond boundaries - slider acts as mask */
+    overflow: hidden; /* Clip content beyond canvas boundary - slider acts as mask */
     transition: width 0.3s ease-out, left 0.3s ease-out;
 }
 
-/* Canvas content area - fixed size, centered */
-.canvas-content {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    box-sizing: border-box;
+/* Allow sliders to extend beyond canvas for visibility */
+.step-slide .canvas-slider {
     overflow: visible;
-    width: auto;
-    height: auto;
+    pointer-events: all;
 }
 
-/* Step 1 specific canvas content - fixed size */
+/* Canvas content area - fills the canvas */
+.canvas-content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    overflow: hidden; /* Clip content beyond canvas */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Step 1 specific canvas content - centered */
 .step-slide[data-step="1"] .canvas-content {
-    width: 600px; /* Fixed width */
-    height: auto;
-    min-height: 600px;
     padding: 0;
-    background: transparent;
+    background: transparent; /* Use canvas background */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
 }
 
 /* Step 3 and Step 4 canvas content */
@@ -629,12 +638,15 @@ body:active {
     background: #f0f0f0;
 }
 
-/* Upload area - fixed position within Step 1 content */
+/* Upload area - fixed position, centered */
 .upload-area {
-    position: relative;
-    width: 520px;
-    margin: 0 auto;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     z-index: 5;
+    width: 520px; /* Fixed width */
+    height: 520px; /* Fixed height */
 }
 
 .upload-box {
@@ -651,7 +663,7 @@ body:active {
     transition: background 0.2s ease, border-color 0.2s ease;
     position: relative;
     overflow: hidden;
-    flex-shrink: 0;
+    flex-shrink: 0; /* Don't shrink */
 }
 
 /* L-shaped corner brackets */
@@ -761,14 +773,18 @@ body:active {
     margin: 0;
 }
 
-/* Bottom image thumbnails - fixed position within Step 1 content */
+/* Bottom image thumbnails - fixed position below upload box */
 .bottom-images {
-    position: relative;
-    margin-top: 40px;
+    position: absolute;
+    top: calc(50% + 280px); /* Fixed position below upload box (520px/2 + 20px gap) */
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
     justify-content: center;
     gap: 20px;
     z-index: 5;
+    width: auto; /* Auto width based on content */
+    flex-shrink: 0;
 }
 
 .image-thumbnail {
@@ -809,11 +825,10 @@ body:active {
 /* Step content for other steps - fixed size, centered */
 .step-content {
     width: 600px; /* Fixed width */
+    margin: 0 auto;
     text-align: center;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    flex-shrink: 0;
+    position: relative;
 }
 
 .step-content h2 {
@@ -834,20 +849,19 @@ body:active {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 0;
+    justify-content: center;
     gap: 32px;
     width: 600px; /* Fixed width */
     height: auto;
-    min-height: 800px;
+    max-height: 100vh;
     box-sizing: border-box;
-    background: transparent;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    overflow: visible;
+    background: transparent; /* Use canvas background */
+    flex-shrink: 0; /* Don't shrink */
+    padding: 0; /* No padding, content is self-contained */
 }
 
-/* Step 2 Header */
+/* Step 2 Header - fixed size */
 .step-2-header {
     display: flex;
     flex-direction: column;
@@ -886,11 +900,13 @@ body:active {
     text-align: center;
 }
 
-/* Step 2 Image Container */
+/* Step 2 Image Container - fixed size */
 .step-2-image-container {
-    width: 100%;
+    width: 520px; /* Fixed width */
+    height: 520px; /* Fixed height */
     display: flex;
     justify-content: center;
+    align-items: center;
     flex-shrink: 0;
 }
 
@@ -956,7 +972,7 @@ body:active {
     border-top: none;
 }
 
-/* Step 2 Input Section */
+/* Step 2 Input Section - fixed size */
 .step-2-input-section {
     width: 100%;
     display: flex;
@@ -969,6 +985,7 @@ body:active {
     align-items: center;
     gap: 12px;
     width: 100%;
+    flex-shrink: 0;
 }
 
 .step-2-input {
@@ -1037,7 +1054,7 @@ body:active {
     border-left: 7px solid #000;
 }
 
-/* Step 2 Options */
+/* Step 2 Options - fixed size */
 .step-2-options {
     width: 100%;
     display: flex;
