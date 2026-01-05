@@ -487,12 +487,25 @@ body:active {
     width: 100%;
     height: 100%;
     box-sizing: border-box;
-    overflow: hidden;
+    overflow: visible; /* Allow content to be visible */
+}
+
+/* Step 2 canvas content needs overflow handling */
+.step-2-content {
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 /* Step 1 specific canvas content */
 .step-slide[data-step="1"] .canvas-content {
     padding: 40px;
+    background: transparent; /* Use canvas background */
+}
+
+/* Step 3 and Step 4 canvas content */
+.step-slide[data-step="3"] .canvas-content,
+.step-slide[data-step="4"] .canvas-content {
+    background: transparent; /* Use canvas background */
 }
 
 /* Disable slide transitions during drag */
@@ -500,28 +513,40 @@ body:active {
     transition: none !important;
 }
 
-/* Step 1: From 0 to boundary 1-2 */
+/* Step 1: From 0 to boundary 1-2 - Light gray */
 .step-slide[data-step="1"] {
     width: var(--boundary-1-2, 75vw);
     left: 0;
+    background: #f5f5f5; /* Light gray */
+    z-index: 1;
+    color: #000; /* Dark text on light background */
 }
 
-/* Step 2: From boundary 1-2 to boundary 2-3 */
+/* Step 2: From boundary 1-2 to boundary 2-3 - Medium-light gray */
 .step-slide[data-step="2"] {
     width: calc(var(--boundary-2-3, 100vw) - var(--boundary-1-2, 75vw));
     left: var(--boundary-1-2, 75vw);
+    background: #d5d5d5; /* Medium-light gray */
+    z-index: 1; /* Ensure it's above background pseudo-elements */
+    color: #000; /* Dark text on medium-light background */
 }
 
-/* Step 3: From boundary 2-3 to boundary 3-4 */
+/* Step 3: From boundary 2-3 to boundary 3-4 - Medium-dark gray */
 .step-slide[data-step="3"] {
     width: calc(var(--boundary-3-4, 100vw) - var(--boundary-2-3, 100vw));
     left: var(--boundary-2-3, 100vw);
+    background: #808080; /* Medium-dark gray */
+    z-index: 1;
+    color: #fff; /* Light text on medium-dark background */
 }
 
-/* Step 4: From boundary 3-4 to 100vw */
+/* Step 4: From boundary 3-4 to 100vw - Darkest gray (black) */
 .step-slide[data-step="4"] {
     width: calc(100vw - var(--boundary-3-4, 100vw));
     left: var(--boundary-3-4, 100vw);
+    background: #000000; /* Darkest gray (black) */
+    z-index: 1;
+    color: #fff; /* Light text on black background */
 }
 
 /* Step header with navigation */
@@ -793,12 +818,13 @@ body:active {
 .step-content h2 {
     font-size: 28px;
     margin-bottom: 20px;
-    color: #333;
+    color: inherit; /* Use parent color */
 }
 
 .step-content p {
     font-size: 16px;
-    color: #666;
+    color: inherit; /* Use parent color */
+    opacity: 0.8;
     line-height: 1.6;
 }
 
@@ -807,13 +833,15 @@ body:active {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 60px 40px 40px;
-    gap: 32px;
+    padding: 40px 20px;
+    gap: 24px;
     width: 100%;
     height: 100%;
     box-sizing: border-box;
     overflow-y: auto;
     overflow-x: hidden;
+    background: transparent; /* Use canvas background */
+    min-width: 0; /* Allow flex shrinking */
 }
 
 /* Step 2 Header */
@@ -831,7 +859,7 @@ body:active {
     font-size: 14px;
     font-weight: 500;
     letter-spacing: 0.05em;
-    color: #333;
+    color: #000; /* Dark text on medium-light gray */
     text-transform: uppercase;
 }
 
@@ -852,7 +880,7 @@ body:active {
 .step-2-title {
     font-size: 16px;
     font-weight: 400;
-    color: #000;
+    color: #000; /* Dark text on medium-light gray */
     text-align: center;
 }
 
@@ -868,6 +896,7 @@ body:active {
 .step-2-image-box {
     width: 100%;
     max-width: 520px;
+    min-width: 200px; /* Minimum size for very narrow canvases */
     aspect-ratio: 1;
     position: relative;
     background: #fff;
@@ -879,6 +908,11 @@ body:active {
     height: 100%;
     object-fit: contain;
     display: none; /* Hidden by default, shown when image is selected */
+}
+
+/* Show image when it has a src */
+.step-2-image-box img[src]:not([src=""]) {
+    display: block !important;
 }
 
 /* Corner brackets for Step 2 image box */
@@ -936,6 +970,8 @@ body:active {
     align-items: center;
     gap: 12px;
     width: 100%;
+    max-width: 100%;
+    min-width: 0; /* Allow flex shrinking */
 }
 
 .step-2-input {
