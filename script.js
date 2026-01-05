@@ -487,41 +487,86 @@ class Scene3D {
     }
     
     updateSliderVisibility() {
-        // Update visibility of draggers within each canvas
+        // First, hide all draggers
+        const allDraggers = document.querySelectorAll('.canvas-dragger');
+        console.log('Total draggers found:', allDraggers.length);
+        allDraggers.forEach(dragger => {
+            dragger.style.display = 'none';
+        });
+        
+        // Update visibility of draggers within each canvas based on current step
         const step1 = document.querySelector('.step-slide[data-step="1"]');
         const step2 = document.querySelector('.step-slide[data-step="2"]');
         const step3 = document.querySelector('.step-slide[data-step="3"]');
         const step4 = document.querySelector('.step-slide[data-step="4"]');
         
+        console.log('Step canvases found:', {
+            step1: !!step1,
+            step2: !!step2,
+            step3: !!step3,
+            step4: !!step4
+        });
+        
         const prevBadge = document.getElementById('prev-step-badge');
         const nextBadge = document.getElementById('next-step-badge');
         
-        // Step 1: Only right dragger visible
+        // Show draggers based on which canvases are visible (have width > 0)
+        // Step 1: Show right dragger if Step 1 canvas is visible
         if (step1) {
-            const rightDragger = step1.querySelector('.dragger-right');
-            if (rightDragger) rightDragger.style.display = 'flex';
+            const step1Width = this.boundaries['1-2'];
+            if (step1Width > 0) {
+                const rightDragger = step1.querySelector('.dragger-right');
+                if (rightDragger) {
+                    rightDragger.style.display = 'flex';
+                    console.log('Showing right dragger on Step 1, width:', step1Width);
+                }
+            }
         }
         
-        // Step 2: Both left and right draggers visible
+        // Step 2: Show draggers if Step 2 canvas is visible
         if (step2) {
-            const leftDragger = step2.querySelector('.dragger-left');
-            const rightDragger = step2.querySelector('.dragger-right');
-            if (leftDragger) leftDragger.style.display = 'flex';
-            if (rightDragger) rightDragger.style.display = 'flex';
+            const step2Width = this.boundaries['2-3'] - this.boundaries['1-2'];
+            if (step2Width > 0) {
+                const leftDragger = step2.querySelector('.dragger-left');
+                const rightDragger = step2.querySelector('.dragger-right');
+                if (leftDragger) {
+                    leftDragger.style.display = 'flex';
+                    console.log('Showing left dragger on Step 2');
+                }
+                if (rightDragger) {
+                    rightDragger.style.display = 'flex';
+                    console.log('Showing right dragger on Step 2');
+                }
+            }
         }
         
-        // Step 3: Both left and right draggers visible
+        // Step 3: Show draggers if Step 3 canvas is visible
         if (step3) {
-            const leftDragger = step3.querySelector('.dragger-left');
-            const rightDragger = step3.querySelector('.dragger-right');
-            if (leftDragger) leftDragger.style.display = 'flex';
-            if (rightDragger) rightDragger.style.display = 'flex';
+            const step3Width = this.boundaries['3-4'] - this.boundaries['2-3'];
+            if (step3Width > 0) {
+                const leftDragger = step3.querySelector('.dragger-left');
+                const rightDragger = step3.querySelector('.dragger-right');
+                if (leftDragger) {
+                    leftDragger.style.display = 'flex';
+                    console.log('Showing left dragger on Step 3');
+                }
+                if (rightDragger) {
+                    rightDragger.style.display = 'flex';
+                    console.log('Showing right dragger on Step 3');
+                }
+            }
         }
         
-        // Step 4: Only left dragger visible
+        // Step 4: Show left dragger if Step 4 canvas is visible
         if (step4) {
-            const leftDragger = step4.querySelector('.dragger-left');
-            if (leftDragger) leftDragger.style.display = 'flex';
+            const step4Width = 100 - this.boundaries['3-4'];
+            if (step4Width > 0) {
+                const leftDragger = step4.querySelector('.dragger-left');
+                if (leftDragger) {
+                    leftDragger.style.display = 'flex';
+                    console.log('Showing left dragger on Step 4');
+                }
+            }
         }
         
         // Update badges

@@ -276,7 +276,7 @@ body:active {
     top: 0;
     height: 100%;
     width: 60px;
-    z-index: 100;
+    z-index: 1000; /* High z-index to ensure visibility */
     display: none; /* Hidden by default, shown via JS based on step */
     align-items: center;
     justify-content: center;
@@ -314,7 +314,7 @@ body:active {
     align-items: center;
     justify-content: center;
     cursor: grab;
-    z-index: 101;
+    z-index: 1001; /* Higher than dragger container */
     pointer-events: all; /* Handle receives events */
     transition: all 0.3s ease-out;
 }
