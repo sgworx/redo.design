@@ -26,10 +26,25 @@ class Scene3D {
         
         // Boundary positions for canvas transitions (in vw)
         // Each boundary represents the position between two steps
+        // Sliders have maximum stopping positions with 25vw gaps
         this.boundaries = {
-            '1-2': 75,  // Boundary between Step 1 and Step 2
-            '2-3': 100, // Boundary between Step 2 and Step 3 (initially off-screen)
-            '3-4': 100  // Boundary between Step 3 and Step 4 (initially off-screen)
+            '1-2': 0,   // Boundary between Step 1 and Step 2 (starts at 0vw)
+            '2-3': 25,  // Boundary between Step 2 and Step 3 (stops at 25vw)
+            '3-4': 50   // Boundary between Step 3 and Step 4 (stops at 50vw)
+        };
+        
+        // Maximum stopping positions for each slider
+        this.maxBoundaries = {
+            '1-2': 25,  // Slider 1-2 stops at 25vw
+            '2-3': 50,  // Slider 2-3 stops at 50vw
+            '3-4': 75   // Slider 3-4 stops at 75vw
+        };
+        
+        // Minimum positions (where each slider starts)
+        this.minBoundaries = {
+            '1-2': 0,   // Slider 1-2 starts at 0vw
+            '2-3': 25,  // Slider 2-3 starts at 25vw (can't go below previous max)
+            '3-4': 50   // Slider 3-4 starts at 50vw (can't go below previous max)
         };
         
         this.modelFiles = [
@@ -451,12 +466,12 @@ class Scene3D {
         this.currentSliderValue = 1;
         this.targetSliderValue = 1;
         
-        // Reset boundaries based on current step
-        // Step 1: occupies 0-75vw, Step 2 starts at 75vw
+        // Reset boundaries to initial positions
+        // Step 1: starts at 0vw, can expand to 25vw max
         this.boundaries = {
-            '1-2': 75,
-            '2-3': 100,
-            '3-4': 100
+            '1-2': 0,   // Start at minimum
+            '2-3': 25,  // Start at minimum (25vw)
+            '3-4': 50   // Start at minimum (50vw)
         };
         
         // Initialize CSS variables
@@ -762,21 +777,11 @@ class Scene3D {
         const updateBoundary = (newPositionVw) => {
             if (!activeBoundary) return;
             
-            // Clamp position based on current step and direction
-            let minPos = 0;
-            let maxPos = 100;
+            // Get min and max positions for this boundary
+            const minPos = this.minBoundaries[activeBoundary];
+            const maxPos = this.maxBoundaries[activeBoundary];
             
-            if (activeBoundary === '1-2') {
-                minPos = 0;
-                maxPos = 100;
-            } else if (activeBoundary === '2-3') {
-                minPos = this.boundaries['1-2'];
-                maxPos = 100;
-            } else if (activeBoundary === '3-4') {
-                minPos = this.boundaries['2-3'];
-                maxPos = 100;
-            }
-            
+            // Clamp position to stopping limits
             newPositionVw = Math.max(minPos, Math.min(maxPos, newPositionVw));
             this.boundaries[activeBoundary] = newPositionVw;
             
