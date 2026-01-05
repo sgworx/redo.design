@@ -899,7 +899,7 @@ body:active {
     min-width: 200px; /* Minimum size for very narrow canvases */
     aspect-ratio: 1;
     position: relative;
-    background: #fff;
+    background: #ffffff; /* White background for image box */
     overflow: hidden;
 }
 
