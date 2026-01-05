@@ -201,80 +201,94 @@ body:active {
     transition: opacity 0.3s ease;
 }
 
-/* Slider container */
-.slider-container {
-    position: relative;
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
+/* Canvas areas with different backgrounds */
+.step-slider::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: var(--slider-left, 75vw);
+	height: 100%;
+	background: var(--left-canvas-bg, #ffffff); /* Step 1 canvas - white by default */
+	z-index: -1;
+	transition: background 0.6s ease-out;
 }
 
-/* Canvas slide - each step's container */
-.canvas-slide {
-    position: absolute;
-    top: 0;
-    height: 100%;
-    display: flex;
-    overflow: hidden;
+.step-slider::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: var(--slider-left, 75vw);
+	width: calc(100% - var(--slider-left, 75vw));
+	height: 100%;
+	background: var(--right-canvas-bg, #000000); /* Step 2 canvas - black by default */
+	z-index: -1;
+	transition: background 0.6s ease-out;
 }
 
-/* Canvas backgrounds */
-.canvas-slide[data-step="1"] {
-    left: 0;
-    width: var(--canvas-1-width, 75vw);
-    background: #ffffff;
+/* Next step badge (white circle outline with white number) */
+.next-step-badge {
+	position: absolute;
+	left: var(--slider-right, 75vw); /* Position it on the left side of the next canvas */
+	top: 114px; /* Same level as the "1" circle (70px + 16px + 10px + 18px) */
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+	background: transparent;
+	border: 2px solid #fff;
+	color: #fff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 600;
+	font-size: 18px;
+	z-index: 15;
+	margin-left: 24px; /* space after the slider */
 }
 
-.canvas-slide[data-step="2"] {
-    left: var(--canvas-1-width, 75vw);
-    width: var(--canvas-2-width, 25vw);
-    background: #000000;
+.next-step-badge.hidden { display: none; }
+
+/* Previous step badge (for left slider) */
+.prev-step-badge {
+	position: absolute;
+	right: var(--slider-left, 0vw); /* Position it on the right side of the previous canvas */
+	top: 114px;
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+	background: transparent;
+	border: 2px solid #fff;
+	color: #fff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 600;
+	font-size: 18px;
+	z-index: 15;
+	margin-right: 24px; /* space after the slider */
 }
 
-.canvas-slide[data-step="3"] {
-    left: calc(var(--canvas-1-width, 75vw) + var(--canvas-2-width, 25vw));
-    width: var(--canvas-3-width, 0vw);
-    background: #ffffff;
-}
+.prev-step-badge.hidden { display: none; }
 
-.canvas-slide[data-step="4"] {
-    left: calc(var(--canvas-1-width, 75vw) + var(--canvas-2-width, 25vw) + var(--canvas-3-width, 0vw));
-    width: var(--canvas-4-width, 0vw);
-    background: #000000;
-}
-
-/* Disable transitions during drag */
-.step-slider.no-transition .canvas-slide {
-    transition: none !important;
-}
-
-/* Canvas content area */
-.canvas-content {
-    flex: 1;
-    position: relative;
-    padding: 40px;
-    overflow: hidden;
-    min-width: 0;
-}
-
-/* Canvas dragger - positioned at edge */
+/* Canvas dragger - positioned at edge of canvas */
 .canvas-dragger {
     position: absolute;
     top: 0;
     height: 100%;
     width: 60px;
     z-index: 100;
-    display: flex;
+    display: none; /* Hidden by default, shown via JS based on step */
     align-items: center;
     justify-content: center;
+    pointer-events: none; /* Let handle receive events */
 }
 
 .dragger-right {
-    right: -30px; /* Half outside canvas */
+    right: -30px; /* Half outside canvas, centered on edge */
 }
 
 .dragger-left {
-    left: -30px; /* Half outside canvas */
+    left: -30px; /* Half outside canvas, centered on edge */
 }
 
 /* Dragger line (yellow vertical line) */
@@ -285,6 +299,7 @@ body:active {
     background: #F3E831;
     left: 50%;
     transform: translateX(-50%);
+    pointer-events: none;
 }
 
 /* Dragger handle (circle with arrow) */
@@ -300,10 +315,18 @@ body:active {
     justify-content: center;
     cursor: grab;
     z-index: 101;
+    pointer-events: all; /* Handle receives events */
+    transition: all 0.3s ease-out;
 }
 
 .dragger-handle:active {
     cursor: grabbing;
+}
+
+/* Disable transitions during drag */
+.step-slider.no-transition .dragger-line,
+.step-slider.no-transition .dragger-handle {
+	transition: none !important;
 }
 
 /* Arrow indicators */
@@ -351,33 +374,77 @@ body:active {
     border-right: 10px solid #000;
 }
 
-/* Step badges (next/prev indicators) */
-.next-step-badge,
-.prev-step-badge {
+/* Hidden manual slider for dragging functionality */
+.manual-slider {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 12;
+    pointer-events: none;
+}
+
+.slider-input {
     position: absolute;
-    top: 114px;
-    width: 44px;
-    height: 44px;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background: transparent;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    transform: translateY(-50%);
+    pointer-events: all;
+    cursor: grab;
+}
+
+.slider-input:active {
+    cursor: grabbing;
+}
+
+.slider-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
     background: transparent;
-    border: 2px solid #fff;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
+    cursor: grab;
+}
+
+.slider-input::-moz-range-thumb {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: transparent;
+    cursor: grab;
+    border: none;
+}
+
+/* Hide the labels */
+.slider-labels {
+    display: none;
+}
+
+/* Step title in bottom left */
+.step-title-bottom {
+    position: absolute;
+    bottom: 40px;
+    left: 40px;
     font-size: 18px;
-    z-index: 102;
+    font-weight: 500;
+    color: #333;
+    z-index: 5;
 }
 
-.dragger-right .next-step-badge {
-    left: 50%;
-    transform: translateX(20px);
-}
-
-.dragger-left .prev-step-badge {
-    right: 50%;
-    transform: translateX(-20px);
+@media (max-width: 768px) {
+    .step-title-bottom {
+        bottom: 30px;
+        left: 30px;
+        font-size: 16px;
+    }
 }
 
 .step-slider.hidden {
@@ -385,6 +452,65 @@ body:active {
     pointer-events: none;
 }
 
+.slider-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.step-slide {
+    height: 100%;
+    position: absolute;
+    top: 0;
+    box-sizing: border-box;
+    overflow: visible; /* Allow draggers to extend beyond canvas */
+    transition: width 0.3s ease-out, left 0.3s ease-out;
+    display: flex;
+    align-items: stretch;
+}
+
+/* Disable slide transitions during drag */
+.step-slider.no-transition .step-slide {
+    transition: none !important;
+}
+
+/* Step 1: From 0 to boundary 1-2 */
+.step-slide[data-step="1"] {
+    width: var(--boundary-1-2, 75vw);
+    left: 0;
+    background: #ffffff;
+}
+
+/* Step 2: From boundary 1-2 to boundary 2-3 */
+.step-slide[data-step="2"] {
+    width: calc(var(--boundary-2-3, 100vw) - var(--boundary-1-2, 75vw));
+    left: var(--boundary-1-2, 75vw);
+    background: #000000;
+}
+
+/* Step 3: From boundary 2-3 to boundary 3-4 */
+.step-slide[data-step="3"] {
+    width: calc(var(--boundary-3-4, 100vw) - var(--boundary-2-3, 100vw));
+    left: var(--boundary-2-3, 100vw);
+    background: #ffffff;
+}
+
+/* Step 4: From boundary 3-4 to 100vw */
+.step-slide[data-step="4"] {
+    width: calc(100vw - var(--boundary-3-4, 100vw));
+    left: var(--boundary-3-4, 100vw);
+    background: #000000;
+}
+
+/* Canvas content area - fills the canvas */
+.canvas-content {
+    flex: 1;
+    position: relative;
+    padding: 40px;
+    overflow: hidden;
+    min-width: 0;
+}
 
 /* Step header with navigation */
 .step-header {
@@ -466,25 +592,25 @@ body:active {
     background: #f0f0f0;
 }
 
-/* Upload area - positioned within canvas content */
+/* Upload area */
 .upload-area {
     position: absolute;
-    top: 80px;
+    top: 114px; /* Align with the top of the "1" circle */
     left: 50%;
     transform: translateX(-50%);
     z-index: 5;
 }
 
 .upload-box {
-    width: min(520px, 80%);
-    height: min(520px, 60vh);
+    width: 520px;
+    height: 520px;
     border: none;
     border-radius: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: #f5f5f5;
+    background: #fff;
     cursor: pointer;
     transition: background 0.2s ease, border-color 0.2s ease;
     position: relative;
@@ -598,10 +724,10 @@ body:active {
     margin: 0;
 }
 
-/* Bottom image thumbnails - positioned within canvas content */
+/* Bottom image thumbnails */
 .bottom-images {
     position: absolute;
-    bottom: 80px;
+    top: calc(50% + 220px); /* below the upload box */
     left: 50%;
     transform: translateX(-50%);
     display: flex;
@@ -648,29 +774,8 @@ body:active {
 /* Step content for other steps */
 .step-content {
     max-width: 600px;
-    margin: 80px auto 0;
+    margin: 0 auto;
     text-align: center;
-}
-
-/* Text color for different canvas backgrounds */
-.canvas-slide[data-step="1"] .step-content,
-.canvas-slide[data-step="3"] .step-content {
-    color: #333;
-}
-
-.canvas-slide[data-step="2"] .step-content,
-.canvas-slide[data-step="4"] .step-content {
-    color: #fff;
-}
-
-.canvas-slide[data-step="2"] .step-content h2,
-.canvas-slide[data-step="4"] .step-content h2 {
-    color: #fff;
-}
-
-.canvas-slide[data-step="2"] .step-content p,
-.canvas-slide[data-step="4"] .step-content p {
-    color: rgba(255, 255, 255, 0.8);
 }
 
 .step-content h2 {
