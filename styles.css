@@ -263,16 +263,21 @@ body:active {
     width: 4px;
 }
 
-/* Progress line inside canvas slider */
+/* Progress line inside canvas slider - black by default */
 .canvas-slider .progress-line {
     position: absolute;
     top: 0;
     left: 0;
     width: 4px;
     height: 100%;
-    background: #F3E831;
-    transition: none;
+    background: #000000; /* Black by default - indicates not ready */
+    transition: background 0.3s ease;
     pointer-events: none;
+}
+
+/* Progress line turns yellow when image is selected (ready for next step) */
+.step-slider.image-selected .canvas-slider .progress-line {
+    background: #F3E831; /* Yellow - indicates ready to proceed */
 }
 
 /* Progress circle inside canvas slider */
