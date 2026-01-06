@@ -815,18 +815,18 @@ body:active {
     overflow-x: hidden;
 }
 
-/* Step 3 Header - fixed position to align with Step 1 */
+/* Step 3 Header - absolute position relative to canvas, aligned with Step 1 */
 .step-3-header {
-    position: fixed;
-    top: 90px; /* Match Step 1 header position */
-    left: 20px; /* Match Step 1 header position */
+    position: absolute;
+    top: 90px; /* Match Step 1 header vertical position (from canvas top) */
+    left: 20px; /* Match Step 1 header horizontal position (from canvas left) */
     display: flex;
     flex-direction: column;
     align-items: flex-start; /* Align to left */
     gap: 10px;
     width: auto;
     flex-shrink: 0;
-    z-index: 3000; /* Same as Step 1 header */
+    z-index: 10;
     margin-bottom: 0;
 }
 
@@ -859,18 +859,18 @@ body:active {
     text-align: left; /* Align to left */
 }
 
-/* Step 4 Header - fixed position to align with Step 1 */
+/* Step 4 Header - absolute position relative to canvas, aligned with Step 1 */
 .step-4-header {
-    position: fixed;
-    top: 90px; /* Match Step 1 header position */
-    left: 20px; /* Match Step 1 header position */
+    position: absolute;
+    top: 90px; /* Match Step 1 header vertical position (from canvas top) */
+    left: 20px; /* Match Step 1 header horizontal position (from canvas left) */
     display: flex;
     flex-direction: column;
     align-items: flex-start; /* Align to left */
     gap: 10px;
     width: auto;
     flex-shrink: 0;
-    z-index: 3000; /* Same as Step 1 header */
+    z-index: 10;
 }
 
 .step-4-label {
@@ -1047,19 +1047,18 @@ body:active {
     overflow-x: hidden;
 }
 
-/* Step 2 Header - fixed size */
-/* Step 2 Header - fixed position to align with Step 1 */
+/* Step 2 Header - absolute position relative to canvas, aligned with Step 1 */
 .step-2-header {
-    position: fixed;
-    top: 90px; /* Match Step 1 header position */
-    left: 20px; /* Match Step 1 header position */
+    position: absolute;
+    top: 90px; /* Match Step 1 header vertical position (from canvas top) */
+    left: 20px; /* Match Step 1 header horizontal position (from canvas left) */
     display: flex;
     flex-direction: column;
     align-items: flex-start; /* Align to left */
     gap: 10px;
     width: auto;
     flex-shrink: 0;
-    z-index: 3000; /* Same as Step 1 header */
+    z-index: 10;
 }
 
 .step-2-label {
