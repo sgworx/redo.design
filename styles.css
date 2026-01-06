@@ -227,48 +227,20 @@ body:active {
 }
 
 /* Next step badge (white circle outline with white number) */
+/* Next step badge - HIDDEN: not needed, each canvas has its own header */
 .next-step-badge {
-	position: fixed;
-	top: 114px; /* Same level as the "1" circle (70px + 16px + 10px + 18px) */
-	width: 44px;
-	height: 44px;
-	border-radius: 50%;
-	background: transparent;
-	border: 2px solid #fff;
-	color: #fff;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	font-weight: 600;
-	font-size: 18px;
-	z-index: 15;
-	margin-left: 24px; /* space after the slider */
-	transition: left 0.3s ease-out;
+	display: none !important;
 }
 
-.next-step-badge.hidden { display: none; }
+.next-step-badge.hidden { display: none !important; }
 
 /* Previous step badge (for left slider) */
+/* Previous step badge - HIDDEN: not needed, each canvas has its own header */
 .prev-step-badge {
-	position: fixed;
-	top: 114px;
-	width: 44px;
-	height: 44px;
-	border-radius: 50%;
-	background: transparent;
-	border: 2px solid #fff;
-	color: #fff;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	font-weight: 600;
-	font-size: 18px;
-	z-index: 15;
-	margin-right: 24px; /* space after the slider */
-	transition: right 0.3s ease-out;
+	display: none !important;
 }
 
-.prev-step-badge.hidden { display: none; }
+.prev-step-badge.hidden { display: none !important; }
 
 /* Canvas slider - positioned at edges of canvas */
 .canvas-slider {
