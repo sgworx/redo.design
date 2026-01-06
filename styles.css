@@ -821,32 +821,41 @@ body:active {
     box-sizing: border-box;
 }
 
-/* Step 3 Content Styles - fixed size, centered */
+/* Step 4 content - needs relative positioning for absolute header */
+.step-4-content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+/* Step 3 Content Styles - fixed size, centered (header is absolute positioned) */
 .step-3-content {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 0;
-    width: auto;
-    max-width: 600px;
-    height: auto;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    overflow: visible;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    position: relative; /* For absolute positioned header */
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
-/* Step 3 Header */
+/* Step 3 Header - positioned top-left of canvas */
 .step-3-header {
+    position: absolute;
+    top: 20px; /* Same distance from top as global step indicator */
+    left: 20px; /* Same distance from left as global step indicator */
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start; /* Align to left */
     gap: 10px;
     width: auto;
     flex-shrink: 0;
-    margin-bottom: 40px;
+    z-index: 10;
+    margin-bottom: 0; /* Remove margin since it's absolute positioned */
 }
 
 .step-3-label {
@@ -875,19 +884,61 @@ body:active {
     font-size: 16px;
     font-weight: 400;
     color: inherit; /* Use parent color */
-    text-align: center;
+    text-align: left; /* Align to left */
 }
 
-/* Step 3 Options Container - scrollable */
+/* Step 4 Header - positioned top-left of canvas */
+.step-4-header {
+    position: absolute;
+    top: 20px; /* Same distance from top as global step indicator */
+    left: 20px; /* Same distance from left as global step indicator */
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* Align to left */
+    gap: 10px;
+    width: auto;
+    flex-shrink: 0;
+    z-index: 10;
+}
+
+.step-4-label {
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    color: inherit; /* Use parent color */
+    text-transform: uppercase;
+}
+
+.step-4-circle {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid #F3E831; /* Yellow border */
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 600;
+    color: inherit; /* Use parent color */
+}
+
+.step-4-title {
+    font-size: 16px;
+    font-weight: 400;
+    color: inherit; /* Use parent color */
+    text-align: left; /* Align to left */
+}
+
+/* Step 3 Options Container - scrollable, positioned below header */
 .step-3-options-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 24px;
     width: auto;
-    max-height: 80vh;
-    overflow-y: auto;
-    overflow-x: hidden;
+    max-width: 600px;
+    margin-top: 100px; /* Space for header at top */
     padding: 20px;
     box-sizing: border-box;
     scroll-behavior: smooth;
@@ -1015,26 +1066,28 @@ body:active {
     justify-content: center;
     padding: 0;
     gap: 32px;
-    width: auto; /* Fixed width based on content */
-    max-width: 600px; /* Maximum constraint */
-    height: auto;
+    width: 100%;
+    height: 100%;
     box-sizing: border-box;
     background: transparent; /* Use canvas background */
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    overflow: visible;
+    position: relative; /* For absolute positioned header */
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 /* Step 2 Header - fixed size */
+/* Step 2 Header - positioned top-left of canvas */
 .step-2-header {
+    position: absolute;
+    top: 20px; /* Same distance from top as global step indicator */
+    left: 20px; /* Same distance from left as global step indicator */
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start; /* Align to left */
     gap: 10px;
     width: auto;
     flex-shrink: 0;
+    z-index: 10;
 }
 
 .step-2-label {
@@ -1063,15 +1116,16 @@ body:active {
     font-size: 16px;
     font-weight: 400;
     color: #000; /* Dark text on medium-light gray */
-    text-align: center;
+    text-align: left; /* Align to left */
 }
 
-/* Step 2 Image Container - fixed size */
+/* Step 2 Image Container - fixed size, positioned below header */
 .step-2-image-container {
     width: auto;
     display: flex;
     justify-content: center;
     flex-shrink: 0;
+    margin-top: 100px; /* Space for header at top */
 }
 
 .step-2-image-box {
