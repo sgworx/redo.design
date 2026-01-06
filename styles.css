@@ -277,7 +277,7 @@ body:active {
 
 /* Progress line turns yellow when image is selected (ready for next step) */
 .step-slider.image-selected .canvas-slider .progress-line {
-    background: #F3E831; /* Yellow - indicates ready to proceed */
+    background: #F3E831; /* Yellow when ready */
 }
 
 /* Progress circle inside canvas slider */

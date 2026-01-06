@@ -474,9 +474,6 @@ class Scene3D {
         // Update slider visibility
         this.updateSliderVisibility();
         
-        // Initialize slider color (black by default)
-        this.updateSliderColor();
-        
         // Check if an image is already selected (from HTML default)
         const selectedThumbnail = document.querySelector('.image-thumbnail.selected');
         if (selectedThumbnail) {
@@ -492,40 +489,31 @@ class Scene3D {
             
             this.imageSelected = true;
             this.enableSliderDragging();
-            this.updateSliderColor(); // Update slider color to yellow
+            this.updateSliderColor(); // Update slider to yellow
             
             // Update Step 2 image with pre-selected image
             this.updateStep2Image(thumbnailImg.src);
         } else {
             this.imageSelected = false;
             this.sliderDragEnabled = false;
-            this.updateSliderColor(); // Update slider color to black
+            this.updateSliderColor(); // Update slider to black
         }
         
         // Setup Step 2 interactions
         this.setupStep2Interactions();
+        
+        // Update slider color based on image selection state
+        this.updateSliderColor();
     }
     
     updateSliderColor() {
-        // Update slider color based on image selection state
+        // Update slider color based on image selection
         const stepSlider = document.getElementById('step-slider');
         if (stepSlider) {
             if (this.imageSelected) {
-                stepSlider.classList.add('image-selected'); // Yellow - ready
+                stepSlider.classList.add('image-selected');
             } else {
-                stepSlider.classList.remove('image-selected'); // Black - not ready
-            }
-        }
-    }
-    
-    updateSliderColor() {
-        // Update slider color based on image selection state
-        const stepSlider = document.getElementById('step-slider');
-        if (stepSlider) {
-            if (this.imageSelected) {
-                stepSlider.classList.add('image-selected'); // Yellow - ready
-            } else {
-                stepSlider.classList.remove('image-selected'); // Black - not ready
+                stepSlider.classList.remove('image-selected');
             }
         }
     }
@@ -702,7 +690,7 @@ class Scene3D {
                 // Enable dragging after image selection
                 this.imageSelected = true;
                 this.enableSliderDragging();
-                this.updateSliderColor(); // Update slider color to yellow
+                this.updateSliderColor(); // Update slider to yellow
                 
                 // Update Step 2 image if it exists
                 this.updateStep2Image(imageSrc);
@@ -730,7 +718,7 @@ class Scene3D {
                 // Enable dragging after image selection
                 this.imageSelected = true;
                 this.enableSliderDragging();
-                this.updateSliderColor(); // Update slider color to yellow
+                this.updateSliderColor(); // Update slider to yellow
                 
                 // Update Step 2 image if it exists
                 this.updateStep2Image(img.src);
