@@ -902,38 +902,62 @@ class Scene3D {
     }
     
     updateCurrentStepFromBoundaries() {
-        // Determine current step based on which canvas is most visible
-        // This is a simple heuristic - you might want to refine this
+        // Determine current step based on which canvas is leftmost and has significant width
+        // Use threshold to prevent switching too early
+        const threshold = 10; // Only switch when a canvas is clearly dominant (10vw threshold)
+        
         const step1Width = this.boundaries['1-2'];
         const step2Width = this.boundaries['2-3'] - this.boundaries['1-2'];
         const step3Width = this.boundaries['3-4'] - this.boundaries['2-3'];
         const step4Width = 100 - this.boundaries['3-4'];
         
-        const widths = [step1Width, step2Width, step3Width, step4Width];
-        const maxIndex = widths.indexOf(Math.max(...widths));
-        const newStep = maxIndex + 1;
+        // Determine current step based on leftmost canvas with significant width
+        // Step 1 always starts at 0, so if it has width > threshold, it's current
+        let newStep = this.currentStep; // Default to current step to prevent flickering
         
-        // If Step 3 is now visible, ensure images are loaded
-        if (newStep === 3 && this.currentStep !== 3) {
-            // Use selected design option or default to option 1
-            const optionToLoad = this.selectedDesignOption || 1;
-            this.updateStep3Images(optionToLoad);
+        if (step1Width > threshold) {
+            // Step 1 is visible and significant
+            newStep = 1;
+        } else if (step1Width <= threshold && step2Width > threshold) {
+            // Step 1 is mostly hidden, Step 2 is visible
+            newStep = 2;
+        } else if (step2Width <= threshold && step3Width > threshold) {
+            // Step 2 is mostly hidden, Step 3 is visible
+            newStep = 3;
+        } else if (step3Width <= threshold && step4Width > threshold) {
+            // Step 3 is mostly hidden, Step 4 is visible
+            newStep = 4;
+        } else {
+            // Fallback: use the widest canvas
+            const widths = [step1Width, step2Width, step3Width, step4Width];
+            const maxIndex = widths.indexOf(Math.max(...widths));
+            newStep = maxIndex + 1;
         }
         
-        this.currentStep = newStep;
-        
-        // Update step indicator
-        const stepNumEl = document.getElementById('step-top-left-number');
-        const stepTitleEl = document.getElementById('step-top-left-title');
-        if (stepNumEl && stepTitleEl) {
-            stepNumEl.textContent = String(this.currentStep);
-            const titles = {
-                1: 'Select Image',
-                2: 'Design Prompt',
-                3: 'Choose Design',
-                4: 'Get it ready'
-            };
-            stepTitleEl.textContent = titles[this.currentStep] || '';
+        // Only update if step actually changed (prevents unnecessary updates)
+        if (newStep !== this.currentStep) {
+            this.currentStep = newStep;
+            
+            // If Step 3 is now visible, ensure images are loaded
+            if (newStep === 3) {
+                // Use selected design option or default to option 1
+                const optionToLoad = this.selectedDesignOption || 1;
+                this.updateStep3Images(optionToLoad);
+            }
+            
+            // Update step indicator
+            const stepNumEl = document.getElementById('step-top-left-number');
+            const stepTitleEl = document.getElementById('step-top-left-title');
+            if (stepNumEl && stepTitleEl) {
+                stepNumEl.textContent = String(this.currentStep);
+                const titles = {
+                    1: 'Select Image',
+                    2: 'Design Prompt',
+                    3: 'Choose Design',
+                    4: 'Get it ready'
+                };
+                stepTitleEl.textContent = titles[this.currentStep] || '';
+            }
         }
     }
     
