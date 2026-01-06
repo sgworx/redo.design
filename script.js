@@ -796,7 +796,7 @@ class Scene3D {
         const updateBoundary = (newPositionVw) => {
             if (!activeBoundary) return;
             
-            const MIN_STEP_WIDTH = 35; // Minimum width for each step in vw
+            const MIN_STEP_WIDTH = 15; // Minimum width for each step in vw
             
             // Calculate the current width of each step
             const step1Width = (activeBoundary === '1-2') ? newPositionVw : this.boundaries['1-2'];
