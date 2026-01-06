@@ -1087,7 +1087,7 @@ class Scene3D {
                     // Scroll to main image
                     if (mainOption) {
                         mainOption.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
+            }
                 }
             });
         });
