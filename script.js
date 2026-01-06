@@ -449,6 +449,9 @@ class Scene3D {
         slider.classList.remove('hidden');
         logo.classList.add('visible');
         
+        // Explicitly remove image-selected class on initialization
+        slider.classList.remove('image-selected');
+        
         // Reset to step 1
         this.currentStep = 1;
         stepRange.value = 1;
@@ -489,21 +492,22 @@ class Scene3D {
             
             this.imageSelected = true;
             this.enableSliderDragging();
-            this.updateSliderColor(); // Update slider to yellow
             
             // Update Step 2 image with pre-selected image
             this.updateStep2Image(thumbnailImg.src);
         } else {
             this.imageSelected = false;
             this.sliderDragEnabled = false;
-            this.updateSliderColor(); // Update slider to black
         }
         
         // Setup Step 2 interactions
         this.setupStep2Interactions();
         
-        // Update slider color based on image selection state
-        this.updateSliderColor();
+        // Update slider color based on image selection state (after slider is visible)
+        // Use setTimeout to ensure DOM is ready
+        setTimeout(() => {
+            this.updateSliderColor();
+        }, 0);
     }
     
     updateSliderColor() {
@@ -512,9 +516,13 @@ class Scene3D {
         if (stepSlider) {
             if (this.imageSelected) {
                 stepSlider.classList.add('image-selected');
+                console.log('Slider color: YELLOW (image selected)');
             } else {
                 stepSlider.classList.remove('image-selected');
+                console.log('Slider color: BLACK (no image selected)');
             }
+        } else {
+            console.warn('Step slider element not found');
         }
     }
     
