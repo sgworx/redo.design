@@ -461,12 +461,12 @@ class Scene3D {
         this.targetSliderValue = 1;
         
         // Reset boundaries based on current step
-        // Each step maintains minimum 25vw width
-        // Initial state: All 4 steps visible with equal 25vw width
+        // Each step maintains minimum 30vw width
+        // Initial state: Step 1 visible, others hidden (Step 1 at 100vw)
         this.boundaries = {
-            '1-2': 25,  // Step 1: 25vw
-            '2-3': 50,  // Step 2: 25vw
-            '3-4': 75   // Step 3: 25vw, Step 4: 25vw
+            '1-2': 100,  // Step 1: 100vw (fully visible)
+            '2-3': 100,  // Step 2: 0vw (hidden)
+            '3-4': 100   // Step 3: 0vw (hidden), Step 4: 0vw (hidden)
         };
         
         // Initialize CSS variables
@@ -796,71 +796,63 @@ class Scene3D {
         const updateBoundary = (newPositionVw) => {
             if (!activeBoundary) return;
             
-            const MIN_STEP_WIDTH = 25; // Minimum width for each step in vw (25vw allows all 4 steps to fit)
+            const MIN_STEP_WIDTH = 35; // Minimum width for each step in vw
             
-            // Calculate constraints based on which boundary is being dragged
-            let minPos = 0;
-            let maxPos = 100;
-            
-            if (activeBoundary === '1-2') {
-                // Step 1: min 25vw, max 50vw (to leave 25vw for each remaining step)
-                minPos = MIN_STEP_WIDTH;
-                maxPos = 100 - (3 * MIN_STEP_WIDTH); // Leave room for Steps 2, 3, 4
-            } else if (activeBoundary === '2-3') {
-                // Step 2: min 25vw, ensure Step 3 and 4 have at least 25vw each
-                minPos = this.boundaries['1-2'] + MIN_STEP_WIDTH;
-                maxPos = 100 - (2 * MIN_STEP_WIDTH); // Leave room for Steps 3, 4
-            } else if (activeBoundary === '3-4') {
-                // Step 3: min 25vw, ensure Step 4 has at least 25vw
-                minPos = this.boundaries['2-3'] + MIN_STEP_WIDTH;
-                maxPos = 100 - MIN_STEP_WIDTH; // Leave room for Step 4
-            }
-            
-            // Clamp the new position to the calculated limits
-            newPositionVw = Math.max(minPos, Math.min(maxPos, newPositionVw));
-            
-            // Additional validation: ensure all steps maintain minimum width
-            // Step 1 width
+            // Calculate the current width of each step
             const step1Width = (activeBoundary === '1-2') ? newPositionVw : this.boundaries['1-2'];
-            if (step1Width < MIN_STEP_WIDTH) {
-                if (activeBoundary === '1-2') {
-                    newPositionVw = MIN_STEP_WIDTH;
-                }
-            }
-            
-            // Step 2 width
             const step2Width = (activeBoundary === '2-3') ? 
                 (newPositionVw - this.boundaries['1-2']) : 
-                (this.boundaries['2-3'] - this.boundaries['1-2']);
-            if (step2Width < MIN_STEP_WIDTH) {
-                if (activeBoundary === '2-3') {
-                    newPositionVw = this.boundaries['1-2'] + MIN_STEP_WIDTH;
-                } else if (activeBoundary === '1-2') {
-                    newPositionVw = Math.min(newPositionVw, this.boundaries['2-3'] - MIN_STEP_WIDTH);
-                }
-            }
-            
-            // Step 3 width
+                (activeBoundary === '1-2' ? 
+                    (this.boundaries['2-3'] - newPositionVw) : 
+                    (this.boundaries['2-3'] - this.boundaries['1-2']));
             const step3Width = (activeBoundary === '3-4') ? 
                 (newPositionVw - this.boundaries['2-3']) : 
-                (this.boundaries['3-4'] - this.boundaries['2-3']);
-            if (step3Width < MIN_STEP_WIDTH) {
-                if (activeBoundary === '3-4') {
-                    newPositionVw = this.boundaries['2-3'] + MIN_STEP_WIDTH;
-                } else if (activeBoundary === '2-3') {
-                    newPositionVw = Math.min(newPositionVw, this.boundaries['3-4'] - MIN_STEP_WIDTH);
+                (activeBoundary === '2-3' ? 
+                    (this.boundaries['3-4'] - newPositionVw) : 
+                    (this.boundaries['3-4'] - this.boundaries['2-3']));
+            const step4Width = (activeBoundary === '3-4') ? 
+                (100 - newPositionVw) : 
+                (100 - this.boundaries['3-4']);
+            
+            // Apply constraints: no step can go below minimum width
+            let clampedPosition = newPositionVw;
+            
+            if (activeBoundary === '1-2') {
+                // Step 1 must be at least MIN_STEP_WIDTH
+                if (step1Width < MIN_STEP_WIDTH) {
+                    clampedPosition = MIN_STEP_WIDTH;
                 }
+                // Step 2 must be at least MIN_STEP_WIDTH (if Step 2 is visible, i.e., boundary 2-3 < 100)
+                if (this.boundaries['2-3'] < 100 && (this.boundaries['2-3'] - clampedPosition) < MIN_STEP_WIDTH) {
+                    clampedPosition = this.boundaries['2-3'] - MIN_STEP_WIDTH;
+                }
+                // Step 1 can expand up to 100vw (when other steps are hidden)
+                clampedPosition = Math.max(MIN_STEP_WIDTH, Math.min(100, clampedPosition));
+            } else if (activeBoundary === '2-3') {
+                // Step 2 must be at least MIN_STEP_WIDTH
+                if (step2Width < MIN_STEP_WIDTH) {
+                    clampedPosition = this.boundaries['1-2'] + MIN_STEP_WIDTH;
+                }
+                // Step 3 must be at least MIN_STEP_WIDTH (if Step 3 is visible, i.e., boundary 3-4 < 100)
+                if (this.boundaries['3-4'] < 100 && (this.boundaries['3-4'] - clampedPosition) < MIN_STEP_WIDTH) {
+                    clampedPosition = this.boundaries['3-4'] - MIN_STEP_WIDTH;
+                }
+                // Boundary 2-3 must be between boundary 1-2 + MIN and 100
+                clampedPosition = Math.max(this.boundaries['1-2'] + MIN_STEP_WIDTH, Math.min(100, clampedPosition));
+            } else if (activeBoundary === '3-4') {
+                // Step 3 must be at least MIN_STEP_WIDTH
+                if (step3Width < MIN_STEP_WIDTH) {
+                    clampedPosition = this.boundaries['2-3'] + MIN_STEP_WIDTH;
+                }
+                // Step 4 must be at least MIN_STEP_WIDTH
+                if (step4Width < MIN_STEP_WIDTH) {
+                    clampedPosition = 100 - MIN_STEP_WIDTH;
+                }
+                // Boundary 3-4 must be between boundary 2-3 + MIN and 100 - MIN
+                clampedPosition = Math.max(this.boundaries['2-3'] + MIN_STEP_WIDTH, Math.min(100 - MIN_STEP_WIDTH, clampedPosition));
             }
             
-            // Step 4 width
-            const step4Width = 100 - ((activeBoundary === '3-4') ? newPositionVw : this.boundaries['3-4']);
-            if (step4Width < MIN_STEP_WIDTH) {
-                if (activeBoundary === '3-4') {
-                    newPositionVw = 100 - MIN_STEP_WIDTH;
-                }
-            }
-            
-            this.boundaries[activeBoundary] = newPositionVw;
+            this.boundaries[activeBoundary] = clampedPosition;
             
             // Update canvas positions in real-time
             this.updateCanvasPositions();
@@ -931,8 +923,10 @@ class Scene3D {
             const deltaX = currentX - startX;
             const deltaVw = (deltaX / window.innerWidth) * 100;
             
-            // Update boundary position
-            const newPosition = startBoundary + deltaVw;
+            // Calculate desired position
+            let newPosition = startBoundary + deltaVw;
+            
+            // Apply constraints through updateBoundary
             updateBoundary(newPosition);
         };
         
