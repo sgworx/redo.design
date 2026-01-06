@@ -617,7 +617,7 @@ body:active {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: #fff;
+    background: #d5d5d5; /* Darker grey background when no image selected */
     cursor: pointer;
     transition: background 0.2s ease, border-color 0.2s ease;
     position: relative;
@@ -680,6 +680,7 @@ body:active {
 
 .upload-box.has-image {
     padding: 0;
+    background: #fff; /* White background when image is selected */
 }
 
 .upload-box.has-image .upload-icon,
@@ -687,20 +688,39 @@ body:active {
     display: none;
 }
 
-.upload-box img {
+/* Upload logo image (shown by default) */
+.upload-logo {
+    width: auto;
+    height: auto;
+    max-width: 200px;
+    max-height: 200px;
+    object-fit: contain;
+    display: block;
+}
+
+.upload-box.has-image .upload-logo {
+    display: none;
+}
+
+/* Selected image (hidden by default, shown when image is selected) */
+.upload-box .selected-image {
     width: 100%;
     height: 100%;
     object-fit: contain; /* fit to square without cropping */
     display: none;
 }
 
-.upload-box.has-image img {
+.upload-box.has-image .selected-image {
     display: block;
 }
 
 .upload-box:hover {
-    background: #f5f5f5;
+    background: #c5c5c5; /* Slightly lighter grey on hover when no image */
     border-color: #000;
+}
+
+.upload-box.has-image:hover {
+    background: #fff; /* Keep white when image is selected */
 }
 
 .upload-icon {
@@ -708,20 +728,11 @@ body:active {
     align-items: center;
     justify-content: center;
     margin-bottom: 20px;
-    font-size: 24px;
 }
 
-.plus-icon {
-    background: #000;
-    color: #fff;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    font-weight: bold;
+/* Hide upload icon when image is selected */
+.upload-box.has-image .upload-icon {
+    display: none;
 }
 
 .upload-text {

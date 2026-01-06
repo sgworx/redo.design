@@ -480,7 +480,7 @@ class Scene3D {
             // Show selected image in upload box
             const thumbnailImg = selectedThumbnail.querySelector('img');
             const uploadBox = document.querySelector('.upload-box');
-            const uploadBoxImg = uploadBox ? uploadBox.querySelector('img') : null;
+            const uploadBoxImg = uploadBox ? uploadBox.querySelector('.selected-image') : null;
             if (uploadBox && uploadBoxImg && thumbnailImg) {
                 uploadBoxImg.src = thumbnailImg.src;
                 uploadBox.classList.add('has-image');
@@ -663,7 +663,7 @@ class Scene3D {
                 
                 // Update the upload box to show the selected image
                 const uploadBox = document.querySelector('.upload-box');
-                const uploadBoxImg = uploadBox ? uploadBox.querySelector('img') : null;
+                const uploadBoxImg = uploadBox ? uploadBox.querySelector('.selected-image') : null;
                 if (uploadBox && uploadBoxImg && imageSrc) {
                     uploadBoxImg.src = imageSrc;
                     uploadBox.classList.add('has-image');
@@ -690,7 +690,7 @@ class Scene3D {
                 const img = item.querySelector('img');
                 if (!img) return;
                 const uploadBox = document.querySelector('.upload-box');
-                const uploadBoxImg = uploadBox ? uploadBox.querySelector('img') : null;
+                const uploadBoxImg = uploadBox ? uploadBox.querySelector('.selected-image') : null;
                 if (uploadBox && uploadBoxImg) {
                     uploadBoxImg.src = img.src;
                     uploadBox.classList.add('has-image');
