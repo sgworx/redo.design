@@ -617,7 +617,7 @@ body:active {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: #d5d5d5; /* Darker grey background when no image selected */
+    background: #a0a0a0; /* Darker grey background when no image selected */
     cursor: pointer;
     transition: background 0.2s ease, border-color 0.2s ease;
     position: relative;
@@ -715,7 +715,7 @@ body:active {
 }
 
 .upload-box:hover {
-    background: #c5c5c5; /* Slightly lighter grey on hover when no image */
+    background: #909090; /* Slightly lighter grey on hover when no image */
     border-color: #000;
 }
 
@@ -737,10 +737,11 @@ body:active {
 
 .upload-text {
     text-align: center;
-    color: #666;
+    color: #000; /* Black text for better contrast on darker grey background */
     font-size: 16px;
     line-height: 1.5;
     margin: 0;
+    padding: 0 20px; /* Add horizontal padding for better text layout */
 }
 
 /* Bottom image thumbnails - fixed size, centered */
