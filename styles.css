@@ -268,35 +268,6 @@ body:active {
     }
 }
 
-@supports (-webkit-touch-callout: none) and (orientation: landscape) {
-  html, body {
-    height: -webkit-fill-available;
-    overflow-y: auto;
-    overflow-x: hidden;
-  }
-
-  body,
-  #container,
-  .slider-container,
-  .step-slider,
-  .step-slide {
-    overflow: visible;
-  }
-
-  .canvas-content {
-    overflow-y: auto;
-    overflow-x: hidden;
-  }
-
-  .slider-container {
-    max-width: 100%;
-    overflow-x: hidden;
-  }
-
-  .step-slide {
-    max-height: -webkit-fill-available;
-  }
-}
 
 @media (max-width: 480px) {
     .loading-spinner {
@@ -1819,3 +1790,33 @@ body:active {
 /* Force black color for top-left step number and title */
 #step-top-left-number { color: #000 !important; }
 #step-top-left-title { color: #000 !important; }
+
+@supports (-webkit-touch-callout: none) and (orientation: landscape) {
+  html, body {
+    height: -webkit-fill-available;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  body,
+  #container,
+  .slider-container,
+  .step-slider,
+  .step-slide {
+    overflow: visible;
+  }
+
+  .canvas-content {
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .slider-container {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .step-slide {
+    max-height: -webkit-fill-available;
+  }
+}
