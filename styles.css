@@ -601,20 +601,22 @@ body:active {
 
 .drag-label {
     position: absolute;
-    width: 70px;
-    height: 36px;
-    top: -28px;
+    width: 72px;
+    height: 72px;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
     opacity: 0;
     pointer-events: none;
 }
 
-.drag-label text {
-    fill: #777777;
-    font-size: 10px;
-    letter-spacing: 2px;
+.drag-letter {
+    fill: #A0A0A0;
+    font-size: 9px;
+    letter-spacing: 1px;
     font-family: inherit;
+    dominant-baseline: middle;
+    text-anchor: middle;
 }
 
 .canvas-slider .progress-circle:active {
