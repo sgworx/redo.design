@@ -358,8 +358,8 @@ body:active {
 /* Arrow indicators */
 .arrow-right,
 .arrow-left {
-    width: 18px;
-    height: 18px;
+    width: 22px;
+    height: 22px;
     background-image: url('Assets/slider.png');
     background-repeat: no-repeat;
     background-position: center;
@@ -1289,8 +1289,8 @@ body:active {
 }
 
 .arrow-right-small {
-    width: 18px;
-    height: 18px;
+    width: 22px;
+    height: 22px;
     background-image: url('Assets/slider.png');
     background-repeat: no-repeat;
     background-position: center;
