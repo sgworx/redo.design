@@ -633,11 +633,10 @@ class Scene3D {
         this.targetSliderValue = 1;
         
         // Reset boundaries based on current step
-        // Each step maintains minimum 30vw width
-        // Initial state: Step 1 visible, others hidden (Step 1 at 100vw)
+        // Initial state: Step 1 at 70vw, Step 2 at 30vw, Steps 3-4 hidden
         this.boundaries = {
-            '1-2': 100,  // Step 1: 100vw (fully visible)
-            '2-3': 100,  // Step 2: 0vw (hidden)
+            '1-2': 70,   // Step 1: 70vw
+            '2-3': 100,  // Step 2: 30vw (visible)
             '3-4': 100   // Step 3: 0vw (hidden), Step 4: 0vw (hidden)
         };
         
