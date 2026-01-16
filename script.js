@@ -15,6 +15,9 @@ class Scene3D {
         this.clock = new THREE.Clock();
         this.pointer = new THREE.Vector2(0, 0); // normalized device coords
         this.parallaxStrength = 0.15; // Subtle parallax like BAM Works
+        this.pointerActive = false;
+        this.hoveredModel = null;
+        this.intersectTargets = [];
         
         // Slider smoothing state
         this.currentSliderValue = 1; // smoothed value
@@ -139,6 +142,8 @@ class Scene3D {
                 console.log(`[${i}] Position after scaling:`, model.position.toArray());
                 
                 this.enableShadows(model);
+                this.setModelToGrayscale(model);
+                this.intersectTargets.push(model);
                 
                 this.addFloatingOrbitAnimation(model, i);
                 
@@ -238,6 +243,69 @@ class Scene3D {
                 child.receiveShadow = true;
             }
         });
+    }
+
+    setModelToGrayscale(model) {
+        model.traverse((child) => {
+            if (!child.isMesh || !child.material) return;
+            const materials = Array.isArray(child.material) ? child.material : [child.material];
+            materials.forEach((mat) => {
+                if (!mat.color) return;
+                if (!mat.userData.originalColor) {
+                    mat.userData.originalColor = mat.color.clone();
+                }
+                const hsl = { h: 0, s: 0, l: 0 };
+                mat.color.getHSL(hsl);
+                mat.color.setHSL(0, 0, hsl.l);
+                mat.needsUpdate = true;
+            });
+        });
+    }
+
+    restoreModelColor(model) {
+        model.traverse((child) => {
+            if (!child.isMesh || !child.material) return;
+            const materials = Array.isArray(child.material) ? child.material : [child.material];
+            materials.forEach((mat) => {
+                if (!mat.color || !mat.userData.originalColor) return;
+                mat.color.copy(mat.userData.originalColor);
+                mat.needsUpdate = true;
+            });
+        });
+    }
+
+    updateHoverFromPointer() {
+        if (!this.pointerActive || this.intersectTargets.length === 0) {
+            if (this.hoveredModel) {
+                this.setModelToGrayscale(this.hoveredModel);
+                this.hoveredModel = null;
+            }
+            return;
+        }
+
+        this.raycaster.setFromCamera(this.pointer, this.camera);
+        const intersects = this.raycaster.intersectObjects(this.intersectTargets, true);
+
+        let nextHovered = null;
+        if (intersects.length > 0) {
+            let current = intersects[0].object;
+            while (current.parent && current.parent !== this.scene) {
+                current = current.parent;
+            }
+            if (this.intersectTargets.includes(current)) {
+                nextHovered = current;
+            }
+        }
+
+        if (nextHovered !== this.hoveredModel) {
+            if (this.hoveredModel) {
+                this.setModelToGrayscale(this.hoveredModel);
+            }
+            if (nextHovered) {
+                this.restoreModelColor(nextHovered);
+            }
+            this.hoveredModel = nextHovered;
+        }
     }
     
     separateModels(maxIterations = 40) {
@@ -393,6 +461,15 @@ class Scene3D {
         window.addEventListener('mousemove', (event) => {
             this.pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
             this.pointer.y = (event.clientY / window.innerHeight) * 2 - 1;
+            this.pointerActive = true;
+        });
+
+        window.addEventListener('mouseleave', () => {
+            this.pointerActive = false;
+            if (this.hoveredModel) {
+                this.setModelToGrayscale(this.hoveredModel);
+                this.hoveredModel = null;
+            }
         });
         
         // Window resize
@@ -1412,6 +1489,9 @@ class Scene3D {
             
             // Update controls
             this.controls.update();
+
+            // Update hover highlight
+            this.updateHoverFromPointer();
             
             // Render
             this.renderer.render(this.scene, this.camera);
