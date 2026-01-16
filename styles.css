@@ -980,16 +980,16 @@ body:active {
 
 /* Top and bottom thumbnails - smaller */
 .step-3-thumbnail .step-3-option-img {
-    width: 400px; /* Fixed smaller size */
-    height: auto;
-    max-height: 300px;
+    width: 320px; /* 20% smaller */
+    height: 320px;
+    max-height: none;
 }
 
 /* Main/center image - larger */
 .step-3-main .step-3-option-img {
-    width: 520px; /* Fixed larger size */
-    height: auto;
-    max-height: 520px;
+    width: 416px; /* 20% smaller */
+    height: 416px;
+    max-height: none;
 }
 
 /* Arrow indicator on main image */
