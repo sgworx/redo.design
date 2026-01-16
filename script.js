@@ -850,10 +850,6 @@ class Scene3D {
                 
                 // Add selected class to clicked thumbnail
                 thumbnail.classList.add('selected');
-                const indicator = document.createElement('div');
-                indicator.className = 'selection-indicator';
-                indicator.textContent = 'A';
-                thumbnail.appendChild(indicator);
                 
                 // Get the image source from the clicked thumbnail
                 const thumbnailImg = thumbnail.querySelector('img');

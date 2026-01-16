@@ -798,11 +798,16 @@ body:active {
     background: #1900FF;
     color: #000;
     border-radius: 50%;
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     font-size: 12px;
     font-weight: bold;
+}
+
+.image-thumbnail.selected img {
+    border: 2px solid #000000;
+    box-sizing: border-box;
 }
 
 /* Step content for other steps - fixed size, centered */
