@@ -614,7 +614,7 @@ body:active {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: #a0a0a0; /* Plain darker grey background when no image selected */
+    background: rgba(160, 160, 160, 0.6); /* Lighter/softer grey */
     cursor: pointer;
     transition: background 0.2s ease, border-color 0.2s ease;
     position: relative;
@@ -627,9 +627,9 @@ body:active {
 .upload-box::after {
     content: '';
     position: absolute;
-    width: 20px;
-    height: 20px;
-    border: 2px solid #000;
+    width: 28px;
+    height: 28px;
+    border: 3px solid #000;
     pointer-events: none;
 }
 
@@ -654,9 +654,9 @@ body:active {
     position: absolute;
     top: 0;
     right: 0;
-    width: 20px;
-    height: 20px;
-    border: 2px solid #000;
+    width: 28px;
+    height: 28px;
+    border: 3px solid #000;
     border-left: none;
     border-bottom: none;
     pointer-events: none;
@@ -667,9 +667,9 @@ body:active {
     position: absolute;
     bottom: 0;
     left: 0;
-    width: 20px;
-    height: 20px;
-    border: 2px solid #000;
+    width: 28px;
+    height: 28px;
+    border: 3px solid #000;
     border-right: none;
     border-top: none;
     pointer-events: none;
@@ -1165,9 +1165,9 @@ body:active {
 .step-2-image-box .corner-tl,
 .step-2-image-box .corner-br {
     position: absolute;
-    width: 20px;
-    height: 20px;
-    border: 2px solid #000;
+    width: 28px;
+    height: 28px;
+    border: 3px solid #000;
     pointer-events: none;
     z-index: 1;
 }
