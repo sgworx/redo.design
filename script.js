@@ -734,57 +734,23 @@ class Scene3D {
             slider.style.display = 'none';
         });
         
-        // Show sliders based on which canvases are visible (have width > 0)
-        // Step 1: Show right slider if Step 1 canvas is visible
-        if (step1) {
-            const step1Width = this.boundaries['1-2'];
-            if (step1Width > 0) {
-                const rightSlider = step1.querySelector('.slider-right');
-                if (rightSlider) {
-                    rightSlider.style.display = 'block';
-                }
-            }
-        }
-        
-        // Step 2: Show sliders if Step 2 canvas is visible
-        if (step2) {
-            const step2Width = this.boundaries['2-3'] - this.boundaries['1-2'];
-            if (step2Width > 0) {
-                const leftSlider = step2.querySelector('.slider-left');
-                const rightSlider = step2.querySelector('.slider-right');
-                if (leftSlider) {
-                    leftSlider.style.display = 'block';
-                }
-                if (rightSlider) {
-                    rightSlider.style.display = 'block';
-                }
-            }
-        }
-        
-        // Step 3: Show sliders if Step 3 canvas is visible
-        if (step3) {
-            const step3Width = this.boundaries['3-4'] - this.boundaries['2-3'];
-            if (step3Width > 0) {
-                const leftSlider = step3.querySelector('.slider-left');
-                const rightSlider = step3.querySelector('.slider-right');
-                if (leftSlider) {
-                    leftSlider.style.display = 'block';
-                }
-                if (rightSlider) {
-                    rightSlider.style.display = 'block';
-                }
-            }
-        }
-        
-        // Step 4: Show left slider if Step 4 canvas is visible
-        if (step4) {
-            const step4Width = 100 - this.boundaries['3-4'];
-            if (step4Width > 0) {
-                const leftSlider = step4.querySelector('.slider-left');
-                if (leftSlider) {
-                    leftSlider.style.display = 'block';
-                }
-            }
+        // Only show sliders for the current step to avoid duplicates at boundaries
+        if (this.currentStep === 1 && step1) {
+            const rightSlider = step1.querySelector('.slider-right');
+            if (rightSlider) rightSlider.style.display = 'block';
+        } else if (this.currentStep === 2 && step2) {
+            const leftSlider = step2.querySelector('.slider-left');
+            const rightSlider = step2.querySelector('.slider-right');
+            if (leftSlider) leftSlider.style.display = 'block';
+            if (rightSlider) rightSlider.style.display = 'block';
+        } else if (this.currentStep === 3 && step3) {
+            const leftSlider = step3.querySelector('.slider-left');
+            const rightSlider = step3.querySelector('.slider-right');
+            if (leftSlider) leftSlider.style.display = 'block';
+            if (rightSlider) rightSlider.style.display = 'block';
+        } else if (this.currentStep === 4 && step4) {
+            const leftSlider = step4.querySelector('.slider-left');
+            if (leftSlider) leftSlider.style.display = 'block';
         }
         
         // Update badges
