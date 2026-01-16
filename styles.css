@@ -516,6 +516,7 @@ body:active {
     height: 100%;
     z-index: 1000;
     pointer-events: none; /* Let handle receive events */
+    overflow: visible;
 }
 
 /* Remove the duplicate handle from left sliders (keep right handle only) */
