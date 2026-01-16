@@ -192,6 +192,82 @@ body:active {
     }
 }
 
+/* iPad Air 11" landscape (1180x820) only */
+@media (max-width: 1180px) and (orientation: landscape) {
+    /* Keep steps usable without changing desktop layout */
+    .slider-container {
+        overflow: visible; /* allow handles to remain fully visible */
+    }
+
+    .step-slide {
+        overflow: visible; /* avoid clipping handles at boundaries */
+    }
+
+    .canvas-content {
+        overflow-y: auto; /* allow vertical scroll when needed */
+        overflow-x: hidden;
+    }
+
+    .upload-area {
+        margin-top: clamp(-60px, -6vh, -20px); /* reduce vertical push */
+    }
+
+    .upload-box {
+        width: clamp(300px, 46vw, 460px);
+        height: auto;
+        aspect-ratio: 1 / 1; /* keep square */
+    }
+
+    .bottom-images {
+        margin-top: clamp(200px, 26vh, 300px);
+        gap: clamp(10px, 1.6vw, 18px);
+    }
+
+    .image-thumbnail img {
+        width: clamp(70px, 11vw, 100px);
+        height: clamp(95px, 15vw, 140px);
+    }
+
+    .step-2-image-box {
+        width: clamp(300px, 46vw, 460px);
+        height: auto;
+        aspect-ratio: 1 / 1; /* keep square */
+    }
+
+    .step-2-input-wrapper,
+    .step-2-options {
+        width: clamp(300px, 46vw, 460px);
+    }
+
+    .step-2-content {
+        gap: clamp(16px, 2.4vh, 26px);
+        padding-bottom: clamp(12px, 2vh, 24px);
+    }
+
+    .step-3-options-container {
+        max-width: clamp(320px, 56vw, 520px);
+        max-height: calc(100vh - 220px);
+        overflow-y: auto;
+    }
+
+    .step-3-thumbnail .step-3-option-img {
+        width: clamp(200px, 32vw, 280px);
+        height: clamp(200px, 32vw, 280px);
+    }
+
+    .step-3-main .step-3-option-img {
+        width: clamp(250px, 38vw, 360px);
+        height: clamp(250px, 38vw, 360px);
+    }
+
+    .step-4-guide {
+        max-width: clamp(480px, 70vw, 640px);
+        max-height: calc(100vh - 220px);
+        overflow-y: auto;
+        padding-right: clamp(10px, 2vw, 30px);
+    }
+}
+
 @media (max-width: 480px) {
     .loading-spinner {
         width: 30px;
