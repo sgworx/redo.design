@@ -1238,8 +1238,14 @@ class Scene3D {
     }
 
     applyStepComposition() {
-        // Steps with both prev + next: 15% prev / 70% current / 15% next
-        if (this.currentStep === 2) {
+        // Active step composition:
+        // Step 1/4 (edge): 70% current + 30% adjacent
+        // Step 2/3 (middle): 15% prev + 70% current + 15% next
+        if (this.currentStep === 1) {
+            this.boundaries['1-2'] = 70;
+            this.boundaries['2-3'] = 100;
+            this.boundaries['3-4'] = 100;
+        } else if (this.currentStep === 2) {
             this.boundaries['1-2'] = 15;
             this.boundaries['2-3'] = 85;
             this.boundaries['3-4'] = 100;
@@ -1247,6 +1253,10 @@ class Scene3D {
             this.boundaries['1-2'] = 0;
             this.boundaries['2-3'] = 15;
             this.boundaries['3-4'] = 85;
+        } else if (this.currentStep === 4) {
+            this.boundaries['1-2'] = 0;
+            this.boundaries['2-3'] = 0;
+            this.boundaries['3-4'] = 30;
         } else {
             return;
         }
