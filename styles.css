@@ -1865,8 +1865,7 @@ body:active {
 
 @media (max-width: 1180px) and (orientation: landscape) {
   .step-slider {
-    transform-origin: top center;
-    transform: scale(calc(100vw / 1440));
+    transform: none;
   }
 }
 
