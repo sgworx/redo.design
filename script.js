@@ -62,7 +62,7 @@ class Scene3D {
             0.1,
             1000
         );
-        this.camera.position.set(-30, 42, 95); // More left rotation, same scale
+        this.camera.position.set(-42, 42, 95); // Rotate further left, same scale
         this.camera.lookAt(0, 0, 0);
         
         // Create renderer
