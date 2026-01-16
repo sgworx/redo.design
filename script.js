@@ -250,13 +250,25 @@ class Scene3D {
             if (!child.isMesh || !child.material) return;
             const materials = Array.isArray(child.material) ? child.material : [child.material];
             materials.forEach((mat) => {
-                if (!mat.color) return;
-                if (!mat.userData.originalColor) {
+                if (!mat.userData.originalColor && mat.color) {
                     mat.userData.originalColor = mat.color.clone();
                 }
-                const hsl = { h: 0, s: 0, l: 0 };
-                mat.color.getHSL(hsl);
-                mat.color.setHSL(0, 0, hsl.l);
+                if (!mat.userData.originalMap && mat.map) {
+                    mat.userData.originalMap = mat.map;
+                }
+
+                if (mat.map) {
+                    if (!mat.userData.grayMap) {
+                        mat.userData.grayMap = this.createGrayscaleTexture(mat.map);
+                    }
+                    if (mat.userData.grayMap) {
+                        mat.map = mat.userData.grayMap;
+                    }
+                } else if (mat.color) {
+                    const hsl = { h: 0, s: 0, l: 0 };
+                    mat.color.getHSL(hsl);
+                    mat.color.setHSL(0, 0, hsl.l);
+                }
                 mat.needsUpdate = true;
             });
         });
@@ -267,11 +279,55 @@ class Scene3D {
             if (!child.isMesh || !child.material) return;
             const materials = Array.isArray(child.material) ? child.material : [child.material];
             materials.forEach((mat) => {
-                if (!mat.color || !mat.userData.originalColor) return;
-                mat.color.copy(mat.userData.originalColor);
+                if (mat.userData.originalMap) {
+                    mat.map = mat.userData.originalMap;
+                }
+                if (mat.color && mat.userData.originalColor) {
+                    mat.color.copy(mat.userData.originalColor);
+                }
                 mat.needsUpdate = true;
             });
         });
+    }
+
+    createGrayscaleTexture(map) {
+        const image = map.image;
+        if (!image) return null;
+
+        const canvas = document.createElement('canvas');
+        const width = image.width || image.videoWidth || image.naturalWidth;
+        const height = image.height || image.videoHeight || image.naturalHeight;
+        if (!width || !height) return null;
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return null;
+
+        try {
+            ctx.drawImage(image, 0, 0, width, height);
+        } catch (err) {
+            return null;
+        }
+
+        const imageData = ctx.getImageData(0, 0, width, height);
+        const data = imageData.data;
+        for (let i = 0; i < data.length; i += 4) {
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
+            const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+            data[i] = gray;
+            data[i + 1] = gray;
+            data[i + 2] = gray;
+        }
+        ctx.putImageData(imageData, 0, 0);
+
+        const grayTexture = new THREE.CanvasTexture(canvas);
+        grayTexture.flipY = map.flipY;
+        grayTexture.encoding = map.encoding;
+        grayTexture.needsUpdate = true;
+        return grayTexture;
     }
 
     updateHoverFromPointer() {
