@@ -759,6 +759,25 @@ body:active {
     transition: transform 0.2s ease;
 }
 
+.thumbnail-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 2px solid #000000;
+    color: #000000;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    pointer-events: none;
+}
+
 .image-thumbnail:hover {
     transform: scale(1.05);
 }
