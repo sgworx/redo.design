@@ -1837,7 +1837,7 @@ body:active {
 @supports (-webkit-touch-callout: none) and (orientation: landscape) {
   html, body {
     height: -webkit-fill-available;
-    overflow-y: auto;
+    overflow-y: hidden;
     overflow-x: hidden;
   }
 
@@ -1861,5 +1861,12 @@ body:active {
 
   .step-slide {
     max-height: -webkit-fill-available;
+  }
+}
+
+@media (max-width: 1180px) and (orientation: landscape) {
+  .step-slider {
+    transform-origin: top center;
+    transform: scale(calc(100vw / 1440));
   }
 }
