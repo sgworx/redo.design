@@ -64,13 +64,17 @@ body:active {
 
 /* Tablet (iPad) scaling - keep desktop unchanged */
 @media (max-width: 1024px) {
+    .upload-area {
+        margin-top: clamp(-60px, -6vh, -100px);
+    }
+
     .upload-box {
         width: clamp(320px, 60vw, 520px);
         height: clamp(320px, 60vw, 520px);
     }
 
     .bottom-images {
-        margin-top: clamp(200px, 28vh, 340px);
+        margin-top: clamp(220px, 30vh, 340px);
         gap: clamp(12px, 2vw, 20px);
     }
 
@@ -91,6 +95,7 @@ body:active {
 
     .step-2-content {
         gap: clamp(20px, 3vh, 32px);
+        padding-bottom: clamp(16px, 3vh, 32px);
     }
 
     .step-2-image-container {
@@ -100,6 +105,8 @@ body:active {
     .step-3-options-container {
         margin-top: clamp(70px, 10vh, 100px);
         max-width: clamp(360px, 70vw, 600px);
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
     }
 
     .step-3-thumbnail .step-3-option-img {
@@ -116,6 +123,8 @@ body:active {
         max-width: clamp(520px, 80vw, 720px);
         margin: clamp(110px, 14vh, 140px) 0 60px 20px;
         padding-right: clamp(10px, 2vw, 40px);
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
     }
 }
 
