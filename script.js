@@ -1231,6 +1231,27 @@ class Scene3D {
                 stepTitleEl.textContent = titles[this.currentStep] || '';
             }
         }
+
+        if (!this.isUserSliding) {
+            this.applyStepComposition();
+        }
+    }
+
+    applyStepComposition() {
+        // Steps with both prev + next: 15% prev / 70% current / 15% next
+        if (this.currentStep === 2) {
+            this.boundaries['1-2'] = 15;
+            this.boundaries['2-3'] = 85;
+            this.boundaries['3-4'] = 100;
+        } else if (this.currentStep === 3) {
+            this.boundaries['1-2'] = 0;
+            this.boundaries['2-3'] = 15;
+            this.boundaries['3-4'] = 85;
+        } else {
+            return;
+        }
+
+        this.updateCanvasPositions();
     }
     
     updateStep2Image(imageSrc) {
