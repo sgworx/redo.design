@@ -128,6 +128,70 @@ body:active {
     }
 }
 
+/* iPad landscape fit: reduce sizes without affecting desktop */
+@media (max-width: 1024px) and (orientation: landscape) {
+    .step-2-header,
+    .step-3-header,
+    .step-4-header {
+        top: 70px;
+    }
+
+    .upload-box {
+        width: clamp(280px, 50vw, 420px);
+        height: clamp(280px, 50vw, 420px);
+    }
+
+    .bottom-images {
+        margin-top: clamp(180px, 24vh, 280px);
+        gap: clamp(10px, 1.6vw, 16px);
+    }
+
+    .image-thumbnail img {
+        width: clamp(70px, 12vw, 95px);
+        height: clamp(95px, 16vw, 135px);
+    }
+
+    .step-2-image-box {
+        width: clamp(280px, 50vw, 420px);
+        height: clamp(280px, 50vw, 420px);
+    }
+
+    .step-2-input-wrapper,
+    .step-2-options {
+        width: clamp(280px, 50vw, 420px);
+    }
+
+    .step-2-content {
+        gap: clamp(16px, 2.4vh, 24px);
+        padding-bottom: clamp(10px, 2vh, 20px);
+    }
+
+    .step-3-options-container {
+        margin-top: clamp(60px, 8vh, 90px);
+        max-width: clamp(320px, 60vw, 520px);
+        max-height: calc(100vh - 220px);
+        overflow-y: auto;
+    }
+
+    .step-3-thumbnail .step-3-option-img {
+        width: clamp(200px, 36vw, 280px);
+        height: clamp(200px, 36vw, 280px);
+    }
+
+    .step-3-main .step-3-option-img {
+        width: clamp(250px, 44vw, 360px);
+        height: clamp(250px, 44vw, 360px);
+    }
+
+    .step-4-guide {
+        max-width: clamp(480px, 74vw, 640px);
+        margin: clamp(100px, 12vh, 130px) 0 40px 20px;
+        padding-right: clamp(10px, 2vw, 30px);
+        max-height: calc(100vh - 220px);
+        overflow-y: auto;
+    }
+}
+
 @media (max-width: 480px) {
     .loading-spinner {
         width: 30px;
