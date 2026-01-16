@@ -1174,7 +1174,7 @@ class Scene3D {
     }
     
     updateCurrentStepFromBoundaries() {
-        // Determine current step based on which canvas is leftmost and has significant width
+        // Determine current step based on which canvas is widest
         // Use threshold to prevent switching too early
         const threshold = 10; // Only switch when a canvas is clearly dominant (10vw threshold)
         
@@ -1183,26 +1183,12 @@ class Scene3D {
         const step3Width = this.boundaries['3-4'] - this.boundaries['2-3'];
         const step4Width = 100 - this.boundaries['3-4'];
         
-        // Determine current step based on leftmost canvas with significant width
-        // Step 1 always starts at 0, so if it has width > threshold, it's current
+        // Determine current step based on widest canvas
         let newStep = this.currentStep; // Default to current step to prevent flickering
-        
-        if (step1Width > threshold) {
-            // Step 1 is visible and significant
-            newStep = 1;
-        } else if (step1Width <= threshold && step2Width > threshold) {
-            // Step 1 is mostly hidden, Step 2 is visible
-            newStep = 2;
-        } else if (step2Width <= threshold && step3Width > threshold) {
-            // Step 2 is mostly hidden, Step 3 is visible
-            newStep = 3;
-        } else if (step3Width <= threshold && step4Width > threshold) {
-            // Step 3 is mostly hidden, Step 4 is visible
-            newStep = 4;
-        } else {
-            // Fallback: use the widest canvas
-            const widths = [step1Width, step2Width, step3Width, step4Width];
-            const maxIndex = widths.indexOf(Math.max(...widths));
+        const widths = [step1Width, step2Width, step3Width, step4Width];
+        const maxWidth = Math.max(...widths);
+        if (maxWidth > threshold) {
+            const maxIndex = widths.indexOf(maxWidth);
             newStep = maxIndex + 1;
         }
         
