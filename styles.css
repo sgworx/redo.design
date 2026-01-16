@@ -100,7 +100,7 @@ body:active {
     justify-content: center;
     margin-bottom: 8px;
     transition: all 0.15s ease;
-    border: 3px solid transparent;
+    border: 3px solid #000;
 }
 
 .nav-step.active .step-circle {
@@ -115,25 +115,25 @@ body:active {
 .step-number {
     font-size: 48px;
     font-weight: 600;
-    color: #333;
+    color: #000;
     user-select: none;
 }
 
 .nav-step.active .step-number {
-    color: #F3E831;
+    color: #000;
 }
 
 .step-label {
     font-size: 14px;
     font-weight: 400;
-    color: #666;
+    color: #000;
     text-align: center;
     white-space: nowrap;
     user-select: none;
 }
 
 .nav-step.active .step-label {
-    color: #F3E831;
+    color: #000;
     font-weight: 500;
 }
 
