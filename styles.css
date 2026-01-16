@@ -271,8 +271,7 @@ body:active {
 @supports (-webkit-touch-callout: none) and (orientation: landscape) {
   html, body {
     height: -webkit-fill-available;
-    overflow-y: hidden;
-    overflow-x: hidden;
+    overflow: hidden;
   }
 
   body,
@@ -300,8 +299,7 @@ body:active {
 
 @media (min-width: 1024px) and (max-width: 1180px) and (orientation: landscape) {
   html, body {
-    overflow-y: hidden;
-    overflow-x: hidden;
+    overflow: hidden;
   }
 
   .canvas-content,
@@ -1868,5 +1866,12 @@ body:active {
   .step-slider {
     transform-origin: top center;
     transform: scale(calc(100vw / 1440));
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1180px) and (orientation: landscape) {
+  #container {
+    transform: scale(0.88);
+    transform-origin: top left;
   }
 }
