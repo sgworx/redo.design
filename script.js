@@ -1216,6 +1216,11 @@ class Scene3D {
                 };
                 stepTitleEl.textContent = titles[this.currentStep] || '';
             }
+
+            const topLeft = document.querySelector('.step-top-left');
+            if (topLeft) {
+                topLeft.style.display = this.currentStep === 1 ? 'flex' : 'none';
+            }
         }
 
         if (!this.isUserSliding) {
