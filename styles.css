@@ -105,7 +105,7 @@ body:active {
 
 .nav-step.active .step-circle {
     background: #ffffff;
-    border: 3px solid #F3E831;
+    border: 3px solid #1900FF;
 }
 
 .nav-step:hover .step-circle {
@@ -277,7 +277,7 @@ body:active {
 
 /* Progress line turns yellow when image is selected (ready for next step) */
 .step-slider.image-selected .canvas-slider .progress-line {
-    background: #F3E831 !important; /* Yellow when ready */
+    background: #1900FF !important; /* Yellow when ready */
 }
 
 /* Progress circle inside canvas slider */
@@ -784,7 +784,7 @@ body:active {
     right: 5px;
     width: 24px;
     height: 24px;
-    background: #F3E831;
+    background: #1900FF;
     color: #000;
     border-radius: 50%;
     display: flex;
@@ -899,7 +899,7 @@ body:active {
     width: 44px;
     height: 44px;
     border-radius: 50%;
-    border: 2px solid #F3E831; /* Yellow border */
+    border: 2px solid #1900FF; /* Yellow border */
     background: #ffffff;
     display: flex;
     align-items: center;
@@ -1087,7 +1087,7 @@ body:active {
     width: 44px;
     height: 44px;
     border-radius: 50%;
-    border: 2px solid #F3E831; /* Yellow border */
+    border: 2px solid #1900FF; /* Yellow border */
     background: #ffffff;
     display: flex;
     align-items: center;
@@ -1345,7 +1345,7 @@ body:active {
     width: 53px;
     height: 53px;
     border-radius: 50%;
-    border: 2px solid #F3E831;
+    border: 2px solid #1900FF;
     display: flex;
     align-items: center;
     justify-content: center;
