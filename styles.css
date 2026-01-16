@@ -319,7 +319,7 @@ body:active {
     background: #1900FF !important;
 }
 
-#step-slider.design-selected .step-slide[data-step="2"] .slider-right .progress-circle::before {
+#step-slider.design-selected .step-slide[data-step="2"] .slider-right .progress-circle {
     border-color: #1900FF;
 }
 
@@ -333,12 +333,13 @@ body:active {
     max-width: 56px;
     max-height: 56px;
     flex: 0 0 56px;
-    background: transparent;
-    border: none;
-    border-radius: 0;
+    background: #ffffff;
+    border: 2px solid #000000;
+    border-radius: 50%;
     box-sizing: border-box;
     top: 50%;
-    transform: translateY(-50%) translateZ(0);
+    margin-top: -28px;
+    transform: none;
     transition: none;
     z-index: 1001;
     cursor: grab;
@@ -346,17 +347,6 @@ body:active {
     align-items: center;
     justify-content: center;
     pointer-events: all;
-}
-
-.canvas-slider .progress-circle::before {
-    content: '';
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: #ffffff;
-    border: 2px solid #000000;
-    box-sizing: border-box;
-    display: block;
 }
 
 .canvas-slider .progress-circle:active {
