@@ -139,7 +139,7 @@ body:active {
 
 .step-label-top {
     position: absolute;
-    top: -20px;
+    top: -28px;
     left: 50%;
     transform: translateX(-50%);
 }
@@ -170,7 +170,7 @@ body:active {
     }
     
     .step-label-top {
-        top: -16px;
+        top: -22px;
     }
 }
 
