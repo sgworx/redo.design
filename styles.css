@@ -111,8 +111,20 @@ body:active {
 .nav-step.active .step-circle {
     background: #ffffff;
     border: 3px solid #1900FF;
-    box-shadow: 0 0 0 rgba(25, 0, 255, 0.35);
+    position: relative;
+}
+
+.nav-step.active .step-circle::after {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    background: rgba(25, 0, 255, 0.25);
+    filter: blur(8px);
+    opacity: 0;
+    transform: scale(0.9);
     animation: grabber-pulse 1.6s ease-in-out infinite;
+    pointer-events: none;
 }
 
 .nav-step:hover .step-circle {
@@ -313,20 +325,31 @@ body:active {
 }
 
 /* Motion shadow only on the active (blue) grabber */
-.step-slider.image-selected .step-slide[data-step="1"] .slider-right .progress-circle {
-    box-shadow: 0 0 0 rgba(25, 0, 255, 0.35);
+.step-slider.image-selected .step-slide[data-step="1"] .slider-right .progress-circle::after {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    background: rgba(25, 0, 255, 0.25);
+    filter: blur(8px);
+    opacity: 0;
+    transform: scale(0.9);
     animation: grabber-pulse 1.6s ease-in-out infinite;
+    pointer-events: none;
 }
 
 @keyframes grabber-pulse {
     0% {
-        box-shadow: 0 0 0 0 rgba(25, 0, 255, 0.35);
+        opacity: 0.1;
+        transform: scale(0.9);
     }
     50% {
-        box-shadow: 0 0 12px 6px rgba(25, 0, 255, 0.25);
+        opacity: 0.4;
+        transform: scale(1.05);
     }
     100% {
-        box-shadow: 0 0 0 0 rgba(25, 0, 255, 0.35);
+        opacity: 0.1;
+        transform: scale(0.9);
     }
 }
 
@@ -352,9 +375,17 @@ body:active {
     border-color: #1900FF;
 }
 
-#step-slider.design-selected .step-slide[data-step="2"] .slider-right .progress-circle {
-    box-shadow: 0 0 0 rgba(25, 0, 255, 0.35);
+#step-slider.design-selected .step-slide[data-step="2"] .slider-right .progress-circle::after {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    background: rgba(25, 0, 255, 0.25);
+    filter: blur(8px);
+    opacity: 0;
+    transform: scale(0.9);
     animation: grabber-pulse 1.6s ease-in-out infinite;
+    pointer-events: none;
 }
 
 /* Progress circle inside canvas slider */
@@ -381,6 +412,7 @@ body:active {
     align-items: center;
     justify-content: center;
     pointer-events: all;
+    overflow: visible;
 }
 
 .canvas-slider .progress-circle:active {
