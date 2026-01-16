@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Objects Gallery</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+</head>
+<body>
+    <div id="container"></div>
+    
+    <!-- Top left logo -->
+    <div class="top-logo">
+        <img src="Assets/redologo.png" alt="reDO">
+    </div>
+    
+    <!-- Step slider interface -->
+    <div id="step-slider" class="step-slider hidden">
+        <!-- Step badges (positioned globally) -->
+        <div class="next-step-badge hidden" id="next-step-badge">2</div>
+        <div class="prev-step-badge hidden" id="prev-step-badge">1</div>
+        
+        <!-- Top-left step indicator under logo -->
+        <div class="step-top-left">
+            <div class="step-top-left-label">STEP</div>
+            <div class="step-top-left-circle" id="step-top-left-number">1</div>
+            <div class="step-top-left-title" id="step-top-left-title">Select Image</div>
+        </div>
+        
+        <!-- Manual slider control (hidden, kept for compatibility) -->
+        <div class="manual-slider">
+            <input type="range" id="step-range" min="1" max="4" value="1" step="0.01" class="slider-input">
+            <div class="slider-labels">
+                <span>1</span>
+                <span>2</span>
+                <span>3</span>
+                <span>4</span>
+            </div>
+        </div>
+        
+        <div class="slider-container">
+            <!-- Step 1: Select Image -->
+            <div class="step-slide active" data-step="1">
+                <!-- Canvas content -->
+                <div class="canvas-content">
+                    <div class="upload-area">
+                        <div class="upload-box">
+                            <div class="corner-tr"></div>
+                            <div class="corner-bl"></div>
+                            <div class="upload-icon">
+                                <img src="Assets/AddImageLogo.jpg" alt="Upload icon" class="upload-logo">
+                            </div>
+                            <p class="upload-text">
+                                Upload the picture of raw material you want to turn into<br>
+                                a form, or select the image from the bottom.
+                            </p>
+                            <img src="" alt="Selected image" class="selected-image">
+                        </div>
+                    </div>
+                    
+                    <div class="bottom-images">
+                        <div class="image-thumbnail" data-image="Click1.jpeg">
+                            <img src="Assets/Click1.jpeg" alt="Option 1">
+                        </div>
+                        <div class="image-thumbnail" data-image="Click2.jpeg">
+                            <img src="Assets/Click2.jpeg" alt="Option 2">
+                        </div>
+                        <div class="image-thumbnail" data-image="Click3.jpeg">
+                            <img src="Assets/Click3.jpeg" alt="Option 3">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right slider (to Step 2) -->
+                <div class="canvas-slider slider-right" data-direction="right">
+                    <div class="progress-line"></div>
+                    <div class="progress-circle" id="handle-right-1">
+                        <div class="arrow-right"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 2: Design Prompt -->
+            <div class="step-slide next" data-step="2">
+                <!-- Left slider (to Step 1) -->
+                <div class="canvas-slider slider-left" data-direction="left">
+                    <div class="progress-line"></div>
+                    <div class="progress-circle" id="handle-left-2">
+                        <div class="arrow-left"></div>
+                    </div>
+                </div>
+                
+                <!-- Canvas content -->
+                <div class="canvas-content step-2-content">
+                    <!-- Header -->
+                    <div class="step-2-header">
+                        <div class="step-2-label">STEP</div>
+                        <div class="step-2-circle">2</div>
+                        <div class="step-2-title">Design Prompt</div>
+                    </div>
+                    
+                    <!-- Image Display -->
+                    <div class="step-2-image-container">
+                        <div class="step-2-image-box">
+                            <div class="corner-tr"></div>
+                            <div class="corner-bl"></div>
+                            <div class="corner-tl"></div>
+                            <div class="corner-br"></div>
+                            <img src="" alt="Selected image" id="step-2-selected-image">
+                        </div>
+                    </div>
+                    
+                    <!-- Design Input Section -->
+                    <div class="step-2-input-section">
+                        <div class="step-2-input-wrapper">
+                            <input type="text" class="step-2-input" id="design-input" placeholder="Choose a Design...">
+                            <button class="step-2-arrow-button" id="design-arrow-btn">
+                                <div class="arrow-right-small"></div>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Design Options -->
+                    <div class="step-2-options">
+                        <div class="step-2-option" data-option="Low profile lounge chair ?">
+                            Low profile lounge chair ?
+                        </div>
+                        <div class="step-2-option" data-option="Faceted chair ?">
+                            Faceted chair ?
+                        </div>
+                        <div class="step-2-option" data-option="Modern minimalist chair ?">
+                            Modern minimalist chair ?
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right slider (to Step 3) -->
+                <div class="canvas-slider slider-right" data-direction="right">
+                    <div class="progress-line"></div>
+                    <div class="progress-circle" id="handle-right-2">
+                        <div class="arrow-right"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 3: Choose Design -->
+            <div class="step-slide next" data-step="3">
+                <!-- Left slider (to Step 2) -->
+                <div class="canvas-slider slider-left" data-direction="left">
+                    <div class="progress-line"></div>
+                    <div class="progress-circle" id="handle-left-3">
+                        <div class="arrow-left"></div>
+                    </div>
+                </div>
+                
+                <!-- Canvas content -->
+                <div class="canvas-content step-3-content">
+                    <!-- Header -->
+                    <div class="step-3-header">
+                        <div class="step-3-label">STEP</div>
+                        <div class="step-3-circle">3</div>
+                        <div class="step-3-title">Choose Design</div>
+                    </div>
+                    
+                    <!-- Design Options Container -->
+                    <div class="step-3-options-container" id="step-3-options">
+                        <!-- Top thumbnail -->
+                        <div class="step-3-option step-3-thumbnail" data-option-index="0">
+                            <img src="" alt="Design option 1" class="step-3-option-img">
+                        </div>
+                        
+                        <!-- Main/center image (auto-selected, larger) -->
+                        <div class="step-3-option step-3-main selected" data-option-index="1">
+                            <img src="" alt="Design option 2" class="step-3-option-img">
+                            <div class="step-3-arrow-indicator" id="step-3-finalize-arrow">
+                                <div class="arrow-diagonal"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Bottom thumbnail -->
+                        <div class="step-3-option step-3-thumbnail" data-option-index="2">
+                            <img src="" alt="Design option 3" class="step-3-option-img">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right slider (to Step 4) -->
+                <div class="canvas-slider slider-right" data-direction="right">
+                    <div class="progress-line"></div>
+                    <div class="progress-circle" id="handle-right-3">
+                        <div class="arrow-right"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 4: Get it ready -->
+            <div class="step-slide next" data-step="4">
+                <!-- Left slider (to Step 3) -->
+                <div class="canvas-slider slider-left" data-direction="left">
+                    <div class="progress-line"></div>
+                    <div class="progress-circle" id="handle-left-4">
+                        <div class="arrow-left"></div>
+                    </div>
+                </div>
+                
+                <!-- Canvas content -->
+                <div class="canvas-content step-4-content">
+                    <!-- Header -->
+                    <div class="step-4-header">
+                        <div class="step-4-label">STEP</div>
+                        <div class="step-4-circle">4</div>
+                        <div class="step-4-title">Get it ready</div>
+                    </div>
+                    
+                    <div class="step-content">
+                        <p>Finalize and prepare your design...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Navigation steps -->
+    <div class="nav-steps">
+        <div class="nav-step active">
+            <div class="step-circle">
+                <span class="step-number">1</span>
+            </div>
+            <span class="step-label">Select Image</span>
+        </div>
+        <div class="nav-step">
+            <div class="step-circle">
+                <span class="step-number">2</span>
+            </div>
+            <span class="step-label">Design Prompt</span>
+        </div>
+        <div class="nav-step">
+            <div class="step-circle">
+                <span class="step-number">3</span>
+            </div>
+            <span class="step-label">Choose Design</span>
+        </div>
+        <div class="nav-step">
+            <div class="step-circle">
+                <span class="step-number">4</span>
+            </div>
+            <span class="step-label">Get it ready</span>
+        </div>
+    </div>
+    
+    <!-- Loading screen -->
+    <div id="loading-screen">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
