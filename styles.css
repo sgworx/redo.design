@@ -319,6 +319,10 @@ body:active {
     background: #1900FF !important;
 }
 
+#step-slider.design-selected .step-slide[data-step="2"] .slider-right .progress-circle {
+    border-color: #1900FF;
+}
+
 /* Progress circle inside canvas slider */
 .canvas-slider .progress-circle {
     position: absolute;
