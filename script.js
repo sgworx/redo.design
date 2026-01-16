@@ -59,7 +59,7 @@ class Scene3D {
             0.1,
             1000
         );
-        this.camera.position.set(0, 10, 35); // Higher and farther for wide, centered view
+        this.camera.position.set(12, 12, 45); // Farther and angled for crossed view
         this.camera.lookAt(0, 0, 0);
         
         // Create renderer
