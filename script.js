@@ -68,7 +68,7 @@ class Scene3D {
             0.1,
             1000
         );
-        this.camera.position.set(45, 42, 95); // Slightly toward left
+        this.camera.position.set(20, 70, 95); // More left and higher for bird-eye corner
         this.camera.lookAt(0, 0, 0);
         
         // Create renderer
