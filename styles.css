@@ -169,7 +169,7 @@ body:active {
     background: #ffffff;
     border: 3px solid #1900FF;
     position: relative;
-    box-shadow: 0 0 6px rgba(25, 0, 255, 0.15);
+    box-shadow: 0 0 10px rgba(25, 0, 255, 0.25);
     animation: grabber-shadow 1.6s ease-in-out infinite;
 }
 
@@ -372,19 +372,19 @@ body:active {
 
 /* Motion shadow only on the active (blue) grabber */
 .step-slider.image-selected .step-slide[data-step="1"] .slider-right .progress-circle {
-    box-shadow: 0 0 6px rgba(25, 0, 255, 0.15);
+    box-shadow: 0 0 10px rgba(25, 0, 255, 0.25);
     animation: grabber-shadow 1.6s ease-in-out infinite;
 }
 
 @keyframes grabber-shadow {
     0% {
-        box-shadow: 0 0 6px rgba(25, 0, 255, 0.15);
+        box-shadow: 0 0 8px rgba(25, 0, 255, 0.2);
     }
     50% {
-        box-shadow: 0 0 16px rgba(25, 0, 255, 0.35);
+        box-shadow: 0 0 24px rgba(25, 0, 255, 0.55);
     }
     100% {
-        box-shadow: 0 0 6px rgba(25, 0, 255, 0.15);
+        box-shadow: 0 0 8px rgba(25, 0, 255, 0.2);
     }
 }
 
@@ -411,7 +411,7 @@ body:active {
 }
 
 #step-slider.design-selected .step-slide[data-step="2"] .slider-right .progress-circle {
-    box-shadow: 0 0 6px rgba(25, 0, 255, 0.15);
+    box-shadow: 0 0 10px rgba(25, 0, 255, 0.25);
     animation: grabber-shadow 1.6s ease-in-out infinite;
 }
 
