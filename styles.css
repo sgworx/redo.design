@@ -310,6 +310,24 @@ body:active {
     border-color: #1900FF;
 }
 
+/* Motion shadow when grabber is active (blue) */
+.step-slider.image-selected .canvas-slider .progress-circle {
+    box-shadow: 0 0 0 rgba(25, 0, 255, 0.35);
+    animation: grabber-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes grabber-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(25, 0, 255, 0.35);
+    }
+    50% {
+        box-shadow: 0 0 12px 6px rgba(25, 0, 255, 0.25);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(25, 0, 255, 0.35);
+    }
+}
+
 /* Step 2 dragger state: left blue, right black until option is chosen */
 .step-slide[data-step="2"] .slider-left .progress-line {
     background: #1900FF !important;
