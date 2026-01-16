@@ -267,8 +267,8 @@ body:active {
     pointer-events: none; /* Let handle receive events */
 }
 
-/* Only show draggers for the current step to avoid duplicate circles */
-.step-slide:not(.is-current-step) .canvas-slider {
+/* Remove the duplicate handle from left sliders (keep right handle only) */
+.slider-left .progress-circle {
     display: none;
 }
 
