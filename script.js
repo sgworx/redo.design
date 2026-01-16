@@ -195,10 +195,11 @@ class Scene3D {
     positionModelCloud(model, index) {
         // Simple test: place models in a clear pattern to verify they're separating
         const spacing = 20;
-        const angle = (index / this.modelFiles.length) * Math.PI * 2;
+        const positionIndex = index === 0 ? 1 : index === 1 ? 0 : index;
+        const angle = (positionIndex / this.modelFiles.length) * Math.PI * 2;
         const x = Math.cos(angle) * spacing;
         const z = Math.sin(angle) * spacing;
-        const y = (index - 2) * 5; // Vertical offset for visibility
+        const y = (positionIndex - 2) * 5; // Vertical offset for visibility
         
         const position = new THREE.Vector3(x, y, z);
         model.position.add(position);
@@ -239,7 +240,7 @@ class Scene3D {
         const box = new THREE.Box3().setFromObject(model);
         const size = box.getSize(new THREE.Vector3());
         const maxDim = Math.max(size.x, size.y, size.z);
-        const scale = 10.0 / maxDim;
+        const scale = (10.0 / maxDim) * 1.2; // 20% larger
         model.scale.setScalar(scale);
 
         const adjustment = this.modelAdjustments && this.modelAdjustments[model.userData.modelIndex];
