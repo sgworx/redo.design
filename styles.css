@@ -301,13 +301,20 @@ body:active {
     background: #1900FF !important; /* Yellow when ready */
 }
 
-/* Step 2 dragger state: right stays black until option is chosen */
-.step-slide[data-step="2"] .slider-right .progress-line,
+/* Step 2 dragger state: left blue, right black until option is chosen */
 .step-slide[data-step="2"] .slider-left .progress-line {
+    background: #1900FF !important;
+}
+
+.step-slide[data-step="2"] .slider-right .progress-line {
     background: #000000 !important;
 }
 
-/* After option chosen: right dragger turns blue, left stays black */
+/* After option chosen: left turns black, right turns blue */
+#step-slider.design-selected .step-slide[data-step="2"] .slider-left .progress-line {
+    background: #000000 !important;
+}
+
 #step-slider.design-selected .step-slide[data-step="2"] .slider-right .progress-line {
     background: #1900FF !important;
 }
