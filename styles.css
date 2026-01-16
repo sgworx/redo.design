@@ -88,6 +88,7 @@ body:active {
     cursor: pointer;
     pointer-events: none;
     transition: all 0.15s ease;
+    position: relative;
 }
 
 .nav-step:first-child {
@@ -137,7 +138,10 @@ body:active {
 }
 
 .step-label-top {
-    margin-bottom: 8px;
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
 }
 
 .nav-step.active .step-label {
@@ -163,6 +167,10 @@ body:active {
     
     .step-label {
         font-size: 12px;
+    }
+    
+    .step-label-top {
+        top: -16px;
     }
 }
 
