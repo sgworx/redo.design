@@ -301,13 +301,15 @@ body:active {
     position: absolute;
     width: 60px;
     height: 60px;
+    min-width: 60px;
+    min-height: 60px;
     background: #ffffff;
     border: 2px solid #000;
-    border-radius: 50%;
+    border-radius: 9999px;
     aspect-ratio: 1 / 1;
     box-sizing: border-box;
     top: 50%;
-    transform: translateY(-50%);
+    transform: translateY(-50%) translateZ(0);
     transition: none;
     z-index: 1001;
     cursor: grab;
@@ -340,14 +342,15 @@ body:active {
 /* Arrow indicators */
 .arrow-right,
 .arrow-left {
-    width: 28px;
-    height: 28px;
+    width: 22px;
+    height: 22px;
     background-image: url('Assets/slider.png');
     background-repeat: no-repeat;
     background-position: center;
-    background-size: 70%;
+    background-size: 100%;
     display: block;
     transform-origin: center;
+    margin: 0;
 }
 
 .arrow-right {
