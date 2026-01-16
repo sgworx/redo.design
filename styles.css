@@ -306,6 +306,10 @@ body:active {
     background: #1900FF !important; /* Yellow when ready */
 }
 
+.step-slider.image-selected .canvas-slider .progress-circle {
+    border-color: #1900FF;
+}
+
 /* Step 2 dragger state: left blue, right black until option is chosen */
 .step-slide[data-step="2"] .slider-left .progress-line {
     background: #1900FF !important;
