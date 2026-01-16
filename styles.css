@@ -338,9 +338,14 @@ body:active {
 /* Arrow indicators */
 .arrow-right,
 .arrow-left {
-    width: 24px;
-    height: 24px;
-    background: url('Assets/slider.png') center / contain no-repeat;
+    width: 28px;
+    height: 28px;
+    background-image: url('Assets/slider.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 70%;
+    display: block;
+    transform-origin: center;
 }
 
 .arrow-right {
@@ -823,7 +828,7 @@ body:active {
     left: 20px; /* Match Step 1 header horizontal position (from canvas left) */
     display: flex;
     flex-direction: column;
-    align-items: flex-start; /* Align to left */
+    align-items: center; /* Match Step 1 alignment */
     gap: 10px;
     width: auto;
     flex-shrink: 0;
@@ -832,23 +837,24 @@ body:active {
 }
 
 .step-3-label {
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 500;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.02em;
     color: #3333ff; /* Blue color for STEP */
     text-transform: uppercase;
+    text-align: center;
 }
 
 .step-3-circle {
-    width: 44px;
-    height: 44px;
+    width: 53px;
+    height: 53px;
     border-radius: 50%;
     border: 2px solid #3333ff; /* Blue border */
     background: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
+    font-size: 22px;
     font-weight: 600;
     color: #3333ff; /* Blue number */
 }
@@ -857,7 +863,7 @@ body:active {
     font-size: 16px;
     font-weight: 400;
     color: inherit; /* Use parent color */
-    text-align: left; /* Align to left */
+    text-align: center; /* Match Step 1 alignment */
 }
 
 /* Step 4 Header - absolute position relative to canvas, aligned with Step 1 */
@@ -867,7 +873,7 @@ body:active {
     left: 20px; /* Match Step 1 header horizontal position (from canvas left) */
     display: flex;
     flex-direction: column;
-    align-items: flex-start; /* Align to left */
+    align-items: center; /* Match Step 1 alignment */
     gap: 10px;
     width: auto;
     flex-shrink: 0;
@@ -875,23 +881,24 @@ body:active {
 }
 
 .step-4-label {
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 500;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.02em;
     color: inherit; /* Use parent color */
     text-transform: uppercase;
+    text-align: center;
 }
 
 .step-4-circle {
-    width: 44px;
-    height: 44px;
+    width: 53px;
+    height: 53px;
     border-radius: 50%;
     border: 2px solid #1900FF; /* Yellow border */
     background: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
+    font-size: 22px;
     font-weight: 600;
     color: inherit; /* Use parent color */
 }
@@ -900,7 +907,7 @@ body:active {
     font-size: 16px;
     font-weight: 400;
     color: inherit; /* Use parent color */
-    text-align: left; /* Align to left */
+    text-align: center; /* Match Step 1 alignment */
 }
 
 /* Step 3 Options Container - scrollable, positioned below header */
@@ -1055,7 +1062,7 @@ body:active {
     left: 20px; /* Match Step 1 header horizontal position (from canvas left) */
     display: flex;
     flex-direction: column;
-    align-items: flex-start; /* Align to left */
+    align-items: center; /* Match Step 1 alignment */
     gap: 10px;
     width: auto;
     flex-shrink: 0;
@@ -1063,23 +1070,24 @@ body:active {
 }
 
 .step-2-label {
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 500;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.02em;
     color: #000; /* Dark text on medium-light gray */
     text-transform: uppercase;
+    text-align: center;
 }
 
 .step-2-circle {
-    width: 44px;
-    height: 44px;
+    width: 53px;
+    height: 53px;
     border-radius: 50%;
     border: 2px solid #1900FF; /* Yellow border */
     background: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
+    font-size: 22px;
     font-weight: 600;
     color: #000;
 }
@@ -1088,7 +1096,7 @@ body:active {
     font-size: 16px;
     font-weight: 400;
     color: #000; /* Dark text on medium-light gray */
-    text-align: left; /* Align to left */
+    text-align: center; /* Match Step 1 alignment */
 }
 
 /* Step 2 Image Container - fixed size, positioned below header */
