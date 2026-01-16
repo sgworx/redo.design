@@ -513,14 +513,17 @@ class Scene3D {
             this.onMouseClick(event);
         });
         
-        // Pointer move for parallax
-        window.addEventListener('mousemove', (event) => {
-            this.pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
-            this.pointer.y = (event.clientY / window.innerHeight) * 2 - 1;
+        // Pointer move for parallax + hover (relative to renderer canvas)
+        this.renderer.domElement.addEventListener('mousemove', (event) => {
+            const rect = this.renderer.domElement.getBoundingClientRect();
+            const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+            this.pointer.x = x;
+            this.pointer.y = y;
             this.pointerActive = true;
         });
-
-        window.addEventListener('mouseleave', () => {
+        
+        this.renderer.domElement.addEventListener('mouseleave', () => {
             this.pointerActive = false;
             if (this.hoveredModel) {
                 this.setModelToGrayscale(this.hoveredModel);
