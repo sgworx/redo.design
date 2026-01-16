@@ -304,6 +304,8 @@ body:active {
     background: #ffffff;
     border: 2px solid #000;
     border-radius: 50%;
+    aspect-ratio: 1 / 1;
+    box-sizing: border-box;
     top: 50%;
     transform: translateY(-50%);
     transition: none;
