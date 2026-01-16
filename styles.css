@@ -520,6 +520,13 @@ body:active {
     pointer-events: none; /* Let handle receive events */
 }
 
+.step-slider,
+.slider-container,
+.step-slide,
+.canvas-slider {
+    overflow: visible;
+}
+
 /* Remove the duplicate handle from left sliders (keep right handle only) */
 .slider-left .progress-circle {
     display: none;
