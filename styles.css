@@ -86,8 +86,12 @@ body:active {
     flex-direction: column;
     align-items: center;
     cursor: pointer;
-    pointer-events: all;
+    pointer-events: none;
     transition: all 0.15s ease;
+}
+
+.nav-step:first-child {
+    pointer-events: all;
 }
 
 .step-circle {
