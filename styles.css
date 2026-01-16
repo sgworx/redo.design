@@ -1128,36 +1128,19 @@ body:active {
     transform: scale(1.1);
 }
 
-/* Diagonal arrow pointing up-right */
+/* Step 3 arrow icon */
 .arrow-diagonal {
-    width: 16px;
-    height: 16px;
-    position: relative;
+    width: 18px;
+    height: 18px;
+    background-image: url('Assets/arrow2.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
 }
 
-.arrow-diagonal::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 0;
-    width: 12px;
-    height: 2px;
-    background: #000;
-    transform: translateY(-50%) rotate(45deg);
-    transform-origin: left center;
-}
-
+.arrow-diagonal::before,
 .arrow-diagonal::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 0;
-    height: 0;
-    border-left: 5px solid #000;
-    border-top: 3px solid transparent;
-    border-bottom: 3px solid transparent;
-    transform: rotate(45deg);
+    content: none;
 }
 
 /* Ensure Step 3 images are visible */
