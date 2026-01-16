@@ -592,7 +592,7 @@ body:active {
 
 /* Progress circle inside canvas slider */
 .canvas-slider .progress-circle {
-    position: absolute;
+    position: relative;
     width: 56px;
     height: 56px;
     min-width: 56px;
@@ -622,15 +622,15 @@ body:active {
     width: 72px;
     height: 72px;
     top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    left: 0;
+    transform: translate(-100%, -50%);
     opacity: 0;
     pointer-events: none;
 }
 
 .drag-letter {
     fill: #A0A0A0;
-    font-size: 9px;
+    font-size: 11px;
     letter-spacing: 1px;
     font-family: inherit;
     dominant-baseline: middle;
