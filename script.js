@@ -47,6 +47,10 @@ class Scene3D {
             'Assets/4.glb',
             'Assets/5.glb'
         ];
+
+        this.modelAdjustments = {
+            0: { scale: 0.85 } // Tweak 1.glb to match others
+        };
         
         this.init();
         this.setupEventListeners();
@@ -131,6 +135,7 @@ class Scene3D {
                 this.models.push(gltf);
                 
                 const model = gltf.scene;
+                model.userData.modelIndex = i;
                 console.log(`[${i}] Model loaded, adding to scene`);
                 this.scene.add(model);
                 
@@ -236,6 +241,11 @@ class Scene3D {
         const maxDim = Math.max(size.x, size.y, size.z);
         const scale = 10.0 / maxDim;
         model.scale.setScalar(scale);
+
+        const adjustment = this.modelAdjustments && this.modelAdjustments[model.userData.modelIndex];
+        if (adjustment && adjustment.scale) {
+            model.scale.multiplyScalar(adjustment.scale);
+        }
         
         // DON'T center the model - let it keep its position
         console.log("Skipping centering to preserve position");
