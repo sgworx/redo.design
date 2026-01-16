@@ -19,6 +19,7 @@ class Scene3D {
         this.hoveredModel = null;
         this.intersectTargets = [];
         this.hoverScale = 1.2;
+        this.defaultColorModel = null; // Keep 2.glb colored unless hovering another model
         
         // Slider smoothing state
         this.currentSliderValue = 1; // smoothed value
@@ -145,6 +146,9 @@ class Scene3D {
                 this.enableShadows(model);
                 this.setModelToGrayscale(model);
                 this.intersectTargets.push(model);
+                if (i === 1) {
+                    this.defaultColorModel = model;
+                }
                 
                 this.addFloatingOrbitAnimation(model, i);
                 
@@ -338,6 +342,9 @@ class Scene3D {
                 this.resetHoverScale(this.hoveredModel);
                 this.hoveredModel = null;
             }
+            if (this.defaultColorModel) {
+                this.restoreModelColor(this.defaultColorModel);
+            }
             return;
         }
 
@@ -365,6 +372,14 @@ class Scene3D {
                 this.applyHoverScale(nextHovered);
             }
             this.hoveredModel = nextHovered;
+        }
+
+        if (this.defaultColorModel && this.defaultColorModel !== this.hoveredModel) {
+            if (this.hoveredModel) {
+                this.setModelToGrayscale(this.defaultColorModel);
+            } else {
+                this.restoreModelColor(this.defaultColorModel);
+            }
         }
     }
 
