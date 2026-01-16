@@ -268,6 +268,49 @@ body:active {
     }
 }
 
+@supports (-webkit-touch-callout: none) and (orientation: landscape) {
+  html, body {
+    height: -webkit-fill-available;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  body,
+  #container,
+  .slider-container,
+  .step-slider,
+  .step-slide {
+    overflow: visible;
+  }
+
+  .canvas-content {
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .slider-container {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .step-slide {
+    max-height: -webkit-fill-available;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1180px) and (orientation: landscape) {
+  html, body {
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .canvas-content,
+  .slider-container,
+  .step-slider,
+  .step-slide {
+    overflow: visible;
+  }
+}
 
 @media (max-width: 480px) {
     .loading-spinner {
