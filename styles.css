@@ -312,8 +312,8 @@ body:active {
     border-color: #1900FF;
 }
 
-/* Motion shadow when grabber is active (blue) */
-.step-slider.image-selected .canvas-slider .progress-circle {
+/* Motion shadow only on the active (blue) grabber */
+.step-slider.image-selected .step-slide[data-step="1"] .slider-right .progress-circle {
     box-shadow: 0 0 0 rgba(25, 0, 255, 0.35);
     animation: grabber-pulse 1.6s ease-in-out infinite;
 }
@@ -350,6 +350,11 @@ body:active {
 
 #step-slider.design-selected .step-slide[data-step="2"] .slider-right .progress-circle {
     border-color: #1900FF;
+}
+
+#step-slider.design-selected .step-slide[data-step="2"] .slider-right .progress-circle {
+    box-shadow: 0 0 0 rgba(25, 0, 255, 0.35);
+    animation: grabber-pulse 1.6s ease-in-out infinite;
 }
 
 /* Progress circle inside canvas slider */
