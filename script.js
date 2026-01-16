@@ -573,9 +573,12 @@ class Scene3D {
         
         // Keep zoom via OrbitControls (no manual wheel zoom to avoid conflicts)
         
-        // Touch support for mobile
-        window.addEventListener('touchend', (event) => {
-            event.preventDefault();
+        // Touch support for mobile (only for 3D canvas, don't block UI taps)
+        this.renderer.domElement.addEventListener('touchend', (event) => {
+            const target = event.target;
+            if (target && (target.closest('button') || target.closest('input') || target.closest('a'))) {
+                return;
+            }
             this.onMouseClick(event.changedTouches[0]);
         });
         
@@ -838,15 +841,18 @@ class Scene3D {
         document.querySelectorAll('.step-slide').forEach((slide) => {
             const step = parseInt(slide.dataset.step);
             const width = Math.max(0, widths[step] || 0);
+            const content = slide.querySelector('.canvas-content');
+
+            if (!content) return;
 
             if (step === this.currentStep) {
-                slide.style.filter = 'none';
+                content.style.filter = 'none';
                 return;
             }
 
             const ratio = Math.min(1, Math.max(0, width / 100));
             const blur = maxBlur * (1 - ratio);
-            slide.style.filter = blur > 0.1 ? `blur(${blur.toFixed(2)}px)` : 'none';
+            content.style.filter = blur > 0.1 ? `blur(${blur.toFixed(2)}px)` : 'none';
         });
     }
     
