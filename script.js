@@ -59,7 +59,8 @@ class Scene3D {
             0.1,
             1000
         );
-        this.camera.position.set(0, 0, 20); // Camera pulled back even further for extremely wide layout
+        this.camera.position.set(0, 10, 35); // Higher and farther for wide, centered view
+        this.camera.lookAt(0, 0, 0);
         
         // Create renderer
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -78,6 +79,8 @@ class Scene3D {
         this.controls.enablePan = false;
         this.controls.autoRotate = true; // Enable auto-rotation
         this.controls.autoRotateSpeed = 0.1; // Very subtle rotation like BAM Works
+        this.controls.target.set(0, 0, 0);
+        this.controls.update();
         
         // Setup raycaster for object selection
         this.raycaster = new THREE.Raycaster();
