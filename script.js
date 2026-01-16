@@ -628,6 +628,7 @@ class Scene3D {
         
         // Explicitly remove image-selected class on initialization
         slider.classList.remove('image-selected');
+        slider.classList.remove('design-selected');
         
         // Reset to step 1
         this.currentStep = 1;
@@ -653,6 +654,9 @@ class Scene3D {
         
         // Update slider visibility
         this.updateSliderVisibility();
+
+        // Sync Step 2 dragger state
+        this.updateStep2Draggers();
         
         // Check if an image is already selected (from HTML default)
         const selectedThumbnail = document.querySelector('.image-thumbnail.selected');
@@ -1308,6 +1312,7 @@ class Scene3D {
                 
                 // Update Step 3 images when option is selected
                 this.updateStep3Images(this.selectedDesignOption);
+                this.updateStep2Draggers();
             });
         });
         
@@ -1318,6 +1323,16 @@ class Scene3D {
                 console.log('Design arrow button clicked');
                 // Add functionality here if needed
             });
+        }
+    }
+
+    updateStep2Draggers() {
+        const slider = document.getElementById('step-slider');
+        if (!slider) return;
+        if (this.selectedDesignOption) {
+            slider.classList.add('design-selected');
+        } else {
+            slider.classList.remove('design-selected');
         }
     }
     

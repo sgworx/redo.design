@@ -296,6 +296,21 @@ body:active {
     background: #1900FF !important; /* Yellow when ready */
 }
 
+/* Step 2 dragger state: right stays black until option is chosen */
+.step-slide[data-step="2"] .slider-right .progress-line,
+.step-slide[data-step="2"] .slider-left .progress-line {
+    background: #000000 !important;
+}
+
+/* After option chosen: right dragger blurred, left stays black */
+#step-slider.design-selected .step-slide[data-step="2"] .slider-right {
+    filter: blur(2px);
+}
+
+#step-slider.design-selected .step-slide[data-step="2"] .slider-right .progress-line {
+    background: #000000 !important;
+}
+
 /* Progress circle inside canvas slider */
 .canvas-slider .progress-circle {
     position: absolute;
