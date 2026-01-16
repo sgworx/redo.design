@@ -925,6 +925,21 @@ body:active {
     z-index: 10;
 }
 
+.step-4-content {
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.step-4-guide {
+    max-width: 720px;
+    margin: 140px auto 60px;
+    padding: 0 40px 80px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #ffffff;
+    white-space: pre-wrap;
+}
+
 .step-4-label {
     font-size: 16px;
     font-weight: 500;
