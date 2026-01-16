@@ -269,21 +269,33 @@ body:active {
 }
 
 @supports (-webkit-touch-callout: none) and (orientation: landscape) {
-    html, body {
-        height: -webkit-fill-available;
-        overflow-y: auto;
-        overflow-x: hidden;
-    }
-    #container {
-        height: -webkit-fill-available;
-    }
-    .canvas-content {
-        overflow-y: auto;
-        overflow-x: hidden;
-    }
-    .step-slide {
-        max-height: -webkit-fill-available;
-    }
+  html, body {
+    height: -webkit-fill-available;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  body,
+  #container,
+  .slider-container,
+  .step-slider,
+  .step-slide {
+    overflow: visible;
+  }
+
+  .canvas-content {
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .slider-container {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .step-slide {
+    max-height: -webkit-fill-available;
+  }
 }
 
 @media (max-width: 480px) {
@@ -592,7 +604,7 @@ body:active {
 
 /* Progress circle inside canvas slider */
 .canvas-slider .progress-circle {
-    position: relative;
+    position: absolute;
     width: 56px;
     height: 56px;
     min-width: 56px;
@@ -622,15 +634,15 @@ body:active {
     width: 72px;
     height: 72px;
     top: 50%;
-    left: 0;
-    transform: translate(-100%, -50%);
+    left: 50%;
+    transform: translate(-50%, -50%);
     opacity: 0;
     pointer-events: none;
 }
 
 .drag-letter {
     fill: #A0A0A0;
-    font-size: 11px;
+    font-size: 9px;
     letter-spacing: 1px;
     font-family: inherit;
     dominant-baseline: middle;
