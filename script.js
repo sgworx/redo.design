@@ -1341,7 +1341,7 @@ class Scene3D {
         const imageSet = {
             1: ['Assets/op1_1.png', 'Assets/op1_2.png', 'Assets/op1_3.png'],
             2: ['Assets/op2_1.png', 'Assets/op2_2.png', 'Assets/op2_3.png'],
-            3: ['Assets/op3_1.png', 'Assets/op3_2.png', 'Assets/op3_3.png']
+            3: ['Assets/op3_1.png', 'Assets/op3_2.jpg', 'Assets/op3_3.png']
         };
         
         const images = imageSet[optionNumber];
