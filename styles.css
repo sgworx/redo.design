@@ -1128,9 +1128,9 @@ body:active {
     color: #000;
 }
 
-.step-slide.active .step-2-circle,
-.step-slide.active .step-3-circle,
-.step-slide.active .step-4-circle {
+.step-slide.is-current-step .step-2-circle,
+.step-slide.is-current-step .step-3-circle,
+.step-slide.is-current-step .step-4-circle {
     border-color: #1900FF;
 }
 
