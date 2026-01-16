@@ -952,10 +952,65 @@ body:active {
     max-width: 720px;
     margin: 140px 0 60px 20px;
     padding: 0 40px 80px 0;
-    font-size: 14px;
-    line-height: 1.5;
+    font-size: 15px;
+    line-height: 1.6;
     color: #ffffff;
-    white-space: pre-wrap;
+    white-space: normal;
+}
+
+.step-4-guide h1 {
+    font-size: 30px;
+    font-weight: 700;
+    margin: 0 0 18px;
+}
+
+.step-4-guide h2 {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 28px 0 12px;
+}
+
+.step-4-guide h3 {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 22px 0 8px;
+}
+
+.step-4-guide h4 {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 18px 0 6px;
+}
+
+.step-4-guide h5,
+.step-4-guide h6 {
+    font-size: 14px;
+    font-weight: 700;
+    margin: 14px 0 6px;
+}
+
+.step-4-guide p {
+    margin: 0 0 12px;
+}
+
+.step-4-guide ul,
+.step-4-guide ol {
+    margin: 0 0 16px 20px;
+}
+
+.step-4-guide li {
+    margin: 4px 0;
+}
+
+.step-4-guide pre {
+    background: transparent;
+    color: #ffffff;
+    margin: 8px 0 16px;
+    padding: 0;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 13px;
+    line-height: 1.4;
+    white-space: pre;
 }
 
 .step-4-label {
