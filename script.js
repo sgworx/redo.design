@@ -822,6 +822,32 @@ class Scene3D {
             const boundaryKey = `${this.currentStep - 1}-${this.currentStep}`;
             prevBadge.style.right = `${100 - this.boundaries[boundaryKey]}vw`;
         }
+
+        this.updateCanvasBlur();
+    }
+
+    updateCanvasBlur() {
+        const maxBlur = 6; // px
+        const widths = {
+            1: this.boundaries['1-2'],
+            2: this.boundaries['2-3'] - this.boundaries['1-2'],
+            3: this.boundaries['3-4'] - this.boundaries['2-3'],
+            4: 100 - this.boundaries['3-4']
+        };
+
+        document.querySelectorAll('.step-slide').forEach((slide) => {
+            const step = parseInt(slide.dataset.step);
+            const width = Math.max(0, widths[step] || 0);
+
+            if (step === this.currentStep) {
+                slide.style.filter = 'none';
+                return;
+            }
+
+            const ratio = Math.min(1, Math.max(0, width / 100));
+            const blur = maxBlur * (1 - ratio);
+            slide.style.filter = blur > 0.1 ? `blur(${blur.toFixed(2)}px)` : 'none';
+        });
     }
     
     hideStepSlider() {
