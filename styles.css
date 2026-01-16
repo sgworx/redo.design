@@ -495,31 +495,31 @@ body:active {
     transition: none !important;
 }
 
-/* Step 1: From 0 to boundary 1-2 - Light gray */
+/* Step 1: From 0 to boundary 1-2 - White */
 .step-slide[data-step="1"] {
     width: var(--boundary-1-2, 75vw);
     left: 0;
-    background: #f5f5f5; /* Light gray */
+    background: #ffffff; /* White */
     z-index: 1;
     color: #000; /* Dark text on light background */
 }
 
-/* Step 2: From boundary 1-2 to boundary 2-3 - Medium-light gray */
+/* Step 2: From boundary 1-2 to boundary 2-3 - Light gray */
 .step-slide[data-step="2"] {
     width: calc(var(--boundary-2-3, 100vw) - var(--boundary-1-2, 75vw));
     left: var(--boundary-1-2, 75vw);
-    background: #d5d5d5; /* Medium-light gray */
+    background: #ededed; /* Light gray */
     z-index: 1; /* Ensure it's above background pseudo-elements */
     color: #000; /* Dark text on medium-light background */
 }
 
-/* Step 3: From boundary 2-3 to boundary 3-4 - Medium-dark gray */
+/* Step 3: From boundary 2-3 to boundary 3-4 - Medium gray */
 .step-slide[data-step="3"] {
     width: calc(var(--boundary-3-4, 100vw) - var(--boundary-2-3, 100vw));
     left: var(--boundary-2-3, 100vw);
-    background: #808080; /* Medium-dark gray */
+    background: #b0b0b0; /* Medium gray */
     z-index: 1;
-    color: #fff; /* Light text on medium-dark background */
+    color: #000; /* Dark text on medium background */
 }
 
 /* Step 4: From boundary 3-4 to 100vw - Darkest gray (black) */
