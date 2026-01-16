@@ -267,6 +267,11 @@ body:active {
     pointer-events: none; /* Let handle receive events */
 }
 
+/* Only show draggers for the current step to avoid duplicate circles */
+.step-slide:not(.is-current-step) .canvas-slider {
+    display: none;
+}
+
 /* Right slider (at right edge of canvas) */
 .slider-right {
     right: 0;
