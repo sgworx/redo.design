@@ -270,13 +270,13 @@ body:active {
 /* Right slider (at right edge of canvas) */
 .slider-right {
     right: 0;
-    width: 4px;
+    width: 2px;
 }
 
 /* Left slider (at left edge of canvas) */
 .slider-left {
     left: 0;
-    width: 4px;
+    width: 2px;
 }
 
 /* Progress line inside canvas slider - black by default */
@@ -284,7 +284,7 @@ body:active {
     position: absolute;
     top: 0;
     left: 0;
-    width: 4px;
+    width: 2px;
     height: 100%;
     background: #000000 !important; /* Black by default - indicates not ready */
     transition: background 0.3s ease;
@@ -336,48 +336,19 @@ body:active {
 }
 
 /* Arrow indicators */
-.arrow-right {
-    width: 28px;
-    height: 4px;
-    background: #000;
-    border-radius: 2px;
-    position: relative;
-    margin-left: 8px;
+.arrow-right,
+.arrow-left {
+    width: 24px;
+    height: 24px;
+    background: url('Assets/slider.png') center / contain no-repeat;
 }
 
-.arrow-right::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    right: -10px;
-    transform: translateY(-50%);
-    width: 0;
-    height: 0;
-    border-top: 7px solid transparent;
-    border-bottom: 7px solid transparent;
-    border-left: 10px solid #000;
+.arrow-right {
+    transform: rotate(90deg);
 }
 
 .arrow-left {
-    width: 28px;
-    height: 4px;
-    background: #000;
-    border-radius: 2px;
-    position: relative;
-    margin-right: 8px;
-}
-
-.arrow-left::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: -10px;
-    transform: translateY(-50%);
-    width: 0;
-    height: 0;
-    border-top: 7px solid transparent;
-    border-bottom: 7px solid transparent;
-    border-right: 10px solid #000;
+    transform: rotate(-90deg);
 }
 
 /* Hidden manual slider for dragging functionality */
