@@ -885,7 +885,7 @@ body:active {
     font-size: 16px;
     font-weight: 500;
     letter-spacing: 0.02em;
-    color: #3333ff; /* Blue color for STEP */
+    color: #000000;
     text-transform: uppercase;
     text-align: center;
 }
