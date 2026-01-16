@@ -449,6 +449,10 @@ body:active {
     animation: grabber-shadow 1.6s ease-in-out infinite;
 }
 
+.step-slider.image-selected .step-slide[data-step="1"] .slider-right .drag-label {
+    opacity: 1;
+}
+
 @keyframes grabber-shadow {
     0% {
         box-shadow: 0 0 8px rgba(25, 0, 255, 0.2);
@@ -488,6 +492,10 @@ body:active {
     animation: grabber-shadow 1.6s ease-in-out infinite;
 }
 
+#step-slider.design-selected .step-slide[data-step="2"] .slider-right .drag-label {
+    opacity: 1;
+}
+
 /* Progress circle inside canvas slider */
 .canvas-slider .progress-circle {
     position: absolute;
@@ -513,6 +521,24 @@ body:active {
     justify-content: center;
     pointer-events: all;
     overflow: visible;
+}
+
+.drag-label {
+    position: absolute;
+    width: 70px;
+    height: 36px;
+    top: -28px;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.drag-label text {
+    fill: #777777;
+    font-size: 10px;
+    letter-spacing: 2px;
+    font-family: inherit;
 }
 
 .canvas-slider .progress-circle:active {
