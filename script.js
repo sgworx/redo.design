@@ -524,7 +524,7 @@ class Scene3D {
     
     animateModelFocus(model) {
         // Create a focus animation for the selected model
-        const targetScale = 1.5;
+        const targetScale = 1.3;
         const targetY = 0;
         
         // Animate scale and position
