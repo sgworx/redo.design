@@ -136,6 +136,10 @@ body:active {
     user-select: none;
 }
 
+.step-label-top {
+    margin-bottom: 8px;
+}
+
 .nav-step.active .step-label {
     color: #000;
     font-weight: 500;
