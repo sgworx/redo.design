@@ -798,6 +798,11 @@ body:active {
     transition: width 0.3s ease-out, left 0.3s ease-out;
 }
 
+/* Keep active step (and its dragger) above adjacent canvases */
+.step-slide.is-current-step {
+    z-index: 5;
+}
+
 /* Canvas content area - fills the canvas */
 .canvas-content {
     position: relative;
