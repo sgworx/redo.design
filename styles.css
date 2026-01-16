@@ -271,7 +271,7 @@ body:active {
 @supports (-webkit-touch-callout: none) and (orientation: landscape) {
   html, body {
     height: -webkit-fill-available;
-    overflow-y: auto;
+    overflow-y: hidden;
     overflow-x: hidden;
   }
 
@@ -300,7 +300,7 @@ body:active {
 
 @media (min-width: 1024px) and (max-width: 1180px) and (orientation: landscape) {
   html, body {
-    overflow-y: auto;
+    overflow-y: hidden;
     overflow-x: hidden;
   }
 
