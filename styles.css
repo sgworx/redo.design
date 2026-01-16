@@ -306,7 +306,7 @@ body:active {
     background: #1900FF !important; /* Yellow when ready */
 }
 
-.step-slider.image-selected .canvas-slider .progress-circle {
+.step-slider.image-selected .step-slide[data-step="1"] .canvas-slider .progress-circle {
     border-color: #1900FF;
 }
 
