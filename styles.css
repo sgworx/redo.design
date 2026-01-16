@@ -937,9 +937,9 @@ body:active {
 }
 
 /* Only show header for the active step */
-.step-slide:not(.active) .step-2-header,
-.step-slide:not(.active) .step-3-header,
-.step-slide:not(.active) .step-4-header {
+.step-slide:not(.is-current-step) .step-2-header,
+.step-slide:not(.is-current-step) .step-3-header,
+.step-slide:not(.is-current-step) .step-4-header {
     visibility: hidden;
 }
 

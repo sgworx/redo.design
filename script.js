@@ -1226,6 +1226,20 @@ class Scene3D {
         if (!this.isUserSliding) {
             this.applyStepComposition();
         }
+
+        this.updateActiveSlideClasses();
+    }
+
+    updateActiveSlideClasses() {
+        const slides = document.querySelectorAll('.step-slide');
+        slides.forEach((slide) => {
+            const step = parseInt(slide.dataset.step);
+            if (step === this.currentStep) {
+                slide.classList.add('is-current-step');
+            } else {
+                slide.classList.remove('is-current-step');
+            }
+        });
     }
 
     applyStepComposition() {
