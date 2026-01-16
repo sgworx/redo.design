@@ -936,6 +936,13 @@ body:active {
     text-align: center; /* Match Step 1 alignment */
 }
 
+/* Only show header for the active step */
+.step-slide:not(.active) .step-2-header,
+.step-slide:not(.active) .step-3-header,
+.step-slide:not(.active) .step-4-header {
+    visibility: hidden;
+}
+
 /* Step 3 Options Container - scrollable, positioned below header */
 .step-3-options-container {
     display: flex;
