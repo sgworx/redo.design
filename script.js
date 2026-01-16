@@ -18,7 +18,7 @@ class Scene3D {
         this.pointerActive = false;
         this.hoveredModel = null;
         this.intersectTargets = [];
-        this.hoverScale = 1.2;
+        this.hoverScale = 0.8; // Hover zoom out by 20%
         this.defaultColorModel = null; // Keep 2.glb colored unless hovering another model
         
         // Slider smoothing state
