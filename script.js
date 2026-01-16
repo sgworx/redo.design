@@ -18,6 +18,7 @@ class Scene3D {
         this.pointerActive = false;
         this.hoveredModel = null;
         this.intersectTargets = [];
+        this.hoverScale = 1.2;
         
         // Slider smoothing state
         this.currentSliderValue = 1; // smoothed value
@@ -334,6 +335,7 @@ class Scene3D {
         if (!this.pointerActive || this.intersectTargets.length === 0) {
             if (this.hoveredModel) {
                 this.setModelToGrayscale(this.hoveredModel);
+                this.resetHoverScale(this.hoveredModel);
                 this.hoveredModel = null;
             }
             return;
@@ -356,12 +358,28 @@ class Scene3D {
         if (nextHovered !== this.hoveredModel) {
             if (this.hoveredModel) {
                 this.setModelToGrayscale(this.hoveredModel);
+                this.resetHoverScale(this.hoveredModel);
             }
             if (nextHovered) {
                 this.restoreModelColor(nextHovered);
+                this.applyHoverScale(nextHovered);
             }
             this.hoveredModel = nextHovered;
         }
+    }
+
+    applyHoverScale(model) {
+        if (!model) return;
+        if (!model.userData.hoverBaseScale) {
+            model.userData.hoverBaseScale = model.scale.clone();
+        }
+        model.scale.copy(model.userData.hoverBaseScale).multiplyScalar(this.hoverScale);
+    }
+
+    resetHoverScale(model) {
+        if (!model || !model.userData.hoverBaseScale) return;
+        model.scale.copy(model.userData.hoverBaseScale);
+        delete model.userData.hoverBaseScale;
     }
     
     separateModels(maxIterations = 40) {
