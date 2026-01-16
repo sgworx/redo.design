@@ -68,7 +68,7 @@ class Scene3D {
             0.1,
             1000
         );
-        this.camera.position.set(55, 42, 95); // Mirror to the left view
+        this.camera.position.set(45, 42, 95); // Slightly toward left
         this.camera.lookAt(0, 0, 0);
         
         // Create renderer
