@@ -1467,6 +1467,12 @@ body:active {
     flex-shrink: 0;
 }
 
+/* Motion shadow on Step 2 arrow circle when Step 2 is active */
+.step-slide.is-current-step .step-2-arrow-button {
+    box-shadow: 0 0 10px rgba(25, 0, 255, 0.25);
+    animation: grabber-shadow 1.6s ease-in-out infinite;
+}
+
 .step-2-arrow-button:hover {
     background: #f5f5f5;
 }
