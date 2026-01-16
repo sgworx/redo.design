@@ -873,14 +873,14 @@ body:active {
     width: 53px;
     height: 53px;
     border-radius: 50%;
-    border: 2px solid #3333ff; /* Blue border */
+    border: 2px solid #000000;
     background: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 22px;
     font-weight: 600;
-    color: #3333ff; /* Blue number */
+    color: #000000;
 }
 
 .step-3-title {
@@ -917,7 +917,7 @@ body:active {
     width: 53px;
     height: 53px;
     border-radius: 50%;
-    border: 2px solid #1900FF; /* Yellow border */
+    border: 2px solid #000000;
     background: #ffffff;
     display: flex;
     align-items: center;
@@ -1106,7 +1106,7 @@ body:active {
     width: 53px;
     height: 53px;
     border-radius: 50%;
-    border: 2px solid #1900FF; /* Yellow border */
+    border: 2px solid #000000;
     background: #ffffff;
     display: flex;
     align-items: center;
@@ -1114,6 +1114,12 @@ body:active {
     font-size: 22px;
     font-weight: 600;
     color: #000;
+}
+
+.step-slide.active .step-2-circle,
+.step-slide.active .step-3-circle,
+.step-slide.active .step-4-circle {
+    border-color: #1900FF;
 }
 
 .step-2-title {
