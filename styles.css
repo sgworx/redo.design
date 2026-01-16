@@ -169,19 +169,8 @@ body:active {
     background: #ffffff;
     border: 3px solid #1900FF;
     position: relative;
-}
-
-.nav-step.active .step-circle::after {
-    content: '';
-    position: absolute;
-    inset: -6px;
-    border-radius: 50%;
-    background: rgba(25, 0, 255, 0.25);
-    filter: blur(8px);
-    opacity: 0;
-    transform: scale(0.9);
-    animation: grabber-pulse 1.6s ease-in-out infinite;
-    pointer-events: none;
+    box-shadow: 0 0 6px rgba(25, 0, 255, 0.15);
+    animation: grabber-shadow 1.6s ease-in-out infinite;
 }
 
 .nav-step:hover .step-circle {
@@ -382,31 +371,20 @@ body:active {
 }
 
 /* Motion shadow only on the active (blue) grabber */
-.step-slider.image-selected .step-slide[data-step="1"] .slider-right .progress-circle::after {
-    content: '';
-    position: absolute;
-    inset: -6px;
-    border-radius: 50%;
-    background: rgba(25, 0, 255, 0.25);
-    filter: blur(8px);
-    opacity: 0;
-    transform: scale(0.9);
-    animation: grabber-pulse 1.6s ease-in-out infinite;
-    pointer-events: none;
+.step-slider.image-selected .step-slide[data-step="1"] .slider-right .progress-circle {
+    box-shadow: 0 0 6px rgba(25, 0, 255, 0.15);
+    animation: grabber-shadow 1.6s ease-in-out infinite;
 }
 
-@keyframes grabber-pulse {
+@keyframes grabber-shadow {
     0% {
-        opacity: 0.1;
-        transform: scale(0.9);
+        box-shadow: 0 0 6px rgba(25, 0, 255, 0.15);
     }
     50% {
-        opacity: 0.4;
-        transform: scale(1.05);
+        box-shadow: 0 0 16px rgba(25, 0, 255, 0.35);
     }
     100% {
-        opacity: 0.1;
-        transform: scale(0.9);
+        box-shadow: 0 0 6px rgba(25, 0, 255, 0.15);
     }
 }
 
@@ -432,17 +410,9 @@ body:active {
     border-color: #1900FF;
 }
 
-#step-slider.design-selected .step-slide[data-step="2"] .slider-right .progress-circle::after {
-    content: '';
-    position: absolute;
-    inset: -6px;
-    border-radius: 50%;
-    background: rgba(25, 0, 255, 0.25);
-    filter: blur(8px);
-    opacity: 0;
-    transform: scale(0.9);
-    animation: grabber-pulse 1.6s ease-in-out infinite;
-    pointer-events: none;
+#step-slider.design-selected .step-slide[data-step="2"] .slider-right .progress-circle {
+    box-shadow: 0 0 6px rgba(25, 0, 255, 0.15);
+    animation: grabber-shadow 1.6s ease-in-out infinite;
 }
 
 /* Progress circle inside canvas slider */
