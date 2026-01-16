@@ -1261,25 +1261,18 @@ body:active {
 }
 
 .arrow-right-small {
-    width: 20px;
-    height: 3px;
-    background: #000;
-    border-radius: 2px;
-    position: relative;
-    margin-left: 4px;
+    width: 18px;
+    height: 18px;
+    background-image: url('Assets/slider.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 70%;
+    display: block;
+    transform: rotate(90deg);
 }
 
 .arrow-right-small::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    right: -8px;
-    transform: translateY(-50%);
-    width: 0;
-    height: 0;
-    border-top: 5px solid transparent;
-    border-bottom: 5px solid transparent;
-    border-left: 7px solid #000;
+    content: none;
 }
 
 /* Step 2 Options - fixed size */
