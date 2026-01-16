@@ -360,7 +360,7 @@ body:active {
 .arrow-left {
     width: 22px;
     height: 22px;
-    background-image: url('Assets/slider.png');
+    background-image: url('Assets/arrow.png');
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
@@ -1379,7 +1379,7 @@ body:active {
 .arrow-right-small {
     width: 22px;
     height: 22px;
-    background-image: url('Assets/slider.png');
+    background-image: url('Assets/arrow.png');
     background-repeat: no-repeat;
     background-position: center;
     background-size: 70%;
