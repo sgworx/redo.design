@@ -291,6 +291,11 @@ body:active {
     pointer-events: none;
 }
 
+/* Avoid double line overlap at shared boundaries */
+.slider-left .progress-line {
+    display: none;
+}
+
 /* Progress line turns yellow when image is selected (ready for next step) */
 .step-slider.image-selected .canvas-slider .progress-line {
     background: #1900FF !important; /* Yellow when ready */
