@@ -438,8 +438,8 @@ body:active {
 /* Arrow indicators */
 .arrow-right,
 .arrow-left {
-    width: 22px;
-    height: 22px;
+    width: 26px;
+    height: 26px;
     background-image: url('Assets/arrow.png');
     background-repeat: no-repeat;
     background-position: center;
@@ -547,7 +547,7 @@ body:active {
     position: absolute;
     top: 0;
     box-sizing: border-box;
-    overflow: hidden; /* Clip content beyond canvas boundaries - slider acts as mask */
+    overflow: visible; /* Allow dragger circle to straddle both canvases */
     transition: width 0.3s ease-out, left 0.3s ease-out;
 }
 
