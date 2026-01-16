@@ -307,13 +307,9 @@ body:active {
     background: #000000 !important;
 }
 
-/* After option chosen: right dragger blurred, left stays black */
-#step-slider.design-selected .step-slide[data-step="2"] .slider-right {
-    filter: blur(2px);
-}
-
+/* After option chosen: right dragger turns blue, left stays black */
 #step-slider.design-selected .step-slide[data-step="2"] .slider-right .progress-line {
-    background: #000000 !important;
+    background: #1900FF !important;
 }
 
 /* Progress circle inside canvas slider */
