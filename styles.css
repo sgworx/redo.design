@@ -193,7 +193,7 @@ body:active {
 }
 
 /* iPad Air 11" landscape (1180x820) only */
-@media (max-width: 1180px) and (orientation: landscape) {
+@media (min-width: 1025px) and (max-width: 1180px) and (orientation: landscape) {
     /* Keep steps usable without changing desktop layout */
     .slider-container {
         overflow: visible; /* allow handles to remain fully visible */
@@ -265,6 +265,24 @@ body:active {
         max-height: calc(100vh - 220px);
         overflow-y: auto;
         padding-right: clamp(10px, 2vw, 30px);
+    }
+}
+
+@supports (-webkit-touch-callout: none) and (orientation: landscape) {
+    html, body {
+        height: -webkit-fill-available;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+    #container {
+        height: -webkit-fill-available;
+    }
+    .canvas-content {
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+    .step-slide {
+        max-height: -webkit-fill-available;
     }
 }
 
