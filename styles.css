@@ -653,13 +653,11 @@ body:active {
     pointer-events: none;
 }
 
-.drag-letter {
+.drag-arc-text {
     fill: #666666;
     font-size: 15px;
     letter-spacing: 1.5px;
     font-family: inherit;
-    dominant-baseline: middle;
-    text-anchor: middle;
 }
 
 .canvas-slider .progress-circle:active {
