@@ -655,8 +655,8 @@ body:active {
 
 .drag-letter {
     fill: #666666;
-    font-size: 15px;
-    letter-spacing: 1.5px;
+    font-size: 12px;
+    letter-spacing: 1.2px;
     font-family: inherit;
     dominant-baseline: middle;
     text-anchor: middle;
