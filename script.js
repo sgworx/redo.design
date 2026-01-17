@@ -242,7 +242,7 @@ class Scene3D {
         const box = new THREE.Box3().setFromObject(model);
         const size = box.getSize(new THREE.Vector3());
         const maxDim = Math.max(size.x, size.y, size.z);
-        const scale = (10.0 / maxDim) * 1.44; // 20% larger again
+        const scale = (10.0 / maxDim) * 1.872; // 30% larger
         model.scale.setScalar(scale);
 
         const adjustment = this.modelAdjustments && this.modelAdjustments[model.userData.modelIndex];
