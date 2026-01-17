@@ -670,6 +670,9 @@ class Scene3D {
 
         // Sync Step 2 dragger state
         this.updateStep2Draggers();
+
+        // Ensure active step class is applied for proper z-index
+        this.updateActiveSlideClasses();
         
         // Check if an image is already selected (from HTML default)
         const selectedThumbnail = document.querySelector('.image-thumbnail.selected');
