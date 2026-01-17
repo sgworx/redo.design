@@ -662,6 +662,10 @@ body:active {
     text-anchor: middle;
 }
 
+.drag-letter textPath {
+    letter-spacing: 1.5px;
+}
+
 .canvas-slider .progress-circle:active {
     cursor: grabbing;
 }
