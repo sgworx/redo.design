@@ -139,7 +139,7 @@ class Scene3D {
                 console.log(`[${i}] Model loaded, adding to scene`);
                 this.scene.add(model);
 
-                model.rotation.y += THREE.MathUtils.degToRad(-30);
+                model.rotation.y += THREE.MathUtils.degToRad(-60);
                 
                 console.log(`[${i}] Position before positioning:`, model.position.toArray());
                 
