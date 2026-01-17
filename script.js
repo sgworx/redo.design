@@ -138,6 +138,8 @@ class Scene3D {
                 model.userData.modelIndex = i;
                 console.log(`[${i}] Model loaded, adding to scene`);
                 this.scene.add(model);
+
+                model.rotation.y += THREE.MathUtils.degToRad(-30);
                 
                 console.log(`[${i}] Position before positioning:`, model.position.toArray());
                 
@@ -240,7 +242,7 @@ class Scene3D {
         const box = new THREE.Box3().setFromObject(model);
         const size = box.getSize(new THREE.Vector3());
         const maxDim = Math.max(size.x, size.y, size.z);
-        const scale = (10.0 / maxDim) * 1.2; // 20% larger
+        const scale = (10.0 / maxDim) * 1.44; // 20% larger again
         model.scale.setScalar(scale);
 
         const adjustment = this.modelAdjustments && this.modelAdjustments[model.userData.modelIndex];
