@@ -644,8 +644,8 @@ body:active {
 
 .drag-label {
     position: absolute;
-    width: 72px;
-    height: 72px;
+    width: 90px;
+    height: 90px;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -654,8 +654,8 @@ body:active {
 }
 
 .drag-letter {
-    fill: #A0A0A0;
-    font-size: 9px;
+    fill: #666666;
+    font-size: 10px;
     letter-spacing: 1px;
     font-family: inherit;
     dominant-baseline: middle;
