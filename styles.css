@@ -514,7 +514,7 @@ body:active {
     position: absolute;
     top: 0;
     height: 100%;
-    z-index: 1000;
+    z-index: 4000; /* Ensure dragger renders above adjacent canvases */
     pointer-events: none; /* Let handle receive events */
     overflow: visible;
 }
