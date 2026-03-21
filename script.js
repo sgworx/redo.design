@@ -1,5 +1,5 @@
 /**
- * Homepage: multiple GLBs from assets.redo.design, normalized (max axis 2), laid out on X from bbox widths + gap, row centered.
+ * Homepage: multiple GLBs from assets.redo.design, normalized (max axis 2), laid out on a shallow arc (bbox widths + gap, centered on x=0).
  * Cache bust in loadModel().
  */
 const MODEL_ASSETS_BASE = 'https://assets.redo.design/';
@@ -9,20 +9,44 @@ const MODEL_COUNT = 5;
 /** After load, largest bbox dimension is scaled to this (world units) */
 const targetMaxDimension = 2.0;
 
-/** World units between adjacent models (edge-to-edge along X) */
+/** Minimum chord gap between adjacent pivot centers (arc spacing baseline) */
 const MODEL_ROW_GAP = 0.35;
+
+/** Arc: circle radius in XZ (tune for composition); may grow slightly to satisfy spacing / max span */
+const ARC_RADIUS = 5.0;
+/** Multiply required chord (width halves + gap) to keep motion / AABB error from clipping */
+const ARC_SAFETY_MULT = 1.18;
+/** If equal angular steps exceed this total span, radius is increased (shallower arc) */
+const ARC_MAX_HALF_SPAN_RAD = 0.72;
+/** 0 = fully face outward from arc center; 1 = same yaw as center chair (silhouette blend) */
+const ARC_YAW_INWARD_BLEND = 0.14;
 
 const VIEW_CAMERA_FOV = 36;
 /** Baseline Z distance; widened FOV + multi-model boost keep the row framed with breathing room */
 const VIEW_CAMERA_BASE_Z = 6.0;
-const VIEW_CAMERA_POSITION = new THREE.Vector3(0, 0.9, VIEW_CAMERA_BASE_Z);
-const VIEW_CAMERA_LOOK_AT = new THREE.Vector3(0, 0.7, 0);
+/** Slightly lower eye line vs look-at for a neutral premium product view (less low-angle). */
+const VIEW_CAMERA_POSITION = new THREE.Vector3(0, 0.81, VIEW_CAMERA_BASE_Z);
+const VIEW_CAMERA_LOOK_AT = new THREE.Vector3(0, 0.57, 0);
 /** Extra Z per half-row-width when more than one model: z = baseZ + (rowWidth/2) * this */
 const VIEW_CAMERA_ROW_Z_SCALE = 0.6;
 
 /** BAM-style presentation (pivot); ambient motion applied on top in animate() */
 const HERO_PIVOT_ROT_X = -0.08;
 const HERO_PIVOT_ROT_Y_BASE = 0.55;
+/** Lower entire arc in world Y (eye-level framing with camera tweaks) */
+const HERO_ARRANGEMENT_Y_OFFSET = -0.13;
+/** Slow continuous yaw on each pivot (rad/s); same for all chairs */
+const HERO_SPIN_RAD_PER_SEC = 0.2;
+/** Curated initial Y phase per chair (rad); yaw = baseYaw + spinStartRad + elapsed * HERO_SPIN_RAD_PER_SEC */
+const HERO_SPIN_START_OFFSETS = [-0.8, -0.2, 0.5, 1.1, 1.8];
+/** Alternating depth on Z after arc placement: even index → −mag, odd → +mag (layered from camera at +Z). X unchanged. */
+const HERO_DEPTH_STAGGER_Z = 0.55;
+
+function heroSpinStartRadForIndex(index) {
+    const arr = HERO_SPIN_START_OFFSETS;
+    if (!arr.length) return 0;
+    return arr[index % arr.length];
+}
 
 function buildModelUrls() {
     const urls = [];
@@ -260,43 +284,92 @@ class Scene3D {
         );
     }
 
-    layoutModelRowFromWidths(pivots, widths) {
+    /**
+     * Place pivots on a shallow arc in XZ, center C = (0,0,-R), point at θ=0 is world origin.
+     * Equal angular steps; step size from max chord needed between neighbors (width + gap) × safety.
+     * Each chair yaws to face outward from C, blended slightly toward the midline for readability.
+     * After arc XZ, alternating ±HERO_DEPTH_STAGGER_Z on Z only (horizontal spacing / chord logic unchanged).
+     * @returns {{ spanX: number }} horizontal extent for camera framing (approx 2R sin(halfSpan))
+     */
+    layoutModelArcFromWidths(pivots, widths) {
         const n = pivots.length;
-        if (n === 0) return 0;
+        if (n === 0) return { spanX: 0 };
 
-        const centersX = [];
-        let prevHalf = 0;
-        for (let i = 0; i < n; i++) {
-            const w = widths[i];
-            const half = w * 0.5;
-            if (i === 0) {
-                centersX.push(half);
-            } else {
-                centersX.push(centersX[i - 1] + prevHalf + MODEL_ROW_GAP + half);
-            }
-            prevHalf = half;
-        }
-
-        const rowWidth = centersX[n - 1] + widths[n - 1] * 0.5;
-        const xShift = -rowWidth * 0.5;
-
-        console.log('[Row layout] widths:', widths.map((w) => w.toFixed(4)), 'gap:', MODEL_ROW_GAP, 'rowWidth:', rowWidth.toFixed(4), 'xShift:', xShift.toFixed(4));
-
-        for (let i = 0; i < n; i++) {
-            const pivot = pivots[i];
-            const x = centersX[i] + xShift;
-            pivot.position.set(x, 0, 0);
-            pivot.userData.baseX = x;
+        if (n === 1) {
+            const pivot = pivots[0];
+            const y0 = HERO_ARRANGEMENT_Y_OFFSET;
+            const spin0 = heroSpinStartRadForIndex(0);
+            pivot.position.set(0, y0, 0);
+            pivot.userData.baseX = 0;
+            pivot.userData.baseY = y0;
             pivot.userData.baseZ = 0;
+            pivot.userData.arcTheta = 0;
+            pivot.userData.baseYaw = HERO_PIVOT_ROT_Y_BASE;
+            pivot.userData.spinStartRad = spin0;
+            pivot.rotation.set(HERO_PIVOT_ROT_X, HERO_PIVOT_ROT_Y_BASE + spin0, 0);
+            return { spanX: Math.max(0, widths[0] || 0) };
         }
 
-        return rowWidth;
+        let R = ARC_RADIUS;
+        for (let i = 0; i < n - 1; i++) {
+            const sep =
+                (widths[i] * 0.5 + widths[i + 1] * 0.5 + MODEL_ROW_GAP) * ARC_SAFETY_MULT;
+            R = Math.max(R, sep * 0.5001);
+        }
+
+        let deltaTheta = 0;
+        for (let iter = 0; iter < 28; iter++) {
+            deltaTheta = 0;
+            for (let i = 0; i < n - 1; i++) {
+                const sep =
+                    (widths[i] * 0.5 + widths[i + 1] * 0.5 + MODEL_ROW_GAP) * ARC_SAFETY_MULT;
+                const ratio = sep / (2 * R);
+                const step = 2 * Math.asin(Math.min(1, ratio));
+                deltaTheta = Math.max(deltaTheta, step);
+            }
+            const totalSpan = (n - 1) * deltaTheta;
+            if (totalSpan <= 2 * ARC_MAX_HALF_SPAN_RAD + 1e-7) break;
+            R *= 1.055;
+        }
+
+        const totalSpan = (n - 1) * deltaTheta;
+        const cz = -R;
+
+        const y0 = HERO_ARRANGEMENT_Y_OFFSET;
+        for (let k = 0; k < n; k++) {
+            const theta = -totalSpan * 0.5 + k * deltaTheta;
+            const px = R * Math.sin(theta);
+            const pzArc = cz + R * Math.cos(theta);
+            const zStagger = k % 2 === 0 ? -HERO_DEPTH_STAGGER_Z : HERO_DEPTH_STAGGER_Z;
+            const pz = pzArc + zStagger;
+            const yaw = HERO_PIVOT_ROT_Y_BASE + theta * (1 - ARC_YAW_INWARD_BLEND);
+            const spin0 = heroSpinStartRadForIndex(k);
+            const pivot = pivots[k];
+            pivot.position.set(px, y0, pz);
+            pivot.userData.baseX = px;
+            pivot.userData.baseY = y0;
+            pivot.userData.baseZ = pz;
+            pivot.userData.arcTheta = theta;
+            pivot.userData.baseYaw = yaw;
+            pivot.userData.spinStartRad = spin0;
+            pivot.rotation.set(HERO_PIVOT_ROT_X, yaw + spin0, 0);
+        }
+
+        const spanX = 2 * R * Math.sin(totalSpan * 0.5);
+        console.log('[Arc layout]', {
+            n,
+            R: R.toFixed(3),
+            deltaTheta: deltaTheta.toFixed(4),
+            totalSpanDeg: ((totalSpan * 180) / Math.PI).toFixed(1),
+            spanX: spanX.toFixed(4)
+        });
+        return { spanX };
     }
 
     /** Sets FOV, X/Y position, and Z (with optional multi-model pullback). lookAt + orbit target stay at VIEW_CAMERA_LOOK_AT. */
-    applyHeroViewCamera(rowWidth, modelCount) {
+    applyHeroViewCamera(horizontalSpan, modelCount) {
         if (!this.camera) return;
-        const spacingFactor = rowWidth * 0.5;
+        const spacingFactor = horizontalSpan * 0.5;
         let z = VIEW_CAMERA_BASE_Z;
         if (modelCount > 1) {
             z += spacingFactor * VIEW_CAMERA_ROW_Z_SCALE;
@@ -322,7 +395,7 @@ class Scene3D {
             if (typeof loader.setCrossOrigin === 'function') {
                 loader.setCrossOrigin('anonymous');
             }
-            console.log(`Loading ${this.modelFiles.length} GLBs for bbox-spaced row`);
+            console.log(`Loading ${this.modelFiles.length} GLBs for bbox-spaced arc`);
 
             const widths = [];
             const pivots = [];
@@ -350,7 +423,7 @@ class Scene3D {
                     pivot.rotation.set(HERO_PIVOT_ROT_X, HERO_PIVOT_ROT_Y_BASE, 0);
                     const widthX = this.getPivotWorldWidthX(pivot);
                     widths.push(widthX);
-                    console.log(`[Row] model ${i} world X width (AABB):`, widthX.toFixed(4));
+                    console.log(`[Arc] model ${i} world X width (AABB):`, widthX.toFixed(4));
 
                     this.enableShadows(model);
                     try {
@@ -376,12 +449,13 @@ class Scene3D {
                 }
             }
 
-            let rowWidth = 0;
+            let layoutSpanX = 0;
             if (pivots.length > 0) {
-                rowWidth = this.layoutModelRowFromWidths(pivots, widths);
+                const { spanX } = this.layoutModelArcFromWidths(pivots, widths);
+                layoutSpanX = spanX;
             }
 
-            this.applyHeroViewCamera(rowWidth, pivots.length);
+            this.applyHeroViewCamera(layoutSpanX, pivots.length);
 
             console.log(`Scene models loaded: ${this.models.length}`);
         } catch (e) {
@@ -667,10 +741,15 @@ class Scene3D {
                 model.scale.copy(original.scale);
                 pivot.position.set(
                     pivot.userData.baseX ?? 0,
-                    0,
+                    pivot.userData.baseY ?? HERO_ARRANGEMENT_Y_OFFSET,
                     pivot.userData.baseZ ?? 0
                 );
-                pivot.rotation.set(HERO_PIVOT_ROT_X, HERO_PIVOT_ROT_Y_BASE, 0);
+                const spin0 = pivot.userData.spinStartRad ?? 0;
+                pivot.rotation.set(
+                    HERO_PIVOT_ROT_X,
+                    (pivot.userData.baseYaw ?? HERO_PIVOT_ROT_Y_BASE) + spin0,
+                    0
+                );
             }
         });
     }
@@ -1763,11 +1842,14 @@ class Scene3D {
             const elapsed = this.clock.getElapsedTime();
 
             this.modelPivots.forEach((pivot) => {
+                const baseYaw = pivot.userData.baseYaw ?? HERO_PIVOT_ROT_Y_BASE;
+                const spin0 = pivot.userData.spinStartRad ?? 0;
+                const baseY = pivot.userData.baseY ?? HERO_ARRANGEMENT_Y_OFFSET;
                 pivot.rotation.x = HERO_PIVOT_ROT_X;
-                pivot.rotation.y = HERO_PIVOT_ROT_Y_BASE + Math.sin(elapsed * 0.35) * 0.04;
+                pivot.rotation.y = baseYaw + spin0 + elapsed * HERO_SPIN_RAD_PER_SEC;
                 pivot.position.set(
                     pivot.userData.baseX ?? 0,
-                    Math.sin(elapsed * 0.8) * 0.03,
+                    baseY + Math.sin(elapsed * 0.8) * 0.03,
                     pivot.userData.baseZ ?? 0
                 );
                 pivot.rotation.z = 0;
