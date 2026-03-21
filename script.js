@@ -275,8 +275,9 @@ class Scene3D {
                 fn(arg);
             };
 
+            const cacheBustUrl = url.includes('?') ? `${url}&v=${Date.now()}` : `${url}?v=${Date.now()}`;
             loader.load(
-                url,
+                cacheBustUrl,
                 (gltf) => finish(resolve, gltf),
                 (progress) => {
                     if (progress && progress.total) {
