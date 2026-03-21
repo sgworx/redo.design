@@ -119,6 +119,15 @@ class Scene3D {
         
         this.modelFiles = R2_MODEL_URLS;
 
+        /** Homepage intro handoff: GLBs preload while copy runs; one dismiss when both are ready */
+        this._introRemoved = false;
+        this._modelsReadyForHandoff = false;
+        this._mainRevealDone = false;
+        this._introExitStarted = false;
+        this._introExitCompleted = false;
+        this._introOutTimer = null;
+        this._boundSkipIntro = null;
+
         this.init();
         if (this.renderer && this.camera && this.controls) {
             this.setupEventListeners();
@@ -165,15 +174,19 @@ class Scene3D {
             this.setupLighting();
 
             this._loadOverlayDismissed = false;
+            this.startHomeIntro();
             this.loadModels().catch((err) => {
                 console.error('loadModels rejected:', err);
-                this.dismissLoadingOverlay(this.models.length);
+                this._modelsReadyForHandoff = true;
+                this._tryRevealAfterIntro();
             });
 
             this.animate();
         } catch (err) {
             console.error('Scene3D init failed:', err);
             this.isLoading = false;
+            document.getElementById('home-intro')?.classList.add('home-intro--gone', 'home-intro--exiting');
+            this._introRemoved = true;
             document.getElementById('loading-screen')?.classList.add('hidden');
             const notice = document.getElementById('model-load-notice');
             if (notice) {
@@ -183,6 +196,67 @@ class Scene3D {
                 notice.classList.remove('hidden');
             }
         }
+    }
+
+    startHomeIntro() {
+        const root = document.getElementById('home-intro');
+        if (!root) {
+            this._introRemoved = true;
+            this._tryRevealAfterIntro();
+            return;
+        }
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduce) {
+            root.classList.add('home-intro--reduce-motion');
+        }
+        this._boundSkipIntro = () => this.skipHomeIntro();
+        root.addEventListener('click', this._boundSkipIntro);
+        root.addEventListener('wheel', this._boundSkipIntro, { passive: true });
+        const holdMs = reduce ? 450 : 2450;
+        this._introOutTimer = setTimeout(() => this._beginIntroExit(false), holdMs);
+    }
+
+    skipHomeIntro() {
+        if (this._introExitStarted) return;
+        this._beginIntroExit(true);
+    }
+
+    _beginIntroExit(isSkip) {
+        if (this._introExitStarted) return;
+        this._introExitStarted = true;
+        if (this._introOutTimer) {
+            clearTimeout(this._introOutTimer);
+            this._introOutTimer = null;
+        }
+        const root = document.getElementById('home-intro');
+        root?.classList.add('home-intro--exiting');
+        const ms = isSkip ? 220 : 480;
+        setTimeout(() => this._finalizeIntroLayer(), ms);
+    }
+
+    _finalizeIntroLayer() {
+        if (this._introExitCompleted) return;
+        this._introExitCompleted = true;
+        const root = document.getElementById('home-intro');
+        if (root && this._boundSkipIntro) {
+            root.removeEventListener('click', this._boundSkipIntro);
+            root.removeEventListener('wheel', this._boundSkipIntro);
+            this._boundSkipIntro = null;
+        }
+        root?.classList.add('home-intro--gone');
+        root?.setAttribute('aria-hidden', 'true');
+        this._introRemoved = true;
+        if (!this._modelsReadyForHandoff) {
+            document.getElementById('loading-screen')?.classList.remove('hidden');
+        }
+        this._tryRevealAfterIntro();
+    }
+
+    _tryRevealAfterIntro() {
+        if (this._mainRevealDone) return;
+        if (!this._introRemoved || !this._modelsReadyForHandoff) return;
+        this._mainRevealDone = true;
+        this.dismissLoadingOverlay(this.models.length);
     }
     
     setupLighting() {
@@ -608,7 +682,8 @@ class Scene3D {
         } catch (e) {
             console.error('loadModels fatal:', e);
         } finally {
-            this.dismissLoadingOverlay(this.models.length);
+            this._modelsReadyForHandoff = true;
+            this._tryRevealAfterIntro();
         }
     }
     

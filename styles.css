@@ -1,5 +1,16 @@
 :root {
     --font-site: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    /* Motion — consistent, premium easing (stack: vanilla CSS + rAF + Tween where used in JS) */
+    --ease-out-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-in-out-smooth: cubic-bezier(0.45, 0, 0.55, 1);
+    --ease-soft: cubic-bezier(0.33, 1, 0.68, 1);
+    --duration-fast: 0.22s;
+    --duration-ui: 0.36s;
+    --duration-slow: 0.55s;
+}
+
+html {
+    scroll-behavior: smooth;
 }
 
 * {
@@ -19,10 +30,137 @@ body:active {
     cursor: grabbing;
 }
 
+/* Focus — smooth outline, no layout jump */
+:focus {
+    outline: none;
+}
+
+:focus-visible {
+    outline: 2px solid #1900ff;
+    outline-offset: 3px;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+    transition:
+        color var(--duration-fast) var(--ease-out-smooth),
+        background-color var(--duration-fast) var(--ease-out-smooth),
+        border-color var(--duration-fast) var(--ease-out-smooth),
+        box-shadow var(--duration-ui) var(--ease-out-smooth),
+        transform var(--duration-fast) var(--ease-out-smooth),
+        opacity var(--duration-fast) var(--ease-out-smooth);
+}
+
 #container {
     width: 100vw;
     height: 100vh;
     position: relative;
+}
+
+/* —— Homepage intro: motion typography → 3D handoff —— */
+.home-intro {
+    position: fixed;
+    inset: 0;
+    z-index: 4500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff;
+    opacity: 1;
+    transition: opacity 0.48s var(--ease-in-out-smooth, cubic-bezier(0.45, 0, 0.55, 1));
+    padding: clamp(24px, 5vw, 56px);
+    text-align: center;
+}
+
+.home-intro--exiting {
+    opacity: 0;
+}
+
+.home-intro--gone {
+    visibility: hidden;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.home-intro__inner {
+    max-width: 40rem;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.home-intro__line {
+    font-size: clamp(1.05rem, 2.4vw, 1.32rem);
+    line-height: 1.48;
+    color: #111;
+    margin: 0 0 1rem;
+    font-weight: 400;
+    opacity: 0;
+    transform: translate3d(0, 16px, 0);
+    animation: homeIntroLineIn 0.68s var(--ease-out-smooth, cubic-bezier(0.22, 1, 0.36, 1)) forwards;
+}
+
+.home-intro__line:nth-child(1) {
+    animation-delay: 0.1s;
+}
+
+.home-intro__line:nth-child(2) {
+    animation-delay: 0.42s;
+}
+
+.home-intro__line:nth-child(3) {
+    animation-delay: 0.78s;
+}
+
+.home-intro__line--emphasis {
+    font-weight: 600;
+    margin-bottom: 0;
+}
+
+@keyframes homeIntroLineIn {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 16px, 0);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+.home-intro__hint {
+    margin-top: 2.25rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(0, 0, 0, 0.32);
+    opacity: 0;
+    animation: homeIntroHintIn 0.55s var(--ease-out-smooth, cubic-bezier(0.22, 1, 0.36, 1)) 1.35s forwards;
+}
+
+@keyframes homeIntroHintIn {
+    to {
+        opacity: 1;
+    }
+}
+
+.home-intro--reduce-motion .home-intro__line {
+    animation: none;
+    opacity: 1;
+    transform: none;
+}
+
+.home-intro--reduce-motion .home-intro__hint {
+    animation: none;
+    opacity: 0.4;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .home-intro:not(.home-intro--reduce-motion) {
+        transition-duration: 0.12s;
+    }
 }
 
 /* Loading screen */
@@ -37,7 +175,7 @@ body:active {
     justify-content: center;
     align-items: center;
     z-index: 2000;
-    transition: opacity 0.5s ease;
+    transition: opacity var(--duration-slow) var(--ease-out-smooth);
 }
 
 #loading-screen.hidden {
@@ -68,10 +206,27 @@ body:active {
     text-align: center;
     background: #fff3cd;
     border-top: 1px solid #e6d89c;
+    transition:
+        opacity var(--duration-ui) var(--ease-out-smooth),
+        transform var(--duration-ui) var(--ease-out-smooth),
+        visibility 0s linear var(--duration-ui);
 }
 
 .model-load-notice.hidden {
-    display: none;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(8px);
+    pointer-events: none;
+}
+
+.model-load-notice:not(.hidden) {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    transition:
+        opacity var(--duration-ui) var(--ease-out-smooth),
+        transform var(--duration-ui) var(--ease-out-smooth),
+        visibility 0s linear 0s;
 }
 
 @keyframes spin {
@@ -359,7 +514,9 @@ body:active {
     align-items: center;
     cursor: pointer;
     pointer-events: none;
-    transition: all 0.15s ease;
+    transition:
+        transform var(--duration-fast) var(--ease-out-smooth),
+        opacity var(--duration-fast) var(--ease-out-smooth);
     position: relative;
 }
 
@@ -376,7 +533,11 @@ body:active {
     align-items: center;
     justify-content: center;
     margin-bottom: 8px;
-    transition: all 0.15s ease;
+    transition:
+        background-color var(--duration-ui) var(--ease-out-smooth),
+        border-color var(--duration-ui) var(--ease-out-smooth),
+        box-shadow var(--duration-ui) var(--ease-in-out-smooth),
+        transform var(--duration-ui) var(--ease-out-smooth);
     border: 3px solid #000;
 }
 
@@ -457,7 +618,7 @@ body:active {
     z-index: 3000;
     pointer-events: none;
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity var(--duration-ui) var(--ease-out-smooth);
 }
 
 .top-logo.visible {
@@ -489,7 +650,10 @@ body:active {
     height: 100vh;
     z-index: 2000;
     opacity: 1;
-    transition: opacity 0.3s ease;
+    transition:
+        opacity var(--duration-slow) var(--ease-out-smooth),
+        visibility 0s linear var(--duration-slow);
+    visibility: visible;
 }
 
 /* Canvas areas with different backgrounds */
@@ -502,7 +666,7 @@ body:active {
 	height: 100%;
 	background: var(--left-canvas-bg, #ffffff); /* Step 1 canvas - white by default */
 	z-index: -1;
-	transition: background 0.6s ease-out;
+	transition: background var(--duration-slow) var(--ease-in-out-smooth);
 }
 
 .step-slider::after {
@@ -514,7 +678,7 @@ body:active {
 	height: 100%;
 	background: var(--right-canvas-bg, #000000); /* Step 2 canvas - black by default */
 	z-index: -1;
-	transition: background 0.6s ease-out;
+	transition: background var(--duration-slow) var(--ease-in-out-smooth);
 }
 
 /* Next step badge (white circle outline with white number) */
@@ -568,7 +732,7 @@ body:active {
     width: 2px;
     height: 100%;
     background: #000000 !important; /* Black by default - indicates not ready */
-    transition: background 0.3s ease;
+    transition: background var(--duration-ui) var(--ease-in-out-smooth);
     pointer-events: none;
 }
 
@@ -656,7 +820,10 @@ body:active {
     top: 50%;
     margin-top: -28px;
     transform: none;
-    transition: none;
+    transition:
+        border-color var(--duration-ui) var(--ease-out-smooth),
+        box-shadow var(--duration-ui) var(--ease-in-out-smooth),
+        background-color var(--duration-fast) var(--ease-out-smooth);
     z-index: 1001;
     cursor: grab;
     display: flex;
@@ -808,6 +975,17 @@ body:active {
 .step-slider.hidden {
     opacity: 0;
     pointer-events: none;
+    visibility: hidden;
+    transition:
+        opacity var(--duration-slow) var(--ease-out-smooth),
+        visibility 0s linear var(--duration-slow);
+}
+
+.step-slider:not(.hidden) {
+    visibility: visible;
+    transition:
+        opacity var(--duration-slow) var(--ease-out-smooth),
+        visibility 0s linear 0s;
 }
 
 .slider-container {
@@ -823,7 +1001,10 @@ body:active {
     top: 0;
     box-sizing: border-box;
     overflow: visible; /* Allow dragger circle to straddle both canvases */
-    transition: width 0.3s ease-out, left 0.3s ease-out;
+    transition:
+        width var(--duration-ui) var(--ease-out-smooth),
+        left var(--duration-ui) var(--ease-out-smooth),
+        background-color var(--duration-slow) var(--ease-in-out-smooth);
     z-index: 0;
 }
 
@@ -970,11 +1151,20 @@ body:active {
     justify-content: center;
     font-size: 18px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition:
+        background-color var(--duration-fast) var(--ease-out-smooth),
+        border-color var(--duration-fast) var(--ease-out-smooth),
+        transform var(--duration-fast) var(--ease-out-smooth),
+        box-shadow var(--duration-ui) var(--ease-out-smooth);
 }
 
 .arrow-button:hover {
     background: #f0f0f0;
+    transform: scale(1.04);
+}
+
+.arrow-button:active {
+    transform: scale(0.98);
 }
 
 /* Upload area - fixed size, centered */
@@ -998,7 +1188,11 @@ body:active {
     justify-content: center;
     background: rgba(160, 160, 160, 0.6); /* Lighter/softer grey */
     cursor: pointer;
-    transition: background 0.2s ease, border-color 0.2s ease;
+    transition:
+        background-color var(--duration-ui) var(--ease-out-smooth),
+        border-color var(--duration-fast) var(--ease-out-smooth),
+        box-shadow var(--duration-ui) var(--ease-out-smooth),
+        transform var(--duration-ui) var(--ease-soft);
     position: relative;
     overflow: hidden;
     flex-shrink: 0; /* Don't shrink */
@@ -1082,10 +1276,14 @@ body:active {
 .upload-box:hover {
     background: #909090; /* Slightly lighter grey on hover when no image */
     border-color: #000;
+    transform: scale(1.008);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
 }
 
 .upload-box.has-image:hover {
     background: #fff; /* Keep white when image is selected */
+    transform: none;
+    box-shadow: none;
 }
 
 .upload-icon {
@@ -1138,7 +1336,7 @@ body:active {
     cursor: pointer;
     border-radius: 0;
     overflow: hidden;
-    transition: transform 0.2s ease;
+    transition: transform var(--duration-ui) var(--ease-out-smooth);
 }
 
 .thumbnail-badge {
@@ -1169,6 +1367,9 @@ body:active {
     height: 160px; /* vertical rectangle */
     object-fit: cover;
     display: block;
+    transition:
+        filter var(--duration-ui) var(--ease-out-smooth),
+        opacity var(--duration-fast) var(--ease-out-smooth);
 }
 
 .selection-indicator {
@@ -1263,6 +1464,7 @@ body:active {
     font-size: 20px;
     font-weight: 600;
     color: #000000;
+    transition: border-color var(--duration-ui) var(--ease-out-smooth);
 }
 
 .step-3-title {
@@ -1395,6 +1597,7 @@ body:active {
     font-size: 20px;
     font-weight: 600;
     color: #000; /* Keep number black */
+    transition: border-color var(--duration-ui) var(--ease-out-smooth);
 }
 
 .step-4-title {
@@ -1434,7 +1637,7 @@ body:active {
     justify-content: center;
     flex-shrink: 0;
     cursor: pointer;
-    transition: transform 0.3s ease;
+    transition: transform var(--duration-ui) var(--ease-out-smooth);
 }
 
 .step-3-option-img {
@@ -1472,12 +1675,16 @@ body:active {
     justify-content: center;
     cursor: pointer;
     z-index: 10;
-    transition: all 0.2s ease;
+    transition:
+        background-color var(--duration-fast) var(--ease-out-smooth),
+        border-color var(--duration-fast) var(--ease-out-smooth),
+        transform var(--duration-ui) var(--ease-out-smooth),
+        box-shadow var(--duration-ui) var(--ease-out-smooth);
 }
 
 .step-3-arrow-indicator:hover {
     background: #f5f5f5;
-    transform: scale(1.1);
+    transform: scale(1.08);
 }
 
 /* Step 3 arrow icon */
@@ -1502,6 +1709,10 @@ body:active {
 
 .step-3-option-img[src=""] {
     display: none; /* Hide images with empty src */
+}
+
+.step-3-option:hover {
+    transform: scale(1.012);
 }
 
 /* Scroll snap for better UX */
@@ -1574,6 +1785,7 @@ body:active {
     font-size: 20px;
     font-weight: 600;
     color: #000;
+    transition: border-color var(--duration-ui) var(--ease-out-smooth);
 }
 
 .step-slide.is-current-step .step-2-circle,
@@ -1687,15 +1899,20 @@ body:active {
     color: #000;
     outline: none;
     font-family: inherit;
+    transition:
+        background-color var(--duration-fast) var(--ease-out-smooth),
+        box-shadow var(--duration-ui) var(--ease-out-smooth);
 }
 
 .step-2-input::placeholder {
     color: #666;
+    transition: opacity var(--duration-fast) var(--ease-out-smooth);
 }
 
 .step-2-input:focus {
     outline: 2px solid #000;
     outline-offset: 2px;
+    box-shadow: 0 0 0 3px rgba(25, 0, 255, 0.12);
 }
 
 .step-2-arrow-button {
@@ -1708,7 +1925,11 @@ body:active {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition:
+        background-color var(--duration-fast) var(--ease-out-smooth),
+        border-color var(--duration-fast) var(--ease-out-smooth),
+        transform var(--duration-fast) var(--ease-out-smooth),
+        box-shadow var(--duration-ui) var(--ease-in-out-smooth);
     flex-shrink: 0;
 }
 
@@ -1762,7 +1983,11 @@ body:active {
     font-size: 16px;
     color: #000;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition:
+        background-color var(--duration-fast) var(--ease-out-smooth),
+        border-color var(--duration-fast) var(--ease-out-smooth),
+        transform var(--duration-ui) var(--ease-out-smooth),
+        box-shadow var(--duration-ui) var(--ease-out-smooth);
     font-family: inherit;
 }
 
@@ -1837,6 +2062,10 @@ body:active {
     font-weight: 600;
     color: #000;
     background: #fff;
+    transition:
+        border-color var(--duration-ui) var(--ease-out-smooth),
+        box-shadow var(--duration-ui) var(--ease-in-out-smooth),
+        transform var(--duration-fast) var(--ease-out-smooth);
 }
 
 .step-top-left-title {
@@ -1866,6 +2095,32 @@ body:active {
 /* Force black color for top-left step number and title */
 #step-top-left-number { color: #000 !important; }
 #step-top-left-title { color: #000 !important; }
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        transition-delay: 0ms !important;
+    }
+
+    .step-slider.no-transition .canvas-slider .progress-line,
+    .step-slider.no-transition .canvas-slider .progress-circle,
+    .step-slider.no-transition .step-slide {
+        transition: none !important;
+    }
+
+    .loading-spinner {
+        animation: none;
+        border-top-color: rgba(0, 0, 0, 0.45);
+    }
+}
 
 @supports (-webkit-touch-callout: none) and (orientation: landscape) {
   html, body {

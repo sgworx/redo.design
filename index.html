@@ -11,6 +11,16 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
 </head>
 <body>
+    <!-- Cinematic intro: text first, then handoff to 3D (see Scene3D.startHomeIntro) -->
+    <div id="home-intro" class="home-intro" role="dialog" aria-modal="true" aria-labelledby="home-intro-line-1">
+        <div class="home-intro__inner">
+            <p class="home-intro__line" id="home-intro-line-1">reDO transforms waste into usable design</p>
+            <p class="home-intro__line" id="home-intro-line-2">with step-by-step build instructions and assembly diagrams.</p>
+            <p class="home-intro__line home-intro__line--emphasis" id="home-intro-line-3">Fast, iterative, and direct: waste into form.</p>
+            <p class="home-intro__hint">Click or scroll to skip</p>
+        </div>
+    </div>
+
     <div id="container"></div>
     
     <!-- Top left logo -->
