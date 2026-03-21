@@ -12,9 +12,13 @@ const targetMaxDimension = 2.0;
 /** World units between adjacent models (edge-to-edge along X) */
 const MODEL_ROW_GAP = 0.35;
 
-const VIEW_CAMERA_FOV = 30;
-const VIEW_CAMERA_POSITION = new THREE.Vector3(0, 0.9, 4.6);
+const VIEW_CAMERA_FOV = 36;
+/** Baseline Z distance; widened FOV + multi-model boost keep the row framed with breathing room */
+const VIEW_CAMERA_BASE_Z = 6.0;
+const VIEW_CAMERA_POSITION = new THREE.Vector3(0, 0.9, VIEW_CAMERA_BASE_Z);
 const VIEW_CAMERA_LOOK_AT = new THREE.Vector3(0, 0.7, 0);
+/** Extra Z per half-row-width when more than one model: z = baseZ + (rowWidth/2) * this */
+const VIEW_CAMERA_ROW_Z_SCALE = 0.6;
 
 /** BAM-style presentation (pivot); ambient motion applied on top in animate() */
 const HERO_PIVOT_ROT_X = -0.08;
@@ -258,7 +262,7 @@ class Scene3D {
 
     layoutModelRowFromWidths(pivots, widths) {
         const n = pivots.length;
-        if (n === 0) return;
+        if (n === 0) return 0;
 
         const centersX = [];
         let prevHalf = 0;
@@ -284,6 +288,26 @@ class Scene3D {
             pivot.position.set(x, 0, 0);
             pivot.userData.baseX = x;
             pivot.userData.baseZ = 0;
+        }
+
+        return rowWidth;
+    }
+
+    /** Sets FOV, X/Y position, and Z (with optional multi-model pullback). lookAt + orbit target stay at VIEW_CAMERA_LOOK_AT. */
+    applyHeroViewCamera(rowWidth, modelCount) {
+        if (!this.camera) return;
+        const spacingFactor = rowWidth * 0.5;
+        let z = VIEW_CAMERA_BASE_Z;
+        if (modelCount > 1) {
+            z += spacingFactor * VIEW_CAMERA_ROW_Z_SCALE;
+        }
+        this.camera.fov = VIEW_CAMERA_FOV;
+        this.camera.position.set(VIEW_CAMERA_POSITION.x, VIEW_CAMERA_POSITION.y, z);
+        this.camera.updateProjectionMatrix();
+        this.camera.lookAt(VIEW_CAMERA_LOOK_AT);
+        if (this.controls) {
+            this.controls.target.copy(VIEW_CAMERA_LOOK_AT);
+            this.controls.update();
         }
     }
 
@@ -352,25 +376,12 @@ class Scene3D {
                 }
             }
 
+            let rowWidth = 0;
             if (pivots.length > 0) {
-                this.layoutModelRowFromWidths(pivots, widths);
+                rowWidth = this.layoutModelRowFromWidths(pivots, widths);
             }
 
-            this.camera.fov = VIEW_CAMERA_FOV;
-            this.camera.position.copy(VIEW_CAMERA_POSITION);
-            this.camera.updateProjectionMatrix();
-            this.camera.lookAt(VIEW_CAMERA_LOOK_AT);
-
-            if (this.controls && this.models.length > 0) {
-                const union = new THREE.Box3();
-                this.models.forEach((g) => union.expandByObject(g.scene));
-                if (!union.isEmpty()) {
-                    this.controls.target.copy(union.getCenter(new THREE.Vector3()));
-                } else {
-                    this.controls.target.copy(VIEW_CAMERA_LOOK_AT);
-                }
-                this.controls.update();
-            }
+            this.applyHeroViewCamera(rowWidth, pivots.length);
 
             console.log(`Scene models loaded: ${this.models.length}`);
         } catch (e) {
@@ -1763,11 +1774,7 @@ class Scene3D {
             });
 
             if (this.controls && this.models.length > 0) {
-                const union = new THREE.Box3();
-                this.models.forEach((g) => union.expandByObject(g.scene));
-                if (!union.isEmpty()) {
-                    this.controls.target.copy(union.getCenter(new THREE.Vector3()));
-                }
+                this.controls.target.copy(VIEW_CAMERA_LOOK_AT);
             }
 
             if (typeof TWEEN !== 'undefined' && TWEEN.update) TWEEN.update();
