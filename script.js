@@ -1,9 +1,6 @@
 /**
- * GLB sources (tried in order per file): R2 public URL, then same-origin Assets/N.glb.
- *
- * Browsers block cross-origin GLTF requests unless the bucket sends CORS headers.
- * In R2: Bucket → Settings → CORS policy, e.g.
- * [{"AllowedOrigins":["http://localhost:8080","https://YOUR_DOMAIN"],"AllowedMethods":["GET","HEAD"],"AllowedHeaders":["*"]}]
+ * Homepage 3D models — Cloudflare R2 public URLs only (no local Assets/*.glb).
+ * CORS on the bucket must allow your site origin for browser loads.
  */
 const R2_MODEL_URLS = [
     'https://pub-a0087db496614ca196c3749acf71706e.r2.dev/1.glb',
@@ -12,10 +9,6 @@ const R2_MODEL_URLS = [
     'https://pub-a0087db496614ca196c3749acf71706e.r2.dev/4.glb',
     'https://pub-a0087db496614ca196c3749acf71706e.r2.dev/5.glb'
 ];
-
-function localGlbUrl(indexZeroBased) {
-    return `Assets/${indexZeroBased + 1}.glb`;
-}
 
 class Scene3D {
     constructor() {
@@ -66,59 +59,70 @@ class Scene3D {
         };
         
         this.init();
-        this.setupEventListeners();
+        if (this.renderer && this.camera && this.controls) {
+            this.setupEventListeners();
+        }
     }
     
     init() {
-        // Create scene
-        this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0xffffff);
-        
-        // Create camera
-        this.camera = new THREE.PerspectiveCamera(
-            75,
-            window.innerWidth / window.innerHeight,
-            0.1,
-            1000
-        );
-        this.camera.position.set(20, 70, 95); // More left and higher for bird-eye corner
-        this.camera.lookAt(0, 0, 0);
-        
-        // Create renderer
-        this.renderer = new THREE.WebGLRenderer({ antialias: true });
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(window.devicePixelRatio);
-        this.renderer.shadowMap.enabled = true;
-        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        this.renderer.domElement.style.display = 'block';
-        this.renderer.domElement.style.width = '100%';
-        this.renderer.domElement.style.height = '100%';
+        try {
+            this.scene = new THREE.Scene();
+            this.scene.background = new THREE.Color(0xffffff);
 
-        document.getElementById('container').appendChild(this.renderer.domElement);
-        
-        // Create controls
-        this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
-        this.controls.enableDamping = true;
-        this.controls.dampingFactor = 0.05;
-        this.controls.enableZoom = true;
-        this.controls.enablePan = false;
-        this.controls.autoRotate = true; // Enable auto-rotation
-        this.controls.autoRotateSpeed = 0.1; // Very subtle rotation like BAM Works
-        this.controls.target.set(0, 0, 0);
-        this.controls.update();
-        
-        // Setup raycaster for object selection
-        this.raycaster = new THREE.Raycaster();
-        this.mouse = new THREE.Vector2();
-        
-        // Add lighting
-        this.setupLighting();
-        
-        // Load models
-        this.loadModels();
-        
-        // Start animation loop
-        this.animate();
+            this.camera = new THREE.PerspectiveCamera(
+                75,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                1000
+            );
+            this.camera.position.set(20, 70, 95);
+            this.camera.lookAt(0, 0, 0);
+
+            this.renderer = new THREE.WebGLRenderer({ antialias: true });
+            this.renderer.setSize(window.innerWidth, window.innerHeight);
+            this.renderer.setPixelRatio(window.devicePixelRatio);
+            this.renderer.shadowMap.enabled = true;
+            this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            this.renderer.domElement.style.display = 'block';
+            this.renderer.domElement.style.width = '100%';
+            this.renderer.domElement.style.height = '100%';
+
+            document.getElementById('container').appendChild(this.renderer.domElement);
+
+            this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+            this.controls.enableDamping = true;
+            this.controls.dampingFactor = 0.05;
+            this.controls.enableZoom = true;
+            this.controls.enablePan = false;
+            this.controls.autoRotate = true;
+            this.controls.autoRotateSpeed = 0.1;
+            this.controls.target.set(0, 0, 0);
+            this.controls.update();
+
+            this.raycaster = new THREE.Raycaster();
+            this.mouse = new THREE.Vector2();
+
+            this.setupLighting();
+
+            this._loadOverlayDismissed = false;
+            this.loadModels().catch((err) => {
+                console.error('loadModels rejected:', err);
+                this.dismissLoadingOverlay(this.models.length);
+            });
+
+            this.animate();
+        } catch (err) {
+            console.error('Scene3D init failed:', err);
+            this.isLoading = false;
+            document.getElementById('loading-screen')?.classList.add('hidden');
+            const notice = document.getElementById('model-load-notice');
+            if (notice) {
+                notice.textContent =
+                    (err && err.message) ||
+                    '3D view failed to start (WebGL or setup error). See console.';
+                notice.classList.remove('hidden');
+            }
+        }
     }
     
     setupLighting() {
@@ -140,30 +144,16 @@ class Scene3D {
         this.scene.add(pointLight);
     }
     
-    async loadModelWithFallback(loader, index) {
-        const candidates = [this.modelFiles[index], localGlbUrl(index)];
-        const errors = [];
-        for (let c = 0; c < candidates.length; c++) {
-            const url = candidates[c];
-            try {
-                console.log(`[${index}] Trying: ${url}`);
-                return await this.loadModel(loader, url);
-            } catch (err) {
-                const msg = err && err.message ? err.message : String(err);
-                errors.push(`${url} → ${msg}`);
-                console.warn(`[${index}] Failed (${c + 1}/${candidates.length}):`, msg);
-            }
-        }
-        throw new Error(errors.join(' | '));
-    }
-
     dismissLoadingOverlay(loadedCount) {
+        if (this._loadOverlayDismissed) return;
+        this._loadOverlayDismissed = true;
+
         const overlay = document.getElementById('loading-screen');
         const notice = document.getElementById('model-load-notice');
         if (notice) {
             if (loadedCount === 0) {
                 notice.textContent =
-                    '3D models failed to load. If you use localhost, enable CORS on the R2 bucket (GET/HEAD; allow your origin), or place Assets/1.glb … 5.glb next to this page.';
+                    '3D models failed to load from R2. Enable CORS on the bucket (GET/HEAD) and allow your page origin (e.g. http://localhost:8080).';
                 notice.classList.remove('hidden');
             } else {
                 notice.classList.add('hidden');
@@ -180,63 +170,68 @@ class Scene3D {
         const notice = document.getElementById('model-load-notice');
         if (notice) notice.classList.add('hidden');
 
-        const loader = new THREE.GLTFLoader();
-        loader.setCrossOrigin('anonymous');
-        console.log(`Starting to load ${this.modelFiles.length} models:`, this.modelFiles);
-        
-        for (let i = 0; i < this.modelFiles.length; i++) {
-            try {
-                const gltf = await this.loadModelWithFallback(loader, i);
-                this.models.push(gltf);
-                
-                const model = gltf.scene;
-                model.userData.modelIndex = i;
-                console.log(`[${i}] Model loaded, adding to scene`);
-                this.scene.add(model);
-
-                model.rotation.y += THREE.MathUtils.degToRad(-30);
-                
-                console.log(`[${i}] Position before positioning:`, model.position.toArray());
-                
-                // Position FIRST, then scale
-                this.positionModelCloud(model, i);
-                console.log(`[${i}] Position after cloud positioning:`, model.position.toArray());
-                
-                this.centerAndScaleModel(model);
-                console.log(`[${i}] Position after scaling:`, model.position.toArray());
-                
-                this.enableShadows(model);
-                this.setModelToGrayscale(model);
-                this.intersectTargets.push(model);
-                if (i === 1) {
-                    this.defaultColorModel = model;
-                }
-                
-                this.addFloatingOrbitAnimation(model, i);
-                
-                // Store original position for reset
-                this.originalPositions.push({
-                    x: model.position.x,
-                    y: model.position.y,
-                    z: model.position.z,
-                    scale: model.scale.clone()
-                });
-                
-                console.log(`[${i}] Successfully loaded and positioned model`);
-            } catch (error) {
-                console.error(`[${i}] Error loading model (all sources failed):`, error);
+        try {
+            const loader = new THREE.GLTFLoader();
+            if (typeof loader.setCrossOrigin === 'function') {
+                loader.setCrossOrigin('anonymous');
             }
-        }
-        
-        console.log(`Total models in scene: ${this.models.length}`);
-        console.log(`Total objects in Three.js scene: ${this.scene.children.length}`);
-        
-        this.dismissLoadingOverlay(this.models.length);
-        console.log(`Loaded ${this.models.length} models`);
-        if (this.models.length > 1) {
-            const pos1 = this.models[0].scene.position;
-            const pos2 = this.models[1].scene.position;
-            console.log(`Distance between first two models: ${pos1.distanceTo(pos2).toFixed(2)} units`);
+            console.log(`Starting to load ${this.modelFiles.length} models:`, this.modelFiles);
+
+            for (let i = 0; i < this.modelFiles.length; i++) {
+                try {
+                    const url = this.modelFiles[i];
+                    console.log(`[${i}] Loading from R2: ${url}`);
+                    const gltf = await this.loadModel(loader, url);
+                    this.models.push(gltf);
+
+                    const model = gltf.scene;
+                    model.userData.modelIndex = i;
+                    console.log(`[${i}] Model loaded, adding to scene`);
+                    this.scene.add(model);
+
+                    model.rotation.y += THREE.MathUtils.degToRad(-30);
+
+                    this.positionModelCloud(model, i);
+                    this.centerAndScaleModel(model);
+
+                    this.enableShadows(model);
+                    try {
+                        this.setModelToGrayscale(model);
+                    } catch (grayErr) {
+                        console.warn(`[${i}] Grayscale pass skipped:`, grayErr);
+                    }
+                    this.intersectTargets.push(model);
+                    if (i === 1) {
+                        this.defaultColorModel = model;
+                    }
+
+                    this.addFloatingOrbitAnimation(model, i);
+
+                    this.originalPositions.push({
+                        x: model.position.x,
+                        y: model.position.y,
+                        z: model.position.z,
+                        scale: model.scale.clone()
+                    });
+
+                    console.log(`[${i}] Successfully loaded and positioned model`);
+                } catch (error) {
+                    console.error(`[${i}] Error loading model (all sources failed):`, error);
+                }
+            }
+
+            console.log(`Total models in scene: ${this.models.length}`);
+            console.log(`Total objects in Three.js scene: ${this.scene.children.length}`);
+            console.log(`Loaded ${this.models.length} models`);
+            if (this.models.length > 1) {
+                const pos1 = this.models[0].scene.position;
+                const pos2 = this.models[1].scene.position;
+                console.log(`Distance between first two models: ${pos1.distanceTo(pos2).toFixed(2)} units`);
+            }
+        } catch (e) {
+            console.error('loadModels fatal:', e);
+        } finally {
+            this.dismissLoadingOverlay(this.models.length);
         }
     }
     
@@ -264,18 +259,32 @@ class Scene3D {
     }
     
     loadModel(loader, url) {
+        const TIMEOUT_MS = 120000;
         return new Promise((resolve, reject) => {
+            let settled = false;
+            const timer = setTimeout(() => {
+                if (settled) return;
+                settled = true;
+                reject(new Error(`Timed out after ${TIMEOUT_MS / 1000}s: ${url}`));
+            }, TIMEOUT_MS);
+
+            const finish = (fn, arg) => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timer);
+                fn(arg);
+            };
+
             loader.load(
                 url,
-                (gltf) => {
-                    resolve(gltf);
-                },
+                (gltf) => finish(resolve, gltf),
                 (progress) => {
-                    console.log(`Loading progress: ${(progress.loaded / progress.total * 100).toFixed(2)}%`);
+                    if (progress && progress.total) {
+                        const pct = (progress.loaded / progress.total) * 100;
+                        console.log(`Loading progress: ${pct.toFixed(2)}%`);
+                    }
                 },
-                (error) => {
-                    reject(error);
-                }
+                (error) => finish(reject, error)
             );
         });
     }
@@ -1686,7 +1695,7 @@ class Scene3D {
                 model.rotation.z += 0.0015 * motion.rotSpeed.z;
             });
 
-            TWEEN.update();
+            if (typeof TWEEN !== 'undefined' && TWEEN.update) TWEEN.update();
             this.controls.update();
             this.updateHoverFromPointer();
         }
@@ -1697,7 +1706,27 @@ class Scene3D {
     }
 }
 
-// Initialize the scene when the page loads
 window.addEventListener('load', () => {
-    window.scene3D = new Scene3D(); // Make it globally accessible
+    try {
+        if (typeof THREE === 'undefined') {
+            throw new Error('Three.js did not load (CDN blocked or offline).');
+        }
+        if (typeof THREE.GLTFLoader !== 'function') {
+            throw new Error('GLTFLoader not available. Check script tags / CDN.');
+        }
+        if (typeof THREE.OrbitControls !== 'function') {
+            throw new Error('OrbitControls not available. Check script tags / CDN.');
+        }
+        window.scene3D = new Scene3D();
+    } catch (err) {
+        console.error(err);
+        document.getElementById('loading-screen')?.classList.add('hidden');
+        const notice = document.getElementById('model-load-notice');
+        if (notice) {
+            notice.textContent =
+                (err && err.message) ||
+                'Could not start the app. Use a local server (e.g. python -m http.server), check the console, and ensure CDN scripts are not blocked.';
+            notice.classList.remove('hidden');
+        }
+    }
 }); 
