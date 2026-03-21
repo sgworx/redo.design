@@ -1,11 +1,15 @@
+:root {
+    --font-site: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    font-family: var(--font-site);
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background: #ffffff;
     overflow: hidden;
     cursor: grab;
@@ -1364,7 +1368,7 @@ body:active {
     color: #ffffff;
     margin: 8px 0 16px;
     padding: 0;
-    font-family: "Courier New", Courier, monospace;
+    font-family: inherit;
     font-size: 13px;
     line-height: 1.4;
     white-space: pre;

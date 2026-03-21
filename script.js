@@ -1,8 +1,12 @@
 /**
  * Homepage: multiple GLBs from assets.redo.design, normalized (max axis 2), laid out on a shallow arc (bbox widths + gap, centered on x=0).
- * Cache bust in loadModel().
+ * GLB cache bust only on localhost (see GLB_USE_CACHE_BUST). Production loads use stable URLs for HTTP caching.
  */
 const MODEL_ASSETS_BASE = 'https://assets.redo.design/';
+/** When true, append ?v=timestamp so GLBs never cache (dev iteration). False in production for faster repeat visits. */
+const GLB_USE_CACHE_BUST =
+    typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 const MODEL_FILE_STEM = 'text';
 const MODEL_COUNT = 5;
 
@@ -33,14 +37,28 @@ const VIEW_CAMERA_ROW_Z_SCALE = 0.6;
 /** BAM-style presentation (pivot); ambient motion applied on top in animate() */
 const HERO_PIVOT_ROT_X = -0.08;
 const HERO_PIVOT_ROT_Y_BASE = 0.55;
-/** Lower entire arc in world Y (eye-level framing with camera tweaks) */
-const HERO_ARRANGEMENT_Y_OFFSET = -0.13;
-/** Slow continuous yaw on each pivot (rad/s); same for all chairs */
-const HERO_SPIN_RAD_PER_SEC = 0.2;
-/** Curated initial Y phase per chair (rad); yaw = baseYaw + spinStartRad + elapsed * HERO_SPIN_RAD_PER_SEC */
+/** Lower entire arc in world Y (floorline below mid-screen, more top surface visible) */
+const HERO_ARRANGEMENT_Y_OFFSET = -0.22;
+/** Continuous yaw (rad/s); rAF + elapsed — shared across all chairs (slightly restrained for cinematic feel) */
+const HERO_SPIN_RAD_PER_SEC = 0.23;
+/** Vertical bob (world units); sin(elapsed * freq + phase) */
+const HERO_FLOAT_FREQ_RAD_S = 0.48;
+const HERO_FLOAT_AMP = 0.018;
+/** Curated initial Y offset per chair (rad); ambient yaw uses elapsed * HERO_SPIN_RAD_PER_SEC (shared) */
 const HERO_SPIN_START_OFFSETS = [-0.8, -0.2, 0.5, 1.1, 1.8];
 /** Alternating depth on Z after arc placement: even index → −mag, odd → +mag (layered from camera at +Z). X unchanged. */
 const HERO_DEPTH_STAGGER_Z = 0.55;
+/** Extra +Z on chairs with arc x > 0 (right side) for depth separation toward camera at +Z */
+const HERO_DEPTH_RIGHT_EXTRA_Z = 0.24;
+
+const HOVER_SCALE_MULTIPLIER = 1.3;
+/** Tween.js duration for hover scale in/out (discrete transition; rAF does not write model.scale) */
+const HOVER_SCALE_DURATION_MS = 380;
+/** NDC inset when testing AABB overlap (treat as overlap only if closer than this → push apart) */
+const HERO_SCREEN_OVERLAP_INSET_NDC = 0.035;
+const HERO_SCREEN_SEP_STEP_X = 0.04;
+const HERO_SCREEN_SEP_STEP_Z = 0.048;
+const HERO_SCREEN_SEP_MAX_ITERS = 18;
 
 function heroSpinStartRadForIndex(index) {
     const arr = HERO_SPIN_START_OFFSETS;
@@ -66,10 +84,8 @@ class Scene3D {
         this.renderer = null;
         this.controls = null;
         this.raycaster = null;
-        this.mouse = null;
         this.models = [];
         this.isLoading = true;
-        this.selectedModel = null;
         this.originalPositions = [];
         this.modelPivots = [];
 
@@ -80,7 +96,6 @@ class Scene3D {
         this.pointerActive = false;
         this.hoveredModel = null;
         this.intersectTargets = [];
-        this.hoverScale = 0.8; // Hover zoom out by 20%
         this.defaultColorModel = null; // Keep 2.glb colored unless hovering another model
         
         // Slider smoothing state
@@ -137,7 +152,8 @@ class Scene3D {
 
             this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
             this.controls.enableDamping = true;
-            this.controls.dampingFactor = 0.05;
+            /** Slightly softer orbit settle; requires controls.update() every frame */
+            this.controls.dampingFactor = 0.06;
             this.controls.enableZoom = true;
             this.controls.enablePan = false;
             this.controls.autoRotate = false;
@@ -145,7 +161,6 @@ class Scene3D {
             this.controls.update();
 
             this.raycaster = new THREE.Raycaster();
-            this.mouse = new THREE.Vector2();
 
             this.setupLighting();
 
@@ -237,6 +252,114 @@ class Scene3D {
         return Math.max(0, box.max.x - box.min.x);
     }
 
+    /** World AABB of pivot projected to camera NDC (x,y in ~[-1,1]) for silhouette overlap tests. */
+    getPivotNDCBounds(pivot, camera) {
+        pivot.updateMatrixWorld(true);
+        const box = new THREE.Box3().setFromObject(pivot);
+        if (box.isEmpty()) return null;
+        const mx = box.min.x;
+        const my = box.min.y;
+        const mz = box.min.z;
+        const Mx = box.max.x;
+        const My = box.max.y;
+        const Mz = box.max.z;
+        const corners = [
+            [mx, my, mz],
+            [Mx, my, mz],
+            [mx, My, mz],
+            [Mx, My, mz],
+            [mx, my, Mz],
+            [Mx, my, Mz],
+            [mx, My, Mz],
+            [Mx, My, Mz]
+        ];
+        let minX = Infinity;
+        let maxX = -Infinity;
+        let minY = Infinity;
+        let maxY = -Infinity;
+        const v = new THREE.Vector3();
+        for (let c = 0; c < 8; c++) {
+            const t = corners[c];
+            v.set(t[0], t[1], t[2]).project(camera);
+            minX = Math.min(minX, v.x);
+            maxX = Math.max(maxX, v.x);
+            minY = Math.min(minY, v.y);
+            maxY = Math.max(maxY, v.y);
+        }
+        if (!isFinite(minX)) return null;
+        return { minX, maxX, minY, maxY };
+    }
+
+    ndcBoundsOverlap2D(a, b, inset) {
+        if (!a || !b) return false;
+        const ax0 = a.minX + inset;
+        const ax1 = a.maxX - inset;
+        const ay0 = a.minY + inset;
+        const ay1 = a.maxY - inset;
+        const bx0 = b.minX + inset;
+        const bx1 = b.maxX - inset;
+        const by0 = b.minY + inset;
+        const by1 = b.maxY - inset;
+        if (ax0 > ax1 || ay0 > ay1 || bx0 > bx1 || by0 > by1) return false;
+        return !(ax1 < bx0 || ax0 > bx1 || ay1 < by0 || ay0 > by1);
+    }
+
+    /** Horizontal span for camera pullback after layout / screen-separation moves (pivot x ± half bbox width). */
+    getHeroPivotsHorizontalSpan(pivots, widths) {
+        const n = pivots.length;
+        if (n === 0) return 0;
+        let minE = Infinity;
+        let maxE = -Infinity;
+        for (let i = 0; i < n; i++) {
+            const hw = ((widths[i] != null ? widths[i] : 1) * 0.5);
+            const x = pivots[i].position.x;
+            minE = Math.min(minE, x - hw);
+            maxE = Math.max(maxE, x + hw);
+        }
+        return Math.max(0, maxE - minE);
+    }
+
+    /**
+     * If adjacent chairs’ projected AABBs overlap in NDC, nudge them apart on X and Z; re-center X each pass.
+     * Stronger Z nudge when the eastern chair sits on the +X side (typical right-of-screen overlap).
+     */
+    resolveHeroScreenOverlap(pivots, camera) {
+        const n = pivots.length;
+        if (n < 2 || !camera) return;
+        camera.updateProjectionMatrix();
+        const inset = HERO_SCREEN_OVERLAP_INSET_NDC;
+
+        for (let iter = 0; iter < HERO_SCREEN_SEP_MAX_ITERS; iter++) {
+            const bounds = pivots.map((p) => this.getPivotNDCBounds(p, camera));
+            let overlapped = false;
+            for (let i = 0; i < n - 1; i++) {
+                if (this.ndcBoundsOverlap2D(bounds[i], bounds[i + 1], inset)) {
+                    overlapped = true;
+                    const left = pivots[i];
+                    const right = pivots[i + 1];
+                    left.position.x -= HERO_SCREEN_SEP_STEP_X;
+                    right.position.x += HERO_SCREEN_SEP_STEP_X;
+                    const zExtra =
+                        right.position.x > 0.08
+                            ? HERO_SCREEN_SEP_STEP_Z * 1.12
+                            : HERO_SCREEN_SEP_STEP_Z * 0.88;
+                    right.position.z += zExtra;
+                    left.position.z -= zExtra * 0.42;
+                }
+            }
+            const cx = pivots.reduce((s, p) => s + p.position.x, 0) / n;
+            pivots.forEach((p) => {
+                p.position.x -= cx;
+            });
+            if (!overlapped) break;
+        }
+
+        pivots.forEach((p) => {
+            p.userData.baseX = p.position.x;
+            p.userData.baseZ = p.position.z;
+        });
+    }
+
     findIntersectRoot(object) {
         let o = object;
         while (o) {
@@ -306,6 +429,7 @@ class Scene3D {
             pivot.userData.arcTheta = 0;
             pivot.userData.baseYaw = HERO_PIVOT_ROT_Y_BASE;
             pivot.userData.spinStartRad = spin0;
+            pivot.userData.floatPhase = 0;
             pivot.rotation.set(HERO_PIVOT_ROT_X, HERO_PIVOT_ROT_Y_BASE + spin0, 0);
             return { spanX: Math.max(0, widths[0] || 0) };
         }
@@ -336,11 +460,17 @@ class Scene3D {
         const cz = -R;
 
         const y0 = HERO_ARRANGEMENT_Y_OFFSET;
+        const centerIndex = (n - 1) / 2;
         for (let k = 0; k < n; k++) {
             const theta = -totalSpan * 0.5 + k * deltaTheta;
             const px = R * Math.sin(theta);
             const pzArc = cz + R * Math.cos(theta);
-            const zStagger = k % 2 === 0 ? -HERO_DEPTH_STAGGER_Z : HERO_DEPTH_STAGGER_Z;
+            let zAlt = k % 2 === 0 ? -HERO_DEPTH_STAGGER_Z : HERO_DEPTH_STAGGER_Z;
+            // Odd count: true middle chair must sit outward (+Z toward camera), not recessed by even/odd pattern.
+            if (n % 2 === 1 && k === centerIndex) {
+                zAlt = HERO_DEPTH_STAGGER_Z;
+            }
+            const zStagger = zAlt + (px > 0 ? HERO_DEPTH_RIGHT_EXTRA_Z : 0);
             const pz = pzArc + zStagger;
             const yaw = HERO_PIVOT_ROT_Y_BASE + theta * (1 - ARC_YAW_INWARD_BLEND);
             const spin0 = heroSpinStartRadForIndex(k);
@@ -352,6 +482,7 @@ class Scene3D {
             pivot.userData.arcTheta = theta;
             pivot.userData.baseYaw = yaw;
             pivot.userData.spinStartRad = spin0;
+            pivot.userData.floatPhase = k * 1.35;
             pivot.rotation.set(HERO_PIVOT_ROT_X, yaw + spin0, 0);
         }
 
@@ -395,15 +526,23 @@ class Scene3D {
             if (typeof loader.setCrossOrigin === 'function') {
                 loader.setCrossOrigin('anonymous');
             }
-            console.log(`Loading ${this.modelFiles.length} GLBs for bbox-spaced arc`);
+            console.log(`Loading ${this.modelFiles.length} GLBs for bbox-spaced arc (parallel fetch)`);
 
             const widths = [];
             const pivots = [];
 
-            for (let i = 0; i < this.modelFiles.length; i++) {
+            const outcomes = await Promise.allSettled(
+                this.modelFiles.map((url) => this.loadModel(loader, url))
+            );
+
+            for (let i = 0; i < outcomes.length; i++) {
+                const outcome = outcomes[i];
+                if (outcome.status !== 'fulfilled') {
+                    console.error(`[${i}] Error loading model:`, outcome.reason);
+                    continue;
+                }
                 try {
-                    const url = this.modelFiles[i];
-                    const gltf = await this.loadModel(loader, url);
+                    const gltf = outcome.value;
                     this.models.push(gltf);
 
                     const model = gltf.scene;
@@ -443,7 +582,9 @@ class Scene3D {
                         scale: model.scale.clone()
                     });
 
-                    console.log(`[${i}] Loaded:`, url);
+                    model.userData.heroRestScale = model.scale.clone();
+
+                    console.log(`[${i}] Loaded:`, this.modelFiles[i]);
                 } catch (error) {
                     console.error(`[${i}] Error loading model:`, error);
                 }
@@ -456,6 +597,12 @@ class Scene3D {
             }
 
             this.applyHeroViewCamera(layoutSpanX, pivots.length);
+
+            if (pivots.length > 1) {
+                this.resolveHeroScreenOverlap(pivots, this.camera);
+                layoutSpanX = this.getHeroPivotsHorizontalSpan(pivots, widths);
+                this.applyHeroViewCamera(layoutSpanX, pivots.length);
+            }
 
             console.log(`Scene models loaded: ${this.models.length}`);
         } catch (e) {
@@ -490,10 +637,13 @@ class Scene3D {
                 fn(arg);
             };
 
-            // Bypass browser/CDN cache during development — each load gets ?v=timestamp (e.g. …/1.glb?v=173…)
-            const cacheBustUrl = url.includes('?') ? `${url}&v=${Date.now()}` : `${url}?v=${Date.now()}`;
+            const loadUrl = GLB_USE_CACHE_BUST
+                ? url.includes('?')
+                    ? `${url}&v=${Date.now()}`
+                    : `${url}?v=${Date.now()}`
+                : url;
             loader.load(
-                cacheBustUrl,
+                loadUrl,
                 (gltf) => finish(resolve, gltf),
                 (progress) => {
                     if (progress && progress.total) {
@@ -604,7 +754,7 @@ class Scene3D {
         if (!this.pointerActive || this.intersectTargets.length === 0) {
             if (this.hoveredModel) {
                 this.setModelToGrayscale(this.hoveredModel);
-                this.resetHoverScale(this.hoveredModel);
+                this.tweenHeroHoverScaleReset(this.hoveredModel);
                 this.hoveredModel = null;
             }
             if (this.defaultColorModel) {
@@ -624,11 +774,11 @@ class Scene3D {
         if (nextHovered !== this.hoveredModel) {
             if (this.hoveredModel) {
                 this.setModelToGrayscale(this.hoveredModel);
-                this.resetHoverScale(this.hoveredModel);
+                this.tweenHeroHoverScaleReset(this.hoveredModel);
             }
             if (nextHovered) {
                 this.restoreModelColor(nextHovered);
-                this.applyHoverScale(nextHovered);
+                this.tweenHeroHoverScaleUp(nextHovered);
             }
             this.hoveredModel = nextHovered;
         }
@@ -642,20 +792,67 @@ class Scene3D {
         }
     }
 
-    applyHoverScale(model) {
-        if (!model) return;
-        if (!model.userData.hoverBaseScale) {
-            model.userData.hoverBaseScale = model.scale.clone();
-        }
-        model.scale.copy(model.userData.hoverBaseScale).multiplyScalar(this.hoverScale);
+    stopHeroHoverScaleTween(model) {
+        if (!model?.userData?.hoverScaleTween) return;
+        const tw = model.userData.hoverScaleTween;
+        if (typeof tw.stop === 'function') tw.stop();
+        model.userData.hoverScaleTween = null;
     }
 
-    resetHoverScale(model) {
-        if (!model || !model.userData.hoverBaseScale) return;
-        model.scale.copy(model.userData.hoverBaseScale);
-        delete model.userData.hoverBaseScale;
+    /** Tween.js discrete transition — only system that writes model.scale during hover (rAF uses pivots only). */
+    tweenHeroHoverScaleUp(model) {
+        if (!model) return;
+        if (!model.userData.heroRestScale) {
+            model.userData.heroRestScale = model.scale.clone();
+        }
+        const base = model.userData.heroRestScale;
+        const m = HOVER_SCALE_MULTIPLIER;
+        this.stopHeroHoverScaleTween(model);
+        if (typeof TWEEN === 'undefined' || !TWEEN.Tween) {
+            model.scale.set(base.x * m, base.y * m, base.z * m);
+            return;
+        }
+        const tw = new TWEEN.Tween(model.scale)
+            .to({ x: base.x * m, y: base.y * m, z: base.z * m }, HOVER_SCALE_DURATION_MS)
+            .easing(TWEEN.Easing.Cubic.InOut)
+            .start();
+        model.userData.hoverScaleTween = tw;
     }
-    
+
+    tweenHeroHoverScaleReset(model) {
+        if (!model?.userData?.heroRestScale) return;
+        const base = model.userData.heroRestScale;
+        this.stopHeroHoverScaleTween(model);
+        if (typeof TWEEN === 'undefined' || !TWEEN.Tween) {
+            model.scale.copy(base);
+            return;
+        }
+        const tw = new TWEEN.Tween(model.scale)
+            .to({ x: base.x, y: base.y, z: base.z }, HOVER_SCALE_DURATION_MS)
+            .easing(TWEEN.Easing.Cubic.InOut)
+            .onComplete(() => {
+                model.userData.hoverScaleTween = null;
+            })
+            .start();
+        model.userData.hoverScaleTween = tw;
+    }
+
+    /** rAF: pivot rotation + float only — no model.scale (avoids fighting Tween.js). */
+    updateHeroAmbientMotion(elapsed) {
+        const heroSpinPhaseRad = elapsed * HERO_SPIN_RAD_PER_SEC;
+        this.modelPivots.forEach((pivot) => {
+            const baseYaw = pivot.userData.baseYaw ?? HERO_PIVOT_ROT_Y_BASE;
+            const spin0 = pivot.userData.spinStartRad ?? 0;
+            const baseY = pivot.userData.baseY ?? HERO_ARRANGEMENT_Y_OFFSET;
+            const phase = pivot.userData.floatPhase ?? 0;
+            const yBob = HERO_FLOAT_AMP * Math.sin(elapsed * HERO_FLOAT_FREQ_RAD_S + phase);
+            pivot.rotation.x = HERO_PIVOT_ROT_X;
+            pivot.rotation.y = baseYaw + spin0 + heroSpinPhaseRad;
+            pivot.rotation.z = 0;
+            pivot.position.set(pivot.userData.baseX ?? 0, baseY + yBob, pivot.userData.baseZ ?? 0);
+        });
+    }
+
     separateModels(maxIterations = 40) {
         // Compute simple bounding sphere radii for each model
         const entries = this.models.map((modelData) => {
@@ -693,91 +890,7 @@ class Scene3D {
         }
     }
     
-    onMouseClick(event) {
-        // Calculate mouse position in normalized device coordinates
-        this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-        
-        // Update the picking ray with the camera and mouse position
-        this.raycaster.setFromCamera(this.mouse, this.camera);
-        
-        // Calculate objects intersecting the picking ray
-        const intersects = this.raycaster.intersectObjects(this.scene.children, true);
-        
-        if (intersects.length > 0) {
-            let clickedModel = null;
-            for (const intersect of intersects) {
-                const root = this.findIntersectRoot(intersect.object);
-                if (root) {
-                    clickedModel = root;
-                    break;
-                }
-            }
-            if (clickedModel) {
-                this.handleModelClick(clickedModel);
-            }
-        }
-    }
-    
-    handleModelClick(model) {
-        // Reset all models to original state
-        this.resetAllModels();
-        
-        // Animate the clicked model
-        this.animateModelFocus(model);
-        
-        // Update selected model
-        this.selectedModel = model;
-    }
-    
-    resetAllModels() {
-        this.models.forEach((modelData, index) => {
-            const model = modelData.scene;
-            const pivot = model.userData.pivot;
-            const original = this.originalPositions[index];
-
-            if (original && pivot && model) {
-                model.position.set(original.x, original.y, original.z);
-                model.scale.copy(original.scale);
-                pivot.position.set(
-                    pivot.userData.baseX ?? 0,
-                    pivot.userData.baseY ?? HERO_ARRANGEMENT_Y_OFFSET,
-                    pivot.userData.baseZ ?? 0
-                );
-                const spin0 = pivot.userData.spinStartRad ?? 0;
-                pivot.rotation.set(
-                    HERO_PIVOT_ROT_X,
-                    (pivot.userData.baseYaw ?? HERO_PIVOT_ROT_Y_BASE) + spin0,
-                    0
-                );
-            }
-        });
-    }
-    
-    animateModelFocus(model) {
-        // Create a focus animation for the selected model
-        const targetScale = 1.3;
-        const targetY = 0;
-        
-        // Animate scale and position
-        const scaleTween = new TWEEN.Tween(model.scale)
-            .to({ x: targetScale, y: targetScale, z: targetScale }, 800)
-            .easing(TWEEN.Easing.Quadratic.Out);
-            
-        const positionTween = new TWEEN.Tween(model.position)
-            .to({ y: targetY }, 800)
-            .easing(TWEEN.Easing.Quadratic.Out);
-            
-        scaleTween.start();
-        positionTween.start();
-    }
-    
     setupEventListeners() {
-        // Mouse click for object selection
-        window.addEventListener('click', (event) => {
-            this.onMouseClick(event);
-        });
-        
         // Pointer move for parallax + hover (relative to renderer canvas)
         this.renderer.domElement.addEventListener('mousemove', (event) => {
             const rect = this.renderer.domElement.getBoundingClientRect();
@@ -792,6 +905,7 @@ class Scene3D {
             this.pointerActive = false;
             if (this.hoveredModel) {
                 this.setModelToGrayscale(this.hoveredModel);
+                this.tweenHeroHoverScaleReset(this.hoveredModel);
                 this.hoveredModel = null;
             }
         });
@@ -804,15 +918,6 @@ class Scene3D {
         });
         
         // Keep zoom via OrbitControls (no manual wheel zoom to avoid conflicts)
-        
-        // Touch support for mobile (only for 3D canvas, don't block UI taps)
-        this.renderer.domElement.addEventListener('touchend', (event) => {
-            const target = event.target;
-            if (target && (target.closest('button') || target.closest('input') || target.closest('a'))) {
-                return;
-            }
-            this.onMouseClick(event.changedTouches[0]);
-        });
         
         // Navigation dots click functionality
         this.setupNavDots();
@@ -1838,30 +1943,26 @@ class Scene3D {
     animate() {
         requestAnimationFrame(() => this.animate());
 
+        if (this.clock) {
+            this.clock.getDelta();
+        }
+
         if (!this.isLoading) {
             const elapsed = this.clock.getElapsedTime();
 
-            this.modelPivots.forEach((pivot) => {
-                const baseYaw = pivot.userData.baseYaw ?? HERO_PIVOT_ROT_Y_BASE;
-                const spin0 = pivot.userData.spinStartRad ?? 0;
-                const baseY = pivot.userData.baseY ?? HERO_ARRANGEMENT_Y_OFFSET;
-                pivot.rotation.x = HERO_PIVOT_ROT_X;
-                pivot.rotation.y = baseYaw + spin0 + elapsed * HERO_SPIN_RAD_PER_SEC;
-                pivot.position.set(
-                    pivot.userData.baseX ?? 0,
-                    baseY + Math.sin(elapsed * 0.8) * 0.03,
-                    pivot.userData.baseZ ?? 0
-                );
-                pivot.rotation.z = 0;
-            });
-
-            if (this.controls && this.models.length > 0) {
-                this.controls.target.copy(VIEW_CAMERA_LOOK_AT);
-            }
-
-            if (typeof TWEEN !== 'undefined' && TWEEN.update) TWEEN.update();
-            if (this.controls) this.controls.update();
             this.updateHoverFromPointer();
+            this.updateHeroAmbientMotion(elapsed);
+
+            if (this.controls) {
+                if (this.models.length > 0) {
+                    this.controls.target.copy(VIEW_CAMERA_LOOK_AT);
+                }
+                this.controls.update();
+            }
+        }
+
+        if (typeof TWEEN !== 'undefined' && TWEEN.update) {
+            TWEEN.update();
         }
 
         if (this.renderer && this.scene && this.camera) {
