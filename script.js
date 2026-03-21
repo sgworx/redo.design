@@ -1,5 +1,9 @@
 /**
- * 3D models — Cloudflare R2 public bucket (object keys: 1.glb … 5.glb at bucket root).
+ * GLB sources (tried in order per file): R2 public URL, then same-origin Assets/N.glb.
+ *
+ * Browsers block cross-origin GLTF requests unless the bucket sends CORS headers.
+ * In R2: Bucket → Settings → CORS policy, e.g.
+ * [{"AllowedOrigins":["http://localhost:8080","https://YOUR_DOMAIN"],"AllowedMethods":["GET","HEAD"],"AllowedHeaders":["*"]}]
  */
 const R2_MODEL_URLS = [
     'https://pub-a0087db496614ca196c3749acf71706e.r2.dev/1.glb',
@@ -8,6 +12,10 @@ const R2_MODEL_URLS = [
     'https://pub-a0087db496614ca196c3749acf71706e.r2.dev/4.glb',
     'https://pub-a0087db496614ca196c3749acf71706e.r2.dev/5.glb'
 ];
+
+function localGlbUrl(indexZeroBased) {
+    return `Assets/${indexZeroBased + 1}.glb`;
+}
 
 class Scene3D {
     constructor() {
@@ -82,7 +90,10 @@ class Scene3D {
         this.renderer.setPixelRatio(window.devicePixelRatio);
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        
+        this.renderer.domElement.style.display = 'block';
+        this.renderer.domElement.style.width = '100%';
+        this.renderer.domElement.style.height = '100%';
+
         document.getElementById('container').appendChild(this.renderer.domElement);
         
         // Create controls
@@ -129,15 +140,53 @@ class Scene3D {
         this.scene.add(pointLight);
     }
     
+    async loadModelWithFallback(loader, index) {
+        const candidates = [this.modelFiles[index], localGlbUrl(index)];
+        const errors = [];
+        for (let c = 0; c < candidates.length; c++) {
+            const url = candidates[c];
+            try {
+                console.log(`[${index}] Trying: ${url}`);
+                return await this.loadModel(loader, url);
+            } catch (err) {
+                const msg = err && err.message ? err.message : String(err);
+                errors.push(`${url} → ${msg}`);
+                console.warn(`[${index}] Failed (${c + 1}/${candidates.length}):`, msg);
+            }
+        }
+        throw new Error(errors.join(' | '));
+    }
+
+    dismissLoadingOverlay(loadedCount) {
+        const overlay = document.getElementById('loading-screen');
+        const notice = document.getElementById('model-load-notice');
+        if (notice) {
+            if (loadedCount === 0) {
+                notice.textContent =
+                    '3D models failed to load. If you use localhost, enable CORS on the R2 bucket (GET/HEAD; allow your origin), or place Assets/1.glb … 5.glb next to this page.';
+                notice.classList.remove('hidden');
+            } else {
+                notice.classList.add('hidden');
+            }
+        }
+        const delayMs = loadedCount === 0 ? 100 : 600;
+        setTimeout(() => {
+            if (overlay) overlay.classList.add('hidden');
+            this.isLoading = false;
+        }, delayMs);
+    }
+
     async loadModels() {
+        const notice = document.getElementById('model-load-notice');
+        if (notice) notice.classList.add('hidden');
+
         const loader = new THREE.GLTFLoader();
         loader.setCrossOrigin('anonymous');
         console.log(`Starting to load ${this.modelFiles.length} models:`, this.modelFiles);
         
         for (let i = 0; i < this.modelFiles.length; i++) {
             try {
-                console.log(`[${i}] Loading model: ${this.modelFiles[i]}`);
-                const gltf = await this.loadModel(loader, this.modelFiles[i]);
+                const gltf = await this.loadModelWithFallback(loader, i);
                 this.models.push(gltf);
                 
                 const model = gltf.scene;
@@ -173,31 +222,22 @@ class Scene3D {
                     scale: model.scale.clone()
                 });
                 
-                console.log(`[${i}] Successfully loaded and positioned model: ${this.modelFiles[i]}`);
+                console.log(`[${i}] Successfully loaded and positioned model`);
             } catch (error) {
-                console.error(`[${i}] Error loading model ${this.modelFiles[i]}:`, error);
-                console.log(`[${i}] Skipping model due to loading error`);
+                console.error(`[${i}] Error loading model (all sources failed):`, error);
             }
         }
         
         console.log(`Total models in scene: ${this.models.length}`);
         console.log(`Total objects in Three.js scene: ${this.scene.children.length}`);
         
-        // Hide loading screen
-        setTimeout(() => {
-            document.getElementById('loading-screen').classList.add('hidden');
-            this.isLoading = false;
-            console.log(`Loaded ${this.models.length} models successfully`);
-            console.log('Model positions:', this.models.map((m, i) => `Model ${i}: (${m.scene.position.x.toFixed(2)}, ${m.scene.position.y.toFixed(2)}, ${m.scene.position.z.toFixed(2)})`));
-            
-            // Verify separation
-            if (this.models.length > 1) {
-                const pos1 = this.models[0].scene.position;
-                const pos2 = this.models[1].scene.position;
-                const distance = pos1.distanceTo(pos2);
-                console.log(`Distance between first two models: ${distance.toFixed(2)} units`);
-            }
-        }, 1000);
+        this.dismissLoadingOverlay(this.models.length);
+        console.log(`Loaded ${this.models.length} models`);
+        if (this.models.length > 1) {
+            const pos1 = this.models[0].scene.position;
+            const pos2 = this.models[1].scene.position;
+            console.log(`Distance between first two models: ${pos1.distanceTo(pos2).toFixed(2)} units`);
+        }
     }
     
     positionModelCloud(model, index) {
@@ -248,6 +288,10 @@ class Scene3D {
         const box = new THREE.Box3().setFromObject(model);
         const size = box.getSize(new THREE.Vector3());
         const maxDim = Math.max(size.x, size.y, size.z);
+        if (!isFinite(maxDim) || maxDim < 1e-6) {
+            console.warn('Model has empty or invalid bounds; leaving scale unchanged', model.userData.modelIndex);
+            return;
+        }
         const scale = (10.0 / maxDim) * 1.872; // 30% larger
         model.scale.setScalar(scale);
 
@@ -1624,12 +1668,11 @@ class Scene3D {
     
     animate() {
         requestAnimationFrame(() => this.animate());
-        
+
         if (!this.isLoading) {
             const elapsed = this.clock.getElapsedTime();
             const parallaxX = this.pointer.x * this.parallaxStrength;
             const parallaxY = -this.pointer.y * this.parallaxStrength;
-            // Update floating orbit motion for all models
             this.models.forEach((modelData) => {
                 const model = modelData.scene;
                 const motion = model.userData.motion;
@@ -1637,22 +1680,18 @@ class Scene3D {
                 model.position.x = motion.baseOffset.x + Math.sin(elapsed * motion.speed.x + motion.phase.x) * motion.amplitude.x + parallaxX;
                 model.position.y = motion.baseOffset.y + Math.cos(elapsed * motion.speed.y + motion.phase.y) * motion.amplitude.y + parallaxY;
                 model.position.z = motion.baseOffset.z + Math.sin(elapsed * motion.speed.z + motion.phase.z) * motion.amplitude.z;
-                
+
                 model.rotation.x += 0.002 * motion.rotSpeed.x;
                 model.rotation.y += 0.002 * motion.rotSpeed.y;
                 model.rotation.z += 0.0015 * motion.rotSpeed.z;
             });
-            
-            // Update TWEEN animations
-            TWEEN.update();
-            
-            // Update controls
-            this.controls.update();
 
-            // Update hover highlight
+            TWEEN.update();
+            this.controls.update();
             this.updateHoverFromPointer();
-            
-            // Render
+        }
+
+        if (this.renderer && this.scene && this.camera) {
             this.renderer.render(this.scene, this.camera);
         }
     }
