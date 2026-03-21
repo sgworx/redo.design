@@ -1,5 +1,21 @@
 :root {
     --font-site: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    /* Monochrome UI — black, white, greys only (no accent hues) */
+    --color-black: #000000;
+    --color-text: #111111;
+    --color-text-secondary: #666666;
+    --color-text-muted: #888888;
+    --color-disabled: #cccccc;
+    --color-border: #e0e0e0;
+    --color-surface: #fafafa;
+    --color-surface-subtle: #f5f5f5;
+    --color-white: #ffffff;
+    --color-ui-strong: #1a1a1a;
+    --color-step-idle: #e0e0e0;
+    --color-step-idle-border: #cccccc;
+    --color-step-completed-bg: #d0d0d0;
+    --color-step-completed-border: #555555;
+    --color-focus-ring: rgba(0, 0, 0, 0.12);
     /* Motion — consistent, premium easing (stack: vanilla CSS + rAF + Tween where used in JS) */
     --ease-out-smooth: cubic-bezier(0.22, 1, 0.36, 1);
     --ease-in-out-smooth: cubic-bezier(0.45, 0, 0.55, 1);
@@ -21,7 +37,7 @@ html {
 }
 
 body {
-    background: #ffffff;
+    background: var(--color-surface-subtle);
     overflow: hidden;
     cursor: grab;
 }
@@ -36,7 +52,7 @@ body:active {
 }
 
 :focus-visible {
-    outline: 2px solid #1900ff;
+    outline: 2px solid var(--color-black);
     outline-offset: 3px;
 }
 
@@ -68,7 +84,7 @@ textarea {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #ffffff;
+    background: var(--color-surface);
     opacity: 1;
     transition: opacity 0.48s var(--ease-in-out-smooth, cubic-bezier(0.45, 0, 0.55, 1));
     padding: clamp(24px, 5vw, 56px);
@@ -94,24 +110,24 @@ textarea {
 .home-intro__line {
     font-size: clamp(1.05rem, 2.4vw, 1.32rem);
     line-height: 1.48;
-    color: #111;
+    color: var(--color-text);
     margin: 0 0 1rem;
     font-weight: 400;
     opacity: 0;
     transform: translate3d(0, 16px, 0);
-    animation: homeIntroLineIn 0.68s var(--ease-out-smooth, cubic-bezier(0.22, 1, 0.36, 1)) forwards;
+    animation: homeIntroLineIn 0.52s var(--ease-out-smooth, cubic-bezier(0.22, 1, 0.36, 1)) forwards;
 }
 
 .home-intro__line:nth-child(1) {
-    animation-delay: 0.1s;
+    animation-delay: 0.05s;
 }
 
 .home-intro__line:nth-child(2) {
-    animation-delay: 0.42s;
+    animation-delay: 0.2s;
 }
 
 .home-intro__line:nth-child(3) {
-    animation-delay: 0.78s;
+    animation-delay: 0.38s;
 }
 
 .home-intro__line--emphasis {
@@ -130,14 +146,57 @@ textarea {
     }
 }
 
+.home-intro__flow {
+    margin: 0.35rem 0 0;
+    font-size: clamp(0.78rem, 1.5vw, 0.88rem);
+    line-height: 1.45;
+    color: rgba(0, 0, 0, 0.42);
+    font-weight: 400;
+    opacity: 0;
+    animation: homeIntroHintIn 0.48s var(--ease-out-smooth, cubic-bezier(0.22, 1, 0.36, 1)) 0.72s forwards;
+}
+
+.home-intro__actions {
+    margin-top: 1.75rem;
+    display: flex;
+    justify-content: center;
+}
+
+.home-intro__cta {
+    appearance: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: clamp(0.95rem, 2vw, 1.05rem);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 0.95rem 1.85rem;
+    border-radius: 999px;
+    color: var(--color-white);
+    background: var(--color-black);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.08) inset,
+        0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.home-intro__cta:hover {
+    background: var(--color-ui-strong);
+    transform: translateY(-1px);
+}
+
+.home-intro__cta:active {
+    transform: translateY(0);
+    opacity: 0.92;
+}
+
 .home-intro__hint {
-    margin-top: 2.25rem;
+    margin-top: 1.75rem;
     font-size: 0.7rem;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: rgba(0, 0, 0, 0.32);
     opacity: 0;
-    animation: homeIntroHintIn 0.55s var(--ease-out-smooth, cubic-bezier(0.22, 1, 0.36, 1)) 1.35s forwards;
+    animation: homeIntroHintIn 0.5s var(--ease-out-smooth, cubic-bezier(0.22, 1, 0.36, 1)) 1.05s forwards;
 }
 
 @keyframes homeIntroHintIn {
@@ -157,10 +216,31 @@ textarea {
     opacity: 0.4;
 }
 
+.home-intro--reduce-motion .home-intro__flow {
+    animation: none;
+    opacity: 1;
+}
+
+.home-intro--reduce-motion .home-intro__cta {
+    transition: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .home-intro:not(.home-intro--reduce-motion) {
         transition-duration: 0.12s;
     }
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
 }
 
 /* Loading screen */
@@ -170,7 +250,7 @@ textarea {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: #ffffff;
+    background: var(--color-surface);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -181,6 +261,21 @@ textarea {
 #loading-screen.hidden {
     opacity: 0;
     pointer-events: none;
+}
+
+.loading-screen__group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.loading-screen__caption {
+    margin: 0;
+    font-size: 0.8125rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
 }
 
 .loading-spinner {
@@ -202,10 +297,10 @@ textarea {
     padding: 12px 16px;
     font-size: 13px;
     line-height: 1.45;
-    color: #1a1a1a;
+    color: var(--color-text);
     text-align: center;
-    background: #fff3cd;
-    border-top: 1px solid #e6d89c;
+    background: var(--color-border);
+    border-top: 1px solid var(--color-disabled);
     transition:
         opacity var(--duration-ui) var(--ease-out-smooth),
         transform var(--duration-ui) var(--ease-out-smooth),
@@ -513,21 +608,46 @@ textarea {
     flex-direction: column;
     align-items: center;
     cursor: pointer;
-    pointer-events: none;
+    pointer-events: auto;
     transition:
         transform var(--duration-fast) var(--ease-out-smooth),
         opacity var(--duration-fast) var(--ease-out-smooth);
     position: relative;
 }
 
-.nav-step:first-child {
-    pointer-events: all;
+.nav-step--locked {
+    pointer-events: none;
+    cursor: not-allowed;
+    opacity: 0.38;
+}
+
+.nav-step--locked .step-circle {
+    border-color: var(--color-disabled);
+    background: var(--color-step-idle);
+}
+
+.nav-step--locked .step-number,
+.nav-step--locked .step-label {
+    color: var(--color-disabled);
+}
+
+.nav-step--completed:not(.active) .step-circle {
+    background: var(--color-step-completed-bg);
+    border-color: var(--color-step-completed-border);
+}
+
+.nav-step--completed:not(.active) .step-number {
+    color: var(--color-ui-strong);
+}
+
+.nav-step--completed:not(.active) .step-label {
+    color: var(--color-text-secondary);
 }
 
 .step-circle {
     width: 120px;
     height: 120px;
-    background: #c7c7c7;
+    background: var(--color-step-idle);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -538,36 +658,50 @@ textarea {
         border-color var(--duration-ui) var(--ease-out-smooth),
         box-shadow var(--duration-ui) var(--ease-in-out-smooth),
         transform var(--duration-ui) var(--ease-out-smooth);
-    border: 3px solid #000;
+    border: 3px solid var(--color-step-idle-border);
+}
+
+/* Unlocked, not active, not yet completed: light neutral */
+.nav-step:not(.active):not(.nav-step--locked):not(.nav-step--completed) .step-circle {
+    background: var(--color-step-idle);
+    border-color: var(--color-step-idle-border);
+}
+
+.nav-step:not(.active):not(.nav-step--locked):not(.nav-step--completed) .step-number {
+    color: var(--color-text);
+}
+
+.nav-step:not(.active):not(.nav-step--locked):not(.nav-step--completed) .step-label {
+    color: var(--color-text-secondary);
 }
 
 .nav-step.active .step-circle {
-    background: #ffffff;
-    border: 3px solid #1900FF;
+    background: var(--color-black);
+    border: 3px solid var(--color-black);
     position: relative;
-    box-shadow: 0 0 10px rgba(25, 0, 255, 0.25);
-    animation: grabber-shadow 1.6s ease-in-out infinite;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    animation: grabber-shadow-neutral 1.6s ease-in-out infinite;
 }
 
-.nav-step:hover .step-circle {
+.nav-step:not(.nav-step--locked):hover .step-circle {
     transform: scale(1.05);
 }
 
 .step-number {
     font-size: 31px;
     font-weight: 600;
-    color: #000;
+    color: var(--color-text);
     user-select: none;
 }
 
 .nav-step.active .step-number {
-    color: #000;
+    color: var(--color-white);
 }
 
 .step-label {
     font-size: 14px;
     font-weight: 400;
-    color: #000;
+    color: var(--color-text-secondary);
     text-align: center;
     white-space: nowrap;
     user-select: none;
@@ -581,7 +715,7 @@ textarea {
 }
 
 .nav-step.active .step-label {
-    color: #000;
+    color: var(--color-text);
     font-weight: 500;
 }
 
@@ -656,6 +790,10 @@ textarea {
     visibility: visible;
 }
 
+#step-slider.step-slider--raise-above-intro:not(.hidden) {
+    z-index: 4600;
+}
+
 /* Canvas areas with different backgrounds */
 .step-slider::before {
 	content: '';
@@ -664,7 +802,7 @@ textarea {
 	left: 0;
 	width: var(--slider-left, 75vw);
 	height: 100%;
-	background: var(--left-canvas-bg, #ffffff); /* Step 1 canvas - white by default */
+	background: var(--left-canvas-bg, #fafafa); /* Near-white panel */
 	z-index: -1;
 	transition: background var(--duration-slow) var(--ease-in-out-smooth);
 }
@@ -676,7 +814,7 @@ textarea {
 	left: var(--slider-left, 75vw);
 	width: calc(100% - var(--slider-left, 75vw));
 	height: 100%;
-	background: var(--right-canvas-bg, #000000); /* Step 2 canvas - black by default */
+	background: var(--right-canvas-bg, #111111); /* Off-black accent panel */
 	z-index: -1;
 	transition: background var(--duration-slow) var(--ease-in-out-smooth);
 }
@@ -724,14 +862,14 @@ textarea {
     width: 2px;
 }
 
-/* Progress line inside canvas slider - black by default */
+/* Progress line — muted until flow is ready, then solid black */
 .canvas-slider .progress-line {
     position: absolute;
     top: 0;
     left: 0;
     width: 2px;
     height: 100%;
-    background: #000000 !important; /* Black by default - indicates not ready */
+    background: var(--color-disabled) !important;
     transition: background var(--duration-ui) var(--ease-in-out-smooth);
     pointer-events: none;
 }
@@ -741,62 +879,60 @@ textarea {
     display: none;
 }
 
-/* Progress line turns yellow when image is selected (ready for next step) */
+/* Ready for next step: full contrast */
 .step-slider.image-selected .canvas-slider .progress-line {
-    background: #1900FF !important; /* Yellow when ready */
+    background: var(--color-black) !important;
 }
 
 .step-slider.image-selected .step-slide[data-step="1"] .canvas-slider .progress-circle {
-    border-color: #1900FF;
+    border-color: var(--color-black);
 }
 
-/* Motion shadow only on the active (blue) grabber */
 .step-slider.image-selected .step-slide[data-step="1"] .slider-right .progress-circle {
-    box-shadow: 0 0 10px rgba(25, 0, 255, 0.25);
-    animation: grabber-shadow 1.6s ease-in-out infinite;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.18);
+    animation: grabber-shadow-neutral 1.6s ease-in-out infinite;
 }
 
 .step-slider.image-selected .step-slide[data-step="1"] .slider-right .drag-label {
     opacity: 1;
 }
 
-@keyframes grabber-shadow {
+@keyframes grabber-shadow-neutral {
     0% {
-        box-shadow: 0 0 8px rgba(25, 0, 255, 0.2);
+        box-shadow: 0 0 6px rgba(0, 0, 0, 0.12);
     }
     50% {
-        box-shadow: 0 0 24px rgba(25, 0, 255, 0.55);
+        box-shadow: 0 0 18px rgba(0, 0, 0, 0.22);
     }
     100% {
-        box-shadow: 0 0 8px rgba(25, 0, 255, 0.2);
+        box-shadow: 0 0 6px rgba(0, 0, 0, 0.12);
     }
 }
 
-/* Step 2 dragger state: left blue, right black until option is chosen */
+/* Step 2: asymmetry with grey vs black until option chosen */
 .step-slide[data-step="2"] .slider-left .progress-line {
-    background: #1900FF !important;
+    background: var(--color-text-muted) !important;
 }
 
 .step-slide[data-step="2"] .slider-right .progress-line {
-    background: #000000 !important;
+    background: var(--color-black) !important;
 }
 
-/* After option chosen: left turns black, right turns blue */
 #step-slider.design-selected .step-slide[data-step="2"] .slider-left .progress-line {
-    background: #000000 !important;
+    background: var(--color-black) !important;
 }
 
 #step-slider.design-selected .step-slide[data-step="2"] .slider-right .progress-line {
-    background: #1900FF !important;
+    background: var(--color-text-muted) !important;
 }
 
 #step-slider.design-selected .step-slide[data-step="2"] .slider-right .progress-circle {
-    border-color: #1900FF;
+    border-color: var(--color-black);
 }
 
 #step-slider.design-selected .step-slide[data-step="2"] .slider-right .progress-circle {
-    box-shadow: 0 0 10px rgba(25, 0, 255, 0.25);
-    animation: grabber-shadow 1.6s ease-in-out infinite;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.18);
+    animation: grabber-shadow-neutral 1.6s ease-in-out infinite;
 }
 
 #step-slider.design-selected .step-slide[data-step="2"] .slider-right .drag-label {
@@ -1378,8 +1514,8 @@ textarea {
     right: 5px;
     width: 24px;
     height: 24px;
-    background: #1900FF;
-    color: #000;
+    background: var(--color-black);
+    color: var(--color-white);
     border-radius: 50%;
     display: none;
     align-items: center;
@@ -1791,7 +1927,7 @@ textarea {
 .step-slide.is-current-step .step-2-circle,
 .step-slide.is-current-step .step-3-circle,
 .step-slide.is-current-step .step-4-circle {
-    border-color: #1900FF;
+    border-color: var(--color-black);
 }
 
 .step-2-title {
@@ -1910,9 +2046,9 @@ textarea {
 }
 
 .step-2-input:focus {
-    outline: 2px solid #000;
+    outline: 2px solid var(--color-black);
     outline-offset: 2px;
-    box-shadow: 0 0 0 3px rgba(25, 0, 255, 0.12);
+    box-shadow: 0 0 0 3px var(--color-focus-ring);
 }
 
 .step-2-arrow-button {
@@ -1935,8 +2071,8 @@ textarea {
 
 /* Motion shadow on Step 2 arrow circle when Step 2 is active */
 .step-slide.is-current-step .step-2-arrow-button {
-    box-shadow: 0 0 10px rgba(25, 0, 255, 0.25);
-    animation: grabber-shadow 1.6s ease-in-out infinite;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.15);
+    animation: grabber-shadow-neutral 1.6s ease-in-out infinite;
 }
 
 .step-2-arrow-button:hover {
@@ -2054,7 +2190,7 @@ textarea {
     width: 48px;
     height: 48px;
     border-radius: 50%;
-    border: 2px solid #1900FF;
+    border: 2px solid var(--color-black);
     display: flex;
     align-items: center;
     justify-content: center;

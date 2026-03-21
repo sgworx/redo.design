@@ -51,7 +51,12 @@ const HERO_DEPTH_STAGGER_Z = 0.55;
 /** Extra +Z on chairs with arc x > 0 (right side) for depth separation toward camera at +Z */
 const HERO_DEPTH_RIGHT_EXTRA_Z = 0.24;
 
-const HOVER_SCALE_MULTIPLIER = 1.3;
+/** Hover emphasis (1.15–1.25 range); selection uses separate multipliers below */
+const HOVER_SCALE_MULTIPLIER = 1.2;
+/** Rest scale when a chair is chosen (reads clearly vs neighbors) */
+const SELECTED_MODEL_SCALE_MULT = 1.28;
+/** Combined when selected + hover */
+const SELECTED_HOVER_MODEL_SCALE_MULT = 1.35;
 /** Tween.js duration for hover scale in/out (discrete transition; rAF does not write model.scale) */
 const HOVER_SCALE_DURATION_MS = 380;
 /** NDC inset when testing AABB overlap (treat as overlap only if closer than this → push apart) */
@@ -97,7 +102,9 @@ class Scene3D {
         this.hoveredModel = null;
         this.intersectTargets = [];
         this.defaultColorModel = null; // Keep 2.glb colored unless hovering another model
-        
+        this.selectedModel = null; // Click-to-select “chosen design” (visual only; camera unchanged)
+        this.maxFlowStepReached = 1; // Unlocks bottom nav Step 4 after user has reached it once
+
         // Slider smoothing state
         this.currentSliderValue = 1; // smoothed value
         this.targetSliderValue = 1; // target value from input
@@ -127,6 +134,8 @@ class Scene3D {
         this._introExitCompleted = false;
         this._introOutTimer = null;
         this._boundSkipIntro = null;
+        this._step2InteractionsBound = false;
+        this._step3InteractionsBound = false;
 
         this.init();
         if (this.renderer && this.camera && this.controls) {
@@ -137,7 +146,7 @@ class Scene3D {
     init() {
         try {
             this.scene = new THREE.Scene();
-            this.scene.background = new THREE.Color(0xffffff);
+            this.scene.background = new THREE.Color(0xf5f5f5);
 
             this.camera = new THREE.PerspectiveCamera(
                 VIEW_CAMERA_FOV,
@@ -209,10 +218,13 @@ class Scene3D {
         if (reduce) {
             root.classList.add('home-intro--reduce-motion');
         }
-        this._boundSkipIntro = () => this.skipHomeIntro();
+        this._boundSkipIntro = (e) => {
+            if (e && e.target && e.target.closest && e.target.closest('.home-intro__actions')) return;
+            this.skipHomeIntro();
+        };
         root.addEventListener('click', this._boundSkipIntro);
         root.addEventListener('wheel', this._boundSkipIntro, { passive: true });
-        const holdMs = reduce ? 450 : 2450;
+        const holdMs = reduce ? 450 : 1520;
         this._introOutTimer = setTimeout(() => this._beginIntroExit(false), holdMs);
     }
 
@@ -245,6 +257,7 @@ class Scene3D {
         }
         root?.classList.add('home-intro--gone');
         root?.setAttribute('aria-hidden', 'true');
+        document.getElementById('step-slider')?.classList.remove('step-slider--raise-above-intro');
         this._introRemoved = true;
         if (!this._modelsReadyForHandoff) {
             document.getElementById('loading-screen')?.classList.remove('hidden');
@@ -825,16 +838,117 @@ class Scene3D {
         return grayTexture;
     }
 
+    syncHeroModelColors() {
+        if (!this.intersectTargets.length) return;
+        for (const model of this.intersectTargets) {
+            const inColor =
+                model === this.hoveredModel ||
+                model === this.selectedModel ||
+                (model === this.defaultColorModel && !this.hoveredModel && !this.selectedModel);
+            if (inColor) {
+                this.restoreModelColor(model);
+            } else {
+                this.setModelToGrayscale(model);
+            }
+        }
+    }
+
+    getHeroScaleTarget(model) {
+        if (!model?.userData?.heroRestScale) return null;
+        const b = model.userData.heroRestScale;
+        const sel = model === this.selectedModel;
+        const hov = model === this.hoveredModel;
+        let mult = 1;
+        if (sel && hov) mult = SELECTED_HOVER_MODEL_SCALE_MULT;
+        else if (sel) mult = SELECTED_MODEL_SCALE_MULT;
+        else if (hov) mult = HOVER_SCALE_MULTIPLIER;
+        return { x: b.x * mult, y: b.y * mult, z: b.z * mult };
+    }
+
+    stopHeroHoverScaleTween(model) {
+        if (!model?.userData?.hoverScaleTween) return;
+        const tw = model.userData.hoverScaleTween;
+        if (typeof tw.stop === 'function') tw.stop();
+        model.userData.hoverScaleTween = null;
+    }
+
+    /** Tween.js — only system that writes model.scale for hero chairs (rAF uses pivots only). */
+    tweenHeroModelToTargetScale(model) {
+        if (!model) return;
+        if (!model.userData.heroRestScale) {
+            model.userData.heroRestScale = model.scale.clone();
+        }
+        const target = this.getHeroScaleTarget(model);
+        if (!target) return;
+        this.stopHeroHoverScaleTween(model);
+        if (typeof TWEEN === 'undefined' || !TWEEN.Tween) {
+            model.scale.set(target.x, target.y, target.z);
+            return;
+        }
+        const tw = new TWEEN.Tween(model.scale)
+            .to(target, HOVER_SCALE_DURATION_MS)
+            .easing(TWEEN.Easing.Cubic.InOut)
+            .onComplete(() => {
+                model.userData.hoverScaleTween = null;
+            })
+            .start();
+        model.userData.hoverScaleTween = tw;
+    }
+
+    applyHeroEmissiveMode(model, mode) {
+        const strength = mode === 'selected' ? 0.22 : mode === 'hover' ? 0.12 : 0;
+        model.traverse((child) => {
+            if (!child.isMesh || !child.material) return;
+            const materials = Array.isArray(child.material) ? child.material : [child.material];
+            materials.forEach((mat) => {
+                if (!mat.emissive) return;
+                if (!mat.userData._heroEmissiveBase) {
+                    mat.userData._heroEmissiveBase = mat.emissive.clone();
+                }
+                if (strength <= 0) {
+                    mat.emissive.copy(mat.userData._heroEmissiveBase);
+                } else {
+                    mat.emissive.copy(mat.userData._heroEmissiveBase).lerp(new THREE.Color(0xffffff), strength * 0.55);
+                }
+                mat.needsUpdate = true;
+            });
+        });
+    }
+
+    syncHeroEmissiveForAll() {
+        this.intersectTargets.forEach((model) => {
+            const mode =
+                model === this.selectedModel ? 'selected' : model === this.hoveredModel ? 'hover' : 'none';
+            if (model.userData._glowMode === mode) return;
+            model.userData._glowMode = mode;
+            this.applyHeroEmissiveMode(model, mode);
+        });
+    }
+
+    syncHeroCanvasCursor(overHero) {
+        if (!this.renderer?.domElement) return;
+        if (this.isLoading) {
+            this.renderer.domElement.style.cursor = 'default';
+            return;
+        }
+        this.renderer.domElement.style.cursor = overHero ? 'pointer' : 'grab';
+    }
+
     updateHoverFromPointer() {
         if (!this.pointerActive || this.intersectTargets.length === 0) {
             if (this.hoveredModel) {
-                this.setModelToGrayscale(this.hoveredModel);
-                this.tweenHeroHoverScaleReset(this.hoveredModel);
+                const prev = this.hoveredModel;
                 this.hoveredModel = null;
+                this.syncHeroModelColors();
+                this.tweenHeroModelToTargetScale(prev);
+                if (this.selectedModel && this.selectedModel !== prev) {
+                    this.tweenHeroModelToTargetScale(this.selectedModel);
+                }
+            } else {
+                this.syncHeroModelColors();
             }
-            if (this.defaultColorModel) {
-                this.restoreModelColor(this.defaultColorModel);
-            }
+            this.syncHeroEmissiveForAll();
+            this.syncHeroCanvasCursor(false);
             return;
         }
 
@@ -847,69 +961,47 @@ class Scene3D {
         }
 
         if (nextHovered !== this.hoveredModel) {
-            if (this.hoveredModel) {
-                this.setModelToGrayscale(this.hoveredModel);
-                this.tweenHeroHoverScaleReset(this.hoveredModel);
-            }
-            if (nextHovered) {
-                this.restoreModelColor(nextHovered);
-                this.tweenHeroHoverScaleUp(nextHovered);
-            }
+            const prev = this.hoveredModel;
             this.hoveredModel = nextHovered;
-        }
-
-        if (this.defaultColorModel && this.defaultColorModel !== this.hoveredModel) {
-            if (this.hoveredModel) {
-                this.setModelToGrayscale(this.defaultColorModel);
-            } else {
-                this.restoreModelColor(this.defaultColorModel);
+            if (prev) this.tweenHeroModelToTargetScale(prev);
+            if (nextHovered) this.tweenHeroModelToTargetScale(nextHovered);
+            if (this.selectedModel && this.selectedModel !== prev && this.selectedModel !== nextHovered) {
+                this.tweenHeroModelToTargetScale(this.selectedModel);
             }
         }
+
+        this.syncHeroModelColors();
+        this.syncHeroEmissiveForAll();
+        this.syncHeroCanvasCursor(!!nextHovered);
     }
 
-    stopHeroHoverScaleTween(model) {
-        if (!model?.userData?.hoverScaleTween) return;
-        const tw = model.userData.hoverScaleTween;
-        if (typeof tw.stop === 'function') tw.stop();
-        model.userData.hoverScaleTween = null;
-    }
-
-    /** Tween.js discrete transition — only system that writes model.scale during hover (rAF uses pivots only). */
-    tweenHeroHoverScaleUp(model) {
+    applyHeroSelection(model) {
         if (!model) return;
-        if (!model.userData.heroRestScale) {
-            model.userData.heroRestScale = model.scale.clone();
-        }
-        const base = model.userData.heroRestScale;
-        const m = HOVER_SCALE_MULTIPLIER;
-        this.stopHeroHoverScaleTween(model);
-        if (typeof TWEEN === 'undefined' || !TWEEN.Tween) {
-            model.scale.set(base.x * m, base.y * m, base.z * m);
+        if (this.selectedModel === model) {
+            this.clearHeroSelection();
             return;
         }
-        const tw = new TWEEN.Tween(model.scale)
-            .to({ x: base.x * m, y: base.y * m, z: base.z * m }, HOVER_SCALE_DURATION_MS)
-            .easing(TWEEN.Easing.Cubic.InOut)
-            .start();
-        model.userData.hoverScaleTween = tw;
+        const prev = this.selectedModel;
+        this.selectedModel = model;
+        if (prev) {
+            delete prev.userData._glowMode;
+            this.tweenHeroModelToTargetScale(prev);
+        }
+        delete model.userData._glowMode;
+        this.tweenHeroModelToTargetScale(model);
+        this.syncHeroModelColors();
+        this.syncHeroEmissiveForAll();
     }
 
-    tweenHeroHoverScaleReset(model) {
-        if (!model?.userData?.heroRestScale) return;
-        const base = model.userData.heroRestScale;
-        this.stopHeroHoverScaleTween(model);
-        if (typeof TWEEN === 'undefined' || !TWEEN.Tween) {
-            model.scale.copy(base);
-            return;
-        }
-        const tw = new TWEEN.Tween(model.scale)
-            .to({ x: base.x, y: base.y, z: base.z }, HOVER_SCALE_DURATION_MS)
-            .easing(TWEEN.Easing.Cubic.InOut)
-            .onComplete(() => {
-                model.userData.hoverScaleTween = null;
-            })
-            .start();
-        model.userData.hoverScaleTween = tw;
+    clearHeroSelection() {
+        if (!this.selectedModel) return;
+        const prev = this.selectedModel;
+        this.selectedModel = null;
+        delete prev.userData._glowMode;
+        this.intersectTargets.forEach((m) => delete m.userData._glowMode);
+        this.tweenHeroModelToTargetScale(prev);
+        this.syncHeroModelColors();
+        this.syncHeroEmissiveForAll();
     }
 
     /** rAF: pivot rotation + float only — no model.scale (avoids fighting Tween.js). */
@@ -979,9 +1071,32 @@ class Scene3D {
         this.renderer.domElement.addEventListener('mouseleave', () => {
             this.pointerActive = false;
             if (this.hoveredModel) {
-                this.setModelToGrayscale(this.hoveredModel);
-                this.tweenHeroHoverScaleReset(this.hoveredModel);
+                const prev = this.hoveredModel;
                 this.hoveredModel = null;
+                this.syncHeroModelColors();
+                this.tweenHeroModelToTargetScale(prev);
+                if (this.selectedModel && this.selectedModel !== prev) {
+                    this.tweenHeroModelToTargetScale(this.selectedModel);
+                }
+            } else {
+                this.syncHeroModelColors();
+            }
+            this.syncHeroEmissiveForAll();
+            this.syncHeroCanvasCursor(false);
+        });
+
+        this.renderer.domElement.addEventListener('click', (event) => {
+            if (this.isLoading || !this.intersectTargets.length) return;
+            const rect = this.renderer.domElement.getBoundingClientRect();
+            this.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            this.pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+            this.raycaster.setFromCamera(this.pointer, this.camera);
+            const intersects = this.raycaster.intersectObjects(this.intersectTargets, true);
+            if (intersects.length > 0) {
+                const root = this.findIntersectRoot(intersects[0].object);
+                if (root) this.applyHeroSelection(root);
+            } else {
+                this.clearHeroSelection();
             }
         });
         
@@ -1000,110 +1115,199 @@ class Scene3D {
     
     setupNavDots() {
         const navSteps = document.querySelectorAll('.nav-step');
-        
-        navSteps.forEach((step, index) => {
+
+        navSteps.forEach((step) => {
             step.addEventListener('click', () => {
-                // Remove active class from all steps
-                navSteps.forEach(s => s.classList.remove('active'));
-                
-                // Add active class to clicked step
-                step.classList.add('active');
-                
-                // Show step slider for step 1
-                if (index === 0) {
-                    this.showStepSlider();
-                } else {
-                    this.hideStepSlider();
-                }
-                
-                console.log(`Navigation step ${index + 1} clicked`);
+                const n = parseInt(step.dataset.flowStep, 10);
+                if (Number.isNaN(n) || !this.canUnlockFlowStep(n)) return;
+                this.openStepSliderToStep(n);
             });
         });
-        
-        // Setup step slider functionality
+
         this.setupStepSlider();
-        
-        // Setup Step 2 interactions
         this.setupStep2Interactions();
-        
-        // Setup Step 3 interactions
         this.setupStep3Interactions();
+        this.setupMaterialUpload();
+        this.syncNavStepsFromFlow();
     }
-    
-    showStepSlider() {
-        const slider = document.getElementById('step-slider');
-        const logo = document.querySelector('.top-logo');
-        const stepRange = document.getElementById('step-range');
-        
-        slider.classList.remove('hidden');
-        logo.classList.add('visible');
-        
-        // Explicitly remove image-selected class on initialization
-        slider.classList.remove('image-selected');
-        slider.classList.remove('design-selected');
-        
-        // Reset to step 1
-        this.currentStep = 1;
-        stepRange.value = 1;
-        this.currentSliderValue = 1;
-        this.targetSliderValue = 1;
-        
-        // Reset boundaries based on current step
-        // Initial state: Step 1 at 70vw, Step 2 at 30vw, Steps 3-4 hidden
-        this.boundaries = {
-            '1-2': 70,   // Step 1: 70vw
-            '2-3': 100,  // Step 2: 30vw (visible)
-            '3-4': 100   // Step 3: 0vw (hidden), Step 4: 0vw (hidden)
-        };
-        
-        // Initialize CSS variables
-        document.documentElement.style.setProperty('--boundary-1-2', `${this.boundaries['1-2']}vw`);
-        document.documentElement.style.setProperty('--boundary-2-3', `${this.boundaries['2-3']}vw`);
-        document.documentElement.style.setProperty('--boundary-3-4', `${this.boundaries['3-4']}vw`);
-        
-        // Update canvas positions first
-        this.updateCanvasPositions();
-        
-        // Update slider visibility
-        this.updateSliderVisibility();
 
-        // Sync Step 2 dragger state
-        this.updateStep2Draggers();
+    canUnlockFlowStep(step) {
+        if (step === 1) return true;
+        if (step === 2) return this.imageSelected === true;
+        if (step === 3) return this.imageSelected === true && this.selectedDesignOption != null;
+        if (step === 4) {
+            return (
+                this.imageSelected === true &&
+                this.selectedDesignOption != null &&
+                this.maxFlowStepReached >= 4
+            );
+        }
+        return false;
+    }
 
-        // Ensure active step class is applied for proper z-index
-        this.updateActiveSlideClasses();
-        
-        // Check if an image is already selected (from HTML default)
+    syncFlowStateFromDom() {
+        const uploadBox = document.querySelector('.upload-box');
+        const uploadBoxImg = uploadBox ? uploadBox.querySelector('.selected-image') : null;
+        const srcAttr = uploadBoxImg ? uploadBoxImg.getAttribute('src') : '';
+        const hasUpload =
+            uploadBox &&
+            uploadBox.classList.contains('has-image') &&
+            srcAttr &&
+            srcAttr.trim().length > 0;
+
         const selectedThumbnail = document.querySelector('.image-thumbnail.selected');
-        if (selectedThumbnail) {
-            // Show selected image in upload box
+
+        if (hasUpload && uploadBoxImg) {
+            this.imageSelected = true;
+            this.updateStep2Image(uploadBoxImg.src);
+        } else if (selectedThumbnail) {
             const thumbnailImg = selectedThumbnail.querySelector('img');
-            const uploadBox = document.querySelector('.upload-box');
-            const uploadBoxImg = uploadBox ? uploadBox.querySelector('.selected-image') : null;
-            if (uploadBox && uploadBoxImg && thumbnailImg) {
+            if (thumbnailImg && uploadBox && uploadBoxImg) {
                 uploadBoxImg.src = thumbnailImg.src;
                 uploadBox.classList.add('has-image');
                 uploadBoxImg.style.display = 'block';
             }
-            
             this.imageSelected = true;
-            this.enableSliderDragging();
-            
-            // Update Step 2 image with pre-selected image
-            this.updateStep2Image(thumbnailImg.src);
+            this.updateStep2Image(thumbnailImg ? thumbnailImg.src : '');
         } else {
             this.imageSelected = false;
+        }
+
+        const selOpt = document.querySelector('.step-2-option.selected');
+        if (selOpt) {
+            const options = document.querySelectorAll('.step-2-option');
+            options.forEach((opt, i) => {
+                if (opt === selOpt) this.selectedDesignOption = i + 1;
+            });
+        }
+    }
+
+    syncNavStepsFromFlow() {
+        const sliderEl = document.getElementById('step-slider');
+        const sliderOpen = sliderEl && !sliderEl.classList.contains('hidden');
+        const navSteps = document.querySelectorAll('.nav-step');
+
+        navSteps.forEach((el) => {
+            const n = parseInt(el.dataset.flowStep, 10);
+            el.classList.remove('active', 'nav-step--locked', 'nav-step--completed');
+
+            const unlocked = this.canUnlockFlowStep(n);
+            if (!unlocked) el.classList.add('nav-step--locked');
+
+            let isActive = false;
+            let isCompleted = false;
+            if (sliderOpen) {
+                isActive = unlocked && n === this.currentStep;
+                isCompleted = unlocked && n < this.currentStep;
+            } else {
+                isActive = n === 1;
+                isCompleted =
+                    unlocked &&
+                    ((n === 2 && this.imageSelected) ||
+                        (n === 3 && this.selectedDesignOption != null) ||
+                        (n === 4 && this.maxFlowStepReached >= 4));
+            }
+
+            if (isCompleted) el.classList.add('nav-step--completed');
+            if (isActive) el.classList.add('active');
+        });
+    }
+
+    openStepSliderToStep(step) {
+        if (step < 1 || step > 4 || !this.canUnlockFlowStep(step)) return;
+
+        const slider = document.getElementById('step-slider');
+        const logo = document.querySelector('.top-logo');
+        const stepRange = document.getElementById('step-range');
+        if (!slider) return;
+
+        slider.classList.remove('hidden');
+        if (logo) logo.classList.add('visible');
+
+        this.syncFlowStateFromDom();
+
+        this.currentStep = step;
+        if (stepRange) stepRange.value = step;
+        this.currentSliderValue = step;
+        this.targetSliderValue = step;
+
+        this.applyStepComposition();
+        this.updateCanvasPositions();
+        this.updateSliderVisibility();
+        this.updateStep2Draggers();
+        this.updateActiveSlideClasses();
+        this.updateCanvasBlur();
+        this.applySliderVisuals(step, true);
+
+        if (step === 3 && this.selectedDesignOption) {
+            this.updateStep3Images(this.selectedDesignOption);
+        }
+
+        if (this.imageSelected) {
+            this.enableSliderDragging();
+        } else {
             this.sliderDragEnabled = false;
         }
-        
-        // Setup Step 2 interactions
-        this.setupStep2Interactions();
-        
-        // Update slider color based on image selection state (after slider is visible)
-        // Use setTimeout to ensure DOM is ready
-        setTimeout(() => {
+
+        queueMicrotask(() => {
             this.updateSliderColor();
-        }, 0);
+            this.syncNavStepsFromFlow();
+        });
+    }
+
+    /** @deprecated Use openStepSliderToStep(1) — kept for clarity at call sites */
+    showStepSlider() {
+        this.openStepSliderToStep(1);
+    }
+
+    setupMaterialUpload() {
+        const fileInput = document.getElementById('material-upload-input');
+        const cta = document.getElementById('home-intro-cta');
+        const uploadBox = document.querySelector('.upload-box');
+        const thumbnails = document.querySelectorAll('.image-thumbnail');
+
+        const applyFile = (file) => {
+            if (!file || !file.type.startsWith('image/')) return;
+            const url = URL.createObjectURL(file);
+            const box = document.querySelector('.upload-box');
+            const img = box ? box.querySelector('.selected-image') : null;
+            if (box && img) {
+                img.src = url;
+                box.classList.add('has-image');
+                img.style.display = 'block';
+            }
+            thumbnails.forEach((t) => t.classList.remove('selected'));
+            this.imageSelected = true;
+            this.enableSliderDragging();
+            this.skipHomeIntro();
+            this.openStepSliderToStep(1);
+            this.updateSliderColor();
+            this.updateStep2Image(url);
+            this.syncNavStepsFromFlow();
+        };
+
+        if (fileInput) {
+            fileInput.addEventListener('change', () => {
+                const f = fileInput.files && fileInput.files[0];
+                applyFile(f);
+                fileInput.value = '';
+            });
+        }
+
+        if (cta) {
+            cta.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                fileInput?.click();
+            });
+        }
+
+        if (uploadBox) {
+            uploadBox.addEventListener('click', (e) => {
+                e.preventDefault();
+                fileInput?.click();
+            });
+        }
     }
     
     updateSliderColor() {
@@ -1246,7 +1450,9 @@ class Scene3D {
         const slider = document.getElementById('step-slider');
         const logo = document.querySelector('.top-logo');
         slider.classList.add('hidden');
+        slider.classList.remove('step-slider--raise-above-intro');
         logo.classList.remove('visible');
+        this.syncNavStepsFromFlow();
     }
     
     setupStepSlider() {
@@ -1254,8 +1460,7 @@ class Scene3D {
         const arrowButtons = document.querySelectorAll('.arrow-button');
         const uploadBox = document.querySelector('.upload-box');
         const stepRange = document.getElementById('step-range');
-        this.currentStep = 1;
-        
+
         // Handle thumbnail selection
         thumbnails.forEach(thumbnail => {
             thumbnail.addEventListener('click', () => {
@@ -1290,7 +1495,8 @@ class Scene3D {
                 
                 // Update Step 2 image if it exists
                 this.updateStep2Image(imageSrc);
-                
+                this.syncNavStepsFromFlow();
+
                 console.log(`Selected image: ${imageName}`);
             });
         });
@@ -1303,31 +1509,25 @@ class Scene3D {
                 if (!item) return;
                 const img = item.querySelector('img');
                 if (!img) return;
-                const uploadBox = document.querySelector('.upload-box');
-                const uploadBoxImg = uploadBox ? uploadBox.querySelector('.selected-image') : null;
-                if (uploadBox && uploadBoxImg) {
+                thumbnails.forEach((thumb) => thumb.classList.remove('selected'));
+                item.classList.add('selected');
+                const uploadBoxInner = document.querySelector('.upload-box');
+                const uploadBoxImg = uploadBoxInner ? uploadBoxInner.querySelector('.selected-image') : null;
+                if (uploadBoxInner && uploadBoxImg) {
                     uploadBoxImg.src = img.src;
-                    uploadBox.classList.add('has-image');
+                    uploadBoxInner.classList.add('has-image');
                     uploadBoxImg.style.display = 'block';
                 }
-                
-                // Enable dragging after image selection
+
                 this.imageSelected = true;
                 this.enableSliderDragging();
-                this.updateSliderColor(); // Update slider to yellow
-                
-                // Update Step 2 image if it exists
+                this.updateSliderColor();
+
                 this.updateStep2Image(img.src);
+                this.syncNavStepsFromFlow();
             });
         }
-        
-        // Handle upload box click
-        if (uploadBox) {
-            uploadBox.addEventListener('click', () => {
-                console.log('Upload box clicked - would open file picker');
-            });
-        }
-        
+
         // Handle arrow button clicks for navigation
         arrowButtons.forEach(button => {
             button.addEventListener('click', () => {
@@ -1580,7 +1780,8 @@ class Scene3D {
         // Only update if step actually changed (prevents unnecessary updates)
         if (newStep !== this.currentStep) {
             this.currentStep = newStep;
-            
+            this.maxFlowStepReached = Math.max(this.maxFlowStepReached || 1, newStep);
+
             // If Step 3 is now visible, ensure images are loaded
             if (newStep === 3) {
                 // Use selected design option or default to option 1
@@ -1613,6 +1814,7 @@ class Scene3D {
         }
 
         this.updateActiveSlideClasses();
+        this.syncNavStepsFromFlow();
     }
 
     updateActiveSlideClasses() {
@@ -1669,10 +1871,12 @@ class Scene3D {
     }
     
     setupStep2Interactions() {
-        // Handle design option clicks
+        if (this._step2InteractionsBound) return;
+        this._step2InteractionsBound = true;
+
         const options = document.querySelectorAll('.step-2-option');
         const designInput = document.getElementById('design-input');
-        
+
         options.forEach((option, index) => {
             option.addEventListener('click', () => {
                 // Remove selected class from all options
@@ -1694,10 +1898,10 @@ class Scene3D {
                 // Update Step 3 images when option is selected
                 this.updateStep3Images(this.selectedDesignOption);
                 this.updateStep2Draggers();
+                this.syncNavStepsFromFlow();
             });
         });
-        
-        // Handle arrow button click (if needed for future functionality)
+
         const arrowButton = document.getElementById('design-arrow-btn');
         if (arrowButton) {
             arrowButton.addEventListener('click', () => {
@@ -1773,26 +1977,26 @@ class Scene3D {
     }
     
     setupStep3Interactions() {
-        // Handle arrow click to finalize design and go to Step 4
+        if (this._step3InteractionsBound) return;
+        this._step3InteractionsBound = true;
+
         const finalizeArrow = document.getElementById('step-3-finalize-arrow');
         if (finalizeArrow) {
             finalizeArrow.addEventListener('click', (e) => {
                 e.stopPropagation();
-                
-                // Move boundaries to reveal Step 4
-                // Step 4 should take up the full viewport
-                this.boundaries['3-4'] = 0; // Step 4 starts at 0vw
-                this.boundaries['2-3'] = 0; // Step 3 ends at 0vw (hidden)
-                this.boundaries['1-2'] = 0; // Step 2 ends at 0vw (hidden)
-                
-                // Update canvas positions
+
+                this.boundaries['3-4'] = 0;
+                this.boundaries['2-3'] = 0;
+                this.boundaries['1-2'] = 0;
+
                 this.updateCanvasPositions();
                 this.updateSliderVisibility();
-                
-                // Update current step
+
                 this.currentStep = 4;
+                this.maxFlowStepReached = Math.max(this.maxFlowStepReached || 1, 4);
                 this.updateCurrentStepFromBoundaries();
-                
+                this.syncNavStepsFromFlow();
+
                 console.log('Finalized design, moved to Step 4');
             });
         }
@@ -1985,17 +2189,14 @@ class Scene3D {
         const stepSlider = document.querySelector('.step-slider');
         if (stepSlider) {
             if (activeStep === 1) {
-                // Step 1: Left canvas white, right canvas black
-                stepSlider.style.setProperty('--left-canvas-bg', '#ffffff');
-                stepSlider.style.setProperty('--right-canvas-bg', '#000000');
+                stepSlider.style.setProperty('--left-canvas-bg', '#fafafa');
+                stepSlider.style.setProperty('--right-canvas-bg', '#111111');
             } else if (activeStep === 2) {
-                // Step 2: Both canvases white
-                stepSlider.style.setProperty('--left-canvas-bg', '#ffffff');
-                stepSlider.style.setProperty('--right-canvas-bg', '#ffffff');
+                stepSlider.style.setProperty('--left-canvas-bg', '#fafafa');
+                stepSlider.style.setProperty('--right-canvas-bg', '#fafafa');
             } else {
-                // Steps 3-4: Both canvases white
-                stepSlider.style.setProperty('--left-canvas-bg', '#ffffff');
-                stepSlider.style.setProperty('--right-canvas-bg', '#ffffff');
+                stepSlider.style.setProperty('--left-canvas-bg', '#fafafa');
+                stepSlider.style.setProperty('--right-canvas-bg', '#fafafa');
             }
         }
     }

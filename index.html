@@ -14,12 +14,18 @@
     <!-- Cinematic intro: text first, then handoff to 3D (see Scene3D.startHomeIntro) -->
     <div id="home-intro" class="home-intro" role="dialog" aria-modal="true" aria-labelledby="home-intro-line-1">
         <div class="home-intro__inner">
-            <p class="home-intro__line" id="home-intro-line-1">reDO transforms waste into usable design</p>
-            <p class="home-intro__line" id="home-intro-line-2">with step-by-step build instructions and assembly diagrams.</p>
-            <p class="home-intro__line home-intro__line--emphasis" id="home-intro-line-3">Fast, iterative, and direct: waste into form.</p>
+            <p class="home-intro__line" id="home-intro-line-1">Turn waste into buildable design.</p>
+            <p class="home-intro__line" id="home-intro-line-2">Upload → Generate → Build.</p>
+            <p class="home-intro__line home-intro__line--emphasis" id="home-intro-line-3">Fast, iterative, direct.</p>
+            <p class="home-intro__flow" id="home-intro-flow">Upload waste → Generate designs → Build with instructions</p>
+            <div class="home-intro__actions">
+                <button type="button" id="home-intro-cta" class="home-intro__cta">Upload Material</button>
+            </div>
             <p class="home-intro__hint">Click or scroll to skip</p>
         </div>
     </div>
+
+    <input type="file" id="material-upload-input" class="visually-hidden" accept="image/*" tabindex="-1" aria-label="Upload material image">
 
     <div id="container"></div>
     
@@ -587,26 +593,26 @@ Cut cleanly</pre>
     
     <!-- Navigation steps -->
     <div class="nav-steps">
-        <div class="nav-step active">
+        <div class="nav-step active" data-flow-step="1">
             <span class="step-label step-label-top">STEP</span>
             <div class="step-circle">
                 <span class="step-number">1</span>
             </div>
             <span class="step-label">Select Image</span>
         </div>
-        <div class="nav-step">
+        <div class="nav-step nav-step--locked" data-flow-step="2">
             <div class="step-circle">
                 <span class="step-number">2</span>
             </div>
             <span class="step-label">Design Prompt</span>
         </div>
-        <div class="nav-step">
+        <div class="nav-step nav-step--locked" data-flow-step="3">
             <div class="step-circle">
                 <span class="step-number">3</span>
             </div>
             <span class="step-label">Choose Design</span>
         </div>
-        <div class="nav-step">
+        <div class="nav-step nav-step--locked" data-flow-step="4">
             <div class="step-circle">
                 <span class="step-number">4</span>
             </div>
@@ -616,7 +622,10 @@ Cut cleanly</pre>
     
     <!-- Loading screen -->
     <div id="loading-screen">
-        <div class="loading-spinner"></div>
+        <div class="loading-screen__group">
+            <div class="loading-spinner" aria-hidden="true"></div>
+            <p class="loading-screen__caption">Loading 3D scene…</p>
+        </div>
     </div>
 
     <p id="model-load-notice" class="model-load-notice hidden" role="alert"></p>
