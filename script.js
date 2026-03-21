@@ -1,13 +1,12 @@
 /**
- * 3D models — served from Cloudflare R2 public bucket only (not local /Assets).
- * Object keys must match these paths in the bucket.
+ * 3D models — Cloudflare R2 public bucket (object keys: 1.glb … 5.glb at bucket root).
  */
 const R2_MODEL_URLS = [
-    'https://pub-a0087db496614ca196c3749acf71706e.r2.dev/Assets/1.glb',
-    'https://pub-a0087db496614ca196c3749acf71706e.r2.dev/Assets/2.glb',
-    'https://pub-a0087db496614ca196c3749acf71706e.r2.dev/Assets/3.glb',
-    'https://pub-a0087db496614ca196c3749acf71706e.r2.dev/Assets/4.glb',
-    'https://pub-a0087db496614ca196c3749acf71706e.r2.dev/Assets/5.glb'
+    'https://pub-a0087db496614ca196c3749acf71706e.r2.dev/1.glb',
+    'https://pub-a0087db496614ca196c3749acf71706e.r2.dev/2.glb',
+    'https://pub-a0087db496614ca196c3749acf71706e.r2.dev/3.glb',
+    'https://pub-a0087db496614ca196c3749acf71706e.r2.dev/4.glb',
+    'https://pub-a0087db496614ca196c3749acf71706e.r2.dev/5.glb'
 ];
 
 class Scene3D {
@@ -132,6 +131,7 @@ class Scene3D {
     
     async loadModels() {
         const loader = new THREE.GLTFLoader();
+        loader.setCrossOrigin('anonymous');
         console.log(`Starting to load ${this.modelFiles.length} models:`, this.modelFiles);
         
         for (let i = 0; i < this.modelFiles.length; i++) {
