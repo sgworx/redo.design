@@ -1,5 +1,14 @@
-/** Public R2 bucket for GLB models (CDN). Upload as Assets/1.glb … Assets/5.glb */
-const R2_MODELS_BASE = 'https://pub-a0087db496614ca196c3749acf71706e.r2.dev';
+/**
+ * 3D models — served from Cloudflare R2 public bucket only (not local /Assets).
+ * Object keys must match these paths in the bucket.
+ */
+const R2_MODEL_URLS = [
+    'https://pub-a0087db496614ca196c3749acf71706e.r2.dev/Assets/1.glb',
+    'https://pub-a0087db496614ca196c3749acf71706e.r2.dev/Assets/2.glb',
+    'https://pub-a0087db496614ca196c3749acf71706e.r2.dev/Assets/3.glb',
+    'https://pub-a0087db496614ca196c3749acf71706e.r2.dev/Assets/4.glb',
+    'https://pub-a0087db496614ca196c3749acf71706e.r2.dev/Assets/5.glb'
+];
 
 class Scene3D {
     constructor() {
@@ -43,13 +52,7 @@ class Scene3D {
             '3-4': 75   // Step 3: 25vw, Step 4: 25vw
         };
         
-        this.modelFiles = [
-            `${R2_MODELS_BASE}/Assets/1.glb`,
-            `${R2_MODELS_BASE}/Assets/2.glb`,
-            `${R2_MODELS_BASE}/Assets/3.glb`,
-            `${R2_MODELS_BASE}/Assets/4.glb`,
-            `${R2_MODELS_BASE}/Assets/5.glb`
-        ];
+        this.modelFiles = R2_MODEL_URLS;
 
         this.modelAdjustments = {
             0: { scale: 0.85 } // Tweak 1.glb to match others
