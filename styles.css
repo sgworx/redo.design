@@ -1,6 +1,18 @@
 :root {
-    --font-site: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --font-site:
+        "Inter", system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial,
+        sans-serif;
     /* Monochrome UI — black, white, greys only (no accent hues) */
+    --glass-light-bg: rgba(255, 255, 255, 0.62);
+    --glass-light-border: rgba(255, 255, 255, 0.38);
+    --glass-dark-bg: rgba(0, 0, 0, 0.72);
+    --glass-dark-bg-hover: rgba(0, 0, 0, 0.82);
+    --glass-dark-border: rgba(255, 255, 255, 0.12);
+    --glass-blur: blur(20px) saturate(120%);
+    --glass-blur-strong: blur(24px) saturate(118%);
+    --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.08);
+    --shadow-softer: 0 2px 12px rgba(0, 0, 0, 0.06);
+    --shadow-inset-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.45);
     --color-black: #000000;
     --color-text: #111111;
     --color-text-secondary: #666666;
@@ -84,9 +96,11 @@ textarea {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--color-surface);
+    background: rgba(245, 245, 245, 0.72);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
     opacity: 1;
-    transition: opacity 0.48s var(--ease-in-out-smooth, cubic-bezier(0.45, 0, 0.55, 1));
+    transition: opacity 0.58s var(--ease-in-out-smooth, cubic-bezier(0.45, 0, 0.55, 1));
     padding: clamp(24px, 5vw, 56px);
     text-align: center;
 }
@@ -105,40 +119,74 @@ textarea {
     max-width: 40rem;
     width: 100%;
     margin: 0 auto;
+    padding: clamp(2rem, 5vw, 2.75rem);
+    border-radius: 20px;
+    background: var(--glass-light-bg);
+    border: 1px solid var(--glass-light-border);
+    box-shadow: var(--shadow-soft), var(--shadow-inset-highlight);
+    backdrop-filter: var(--glass-blur-strong);
+    -webkit-backdrop-filter: var(--glass-blur-strong);
+    isolation: isolate;
+    position: relative;
+    min-height: min(42vh, 320px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.home-intro__line {
+/* Phase 1 — narrative (message only) */
+.home-intro__phase--1 {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    transition:
+        opacity 0.52s var(--ease-out-smooth),
+        transform 0.52s var(--ease-out-smooth);
+}
+
+.home-intro__phase--1.home-intro__phase--exiting {
+    opacity: 0;
+    transform: translate3d(0, -12px, 0);
+    pointer-events: none;
+}
+
+.home-intro__phase--1.home-intro__phase--off {
+    display: none !important;
+}
+
+.home-intro__phase--1 .home-intro__line {
     font-size: clamp(1.05rem, 2.4vw, 1.32rem);
-    line-height: 1.48;
+    line-height: 1.55;
+    letter-spacing: -0.015em;
     color: var(--color-text);
-    margin: 0 0 1rem;
+    margin: 0 0 1.1rem;
     font-weight: 400;
     opacity: 0;
-    transform: translate3d(0, 16px, 0);
-    animation: homeIntroLineIn 0.52s var(--ease-out-smooth, cubic-bezier(0.22, 1, 0.36, 1)) forwards;
+    transform: translate3d(0, 14px, 0);
+    animation: homeIntroLineIn 0.62s var(--ease-out-smooth, cubic-bezier(0.22, 1, 0.36, 1)) forwards;
 }
 
-.home-intro__line:nth-child(1) {
-    animation-delay: 0.05s;
+.home-intro__phase--1 .home-intro__line:nth-child(1) {
+    animation-delay: 0.08s;
 }
 
-.home-intro__line:nth-child(2) {
-    animation-delay: 0.2s;
+.home-intro__phase--1 .home-intro__line:nth-child(2) {
+    animation-delay: 0.58s;
 }
 
-.home-intro__line:nth-child(3) {
-    animation-delay: 0.38s;
+.home-intro__phase--1 .home-intro__line:nth-child(3) {
+    animation-delay: 1.08s;
 }
 
 .home-intro__line--emphasis {
     font-weight: 600;
-    margin-bottom: 0;
+    margin-bottom: 0 !important;
 }
 
 @keyframes homeIntroLineIn {
     from {
         opacity: 0;
-        transform: translate3d(0, 16px, 0);
+        transform: translate3d(0, 14px, 0);
     }
     to {
         opacity: 1;
@@ -146,83 +194,84 @@ textarea {
     }
 }
 
-.home-intro__flow {
-    margin: 0.35rem 0 0;
-    font-size: clamp(0.78rem, 1.5vw, 0.88rem);
+/* Phase 2 — informational (pipeline tagline only) */
+.home-intro__phase--2 {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    transform: translate3d(0, -50%, 0);
+    width: 100%;
+    z-index: 2;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+        opacity 0.55s var(--ease-out-smooth),
+        visibility 0s linear 0.55s,
+        transform 0.55s var(--ease-out-smooth);
+}
+
+.home-intro__phase--2.home-intro__phase--hidden {
+    display: none !important;
+}
+
+.home-intro__phase--2:not(.home-intro__phase--hidden) {
+    display: block;
+}
+
+.home-intro__phase--2.home-intro__phase--visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: none;
+    transition:
+        opacity 0.55s var(--ease-out-smooth),
+        visibility 0s linear 0s,
+        transform 0.55s var(--ease-out-smooth);
+}
+
+.home-intro__tagline {
+    font-size: clamp(1.22rem, 2.85vw, 1.55rem);
     line-height: 1.45;
-    color: rgba(0, 0, 0, 0.42);
-    font-weight: 400;
+    letter-spacing: 0.035em;
+    font-weight: 500;
+    color: var(--color-text);
+    margin: 0;
     opacity: 0;
-    animation: homeIntroHintIn 0.48s var(--ease-out-smooth, cubic-bezier(0.22, 1, 0.36, 1)) 0.72s forwards;
+    transform: translate3d(0, 12px, 0);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
 }
 
-.home-intro__actions {
-    margin-top: 1.75rem;
-    display: flex;
-    justify-content: center;
+.home-intro__phase--2.home-intro__phase--visible .home-intro__tagline {
+    animation: homeIntroPhase2ItemIn 0.58s var(--ease-out-smooth, cubic-bezier(0.22, 1, 0.36, 1)) 0.08s forwards;
 }
 
-.home-intro__cta {
-    appearance: none;
-    border: none;
-    cursor: pointer;
-    font-family: inherit;
-    font-size: clamp(0.95rem, 2vw, 1.05rem);
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    padding: 0.95rem 1.85rem;
-    border-radius: 999px;
-    color: var(--color-white);
-    background: var(--color-black);
-    box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.08) inset,
-        0 8px 24px rgba(0, 0, 0, 0.18);
-}
-
-.home-intro__cta:hover {
-    background: var(--color-ui-strong);
-    transform: translateY(-1px);
-}
-
-.home-intro__cta:active {
-    transform: translateY(0);
-    opacity: 0.92;
-}
-
-.home-intro__hint {
-    margin-top: 1.75rem;
-    font-size: 0.7rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: rgba(0, 0, 0, 0.32);
-    opacity: 0;
-    animation: homeIntroHintIn 0.5s var(--ease-out-smooth, cubic-bezier(0.22, 1, 0.36, 1)) 1.05s forwards;
-}
-
-@keyframes homeIntroHintIn {
+@keyframes homeIntroPhase2ItemIn {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 12px, 0);
+    }
     to {
         opacity: 1;
+        transform: translate3d(0, 0, 0);
     }
 }
 
-.home-intro--reduce-motion .home-intro__line {
+.home-intro--reduce-motion .home-intro__phase--1 .home-intro__line {
     animation: none;
     opacity: 1;
     transform: none;
 }
 
-.home-intro--reduce-motion .home-intro__hint {
-    animation: none;
-    opacity: 0.4;
+.home-intro--reduce-motion .home-intro__phase--1.home-intro__phase--exiting {
+    transition-duration: 0.12s;
 }
 
-.home-intro--reduce-motion .home-intro__flow {
+.home-intro--reduce-motion .home-intro__phase--2.home-intro__phase--visible .home-intro__tagline {
     animation: none;
     opacity: 1;
-}
-
-.home-intro--reduce-motion .home-intro__cta {
-    transition: none;
+    transform: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -250,7 +299,9 @@ textarea {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: var(--color-surface);
+    background: rgba(245, 245, 245, 0.85);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -267,7 +318,14 @@ textarea {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1rem;
+    gap: 1.25rem;
+    padding: 1.75rem 2.25rem;
+    border-radius: 18px;
+    background: var(--glass-light-bg);
+    border: 1px solid var(--glass-light-border);
+    box-shadow: var(--shadow-soft), var(--shadow-inset-highlight);
+    backdrop-filter: var(--glass-blur-strong);
+    -webkit-backdrop-filter: var(--glass-blur-strong);
 }
 
 .loading-screen__caption {
@@ -294,13 +352,17 @@ textarea {
     bottom: 0;
     z-index: 2500;
     margin: 0;
-    padding: 12px 16px;
+    padding: 14px 20px;
     font-size: 13px;
     line-height: 1.45;
+    letter-spacing: 0.01em;
     color: var(--color-text);
     text-align: center;
-    background: var(--color-border);
-    border-top: 1px solid var(--color-disabled);
+    background: rgba(255, 255, 255, 0.72);
+    border-top: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.06);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
     transition:
         opacity var(--duration-ui) var(--ease-out-smooth),
         transform var(--duration-ui) var(--ease-out-smooth),
@@ -395,7 +457,7 @@ textarea {
 
     .step-4-guide {
         max-width: clamp(520px, 80vw, 720px);
-        margin: clamp(110px, 14vh, 140px) 0 60px 20px;
+        margin: clamp(80px, 11vh, 108px) 0 60px 20px;
         padding-right: clamp(10px, 2vw, 40px);
         max-height: calc(100vh - 200px);
         overflow-y: auto;
@@ -404,12 +466,6 @@ textarea {
 
 /* iPad landscape fit: reduce sizes without affecting desktop */
 @media (max-width: 1024px) and (orientation: landscape) {
-    .step-2-header,
-    .step-3-header,
-    .step-4-header {
-        top: 70px;
-    }
-
     .upload-box {
         width: clamp(280px, 50vw, 420px);
         height: clamp(280px, 50vw, 420px);
@@ -592,21 +648,30 @@ textarea {
     }
 }
 
-/* Navigation steps */
+/* Navigation steps — floating row, no chrome */
 .nav-steps {
     position: fixed;
-    bottom: 3.125%;
-    left: 3.125%;
+    bottom: clamp(28px, 4.5vh, 52px);
+    left: clamp(20px, 3.5vw, 40px);
     display: flex;
-    gap: 2rem;
+    align-items: flex-end;
+    gap: clamp(2.25rem, 4vw, 3.25rem);
     z-index: 1000;
     pointer-events: none;
+    padding: 0;
+    margin: 0;
+    background: none;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
 }
 
 .nav-step {
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 0.5rem;
     cursor: pointer;
     pointer-events: auto;
     transition:
@@ -652,13 +717,15 @@ textarea {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 8px;
+    margin-bottom: 0;
     transition:
         background-color var(--duration-ui) var(--ease-out-smooth),
         border-color var(--duration-ui) var(--ease-out-smooth),
-        box-shadow var(--duration-ui) var(--ease-in-out-smooth),
-        transform var(--duration-ui) var(--ease-out-smooth);
-    border: 3px solid var(--color-step-idle-border);
+        transform var(--duration-ui) var(--ease-out-smooth),
+        opacity var(--duration-fast) var(--ease-out-smooth);
+    border: 1px solid var(--color-step-idle-border);
+    box-shadow: none;
+    opacity: 1;
 }
 
 /* Unlocked, not active, not yet completed: light neutral */
@@ -677,14 +744,16 @@ textarea {
 
 .nav-step.active .step-circle {
     background: var(--color-black);
-    border: 3px solid var(--color-black);
+    border: 1px solid rgba(0, 0, 0, 0.35);
     position: relative;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    animation: grabber-shadow-neutral 1.6s ease-in-out infinite;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
 }
 
 .nav-step:not(.nav-step--locked):hover .step-circle {
-    transform: scale(1.05);
+    transform: scale(1.04);
+    opacity: 0.94;
 }
 
 .step-number {
@@ -699,19 +768,15 @@ textarea {
 }
 
 .step-label {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 400;
     color: var(--color-text-secondary);
     text-align: center;
     white-space: nowrap;
     user-select: none;
-}
-
-.step-label-top {
-    position: absolute;
-    top: -28px;
-    left: 50%;
-    transform: translateX(-50%);
+    letter-spacing: 0.01em;
+    line-height: 1.35;
+    max-width: 7.5rem;
 }
 
 .nav-step.active .step-label {
@@ -721,26 +786,23 @@ textarea {
 
 @media (max-width: 768px) {
     .nav-steps {
-        bottom: 20px;
-        left: 20px;
-        gap: 1.5rem;
+        bottom: max(20px, env(safe-area-inset-bottom, 0px));
+        left: max(16px, env(safe-area-inset-left, 0px));
+        gap: clamp(1.35rem, 5vw, 2rem);
     }
-    
+
     .step-circle {
         width: 100px;
         height: 100px;
     }
-    
+
     .step-number {
         font-size: 25px;
     }
-    
+
     .step-label {
         font-size: 12px;
-    }
-    
-    .step-label-top {
-        top: -22px;
+        max-width: 6.5rem;
     }
 }
 
@@ -753,6 +815,14 @@ textarea {
     pointer-events: none;
     opacity: 0;
     transition: opacity var(--duration-ui) var(--ease-out-smooth);
+    padding: 10px 16px;
+    border-radius: 14px;
+    background: var(--glass-light-bg);
+    border: 1px solid var(--glass-light-border);
+    box-shadow: var(--shadow-softer), var(--shadow-inset-highlight);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    isolation: isolate;
 }
 
 .top-logo.visible {
@@ -889,7 +959,7 @@ textarea {
 }
 
 .step-slider.image-selected .step-slide[data-step="1"] .slider-right .progress-circle {
-    box-shadow: 0 0 12px rgba(0, 0, 0, 0.18);
+    box-shadow: var(--shadow-soft);
     animation: grabber-shadow-neutral 1.6s ease-in-out infinite;
 }
 
@@ -899,13 +969,13 @@ textarea {
 
 @keyframes grabber-shadow-neutral {
     0% {
-        box-shadow: 0 0 6px rgba(0, 0, 0, 0.12);
+        box-shadow: var(--shadow-softer);
     }
     50% {
-        box-shadow: 0 0 18px rgba(0, 0, 0, 0.22);
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.1);
     }
     100% {
-        box-shadow: 0 0 6px rgba(0, 0, 0, 0.12);
+        box-shadow: var(--shadow-softer);
     }
 }
 
@@ -931,7 +1001,7 @@ textarea {
 }
 
 #step-slider.design-selected .step-slide[data-step="2"] .slider-right .progress-circle {
-    box-shadow: 0 0 12px rgba(0, 0, 0, 0.18);
+    box-shadow: var(--shadow-soft);
     animation: grabber-shadow-neutral 1.6s ease-in-out infinite;
 }
 
@@ -949,10 +1019,13 @@ textarea {
     max-width: 56px;
     max-height: 56px;
     flex: 0 0 56px;
-    background: #ffffff;
-    border: 2px solid #000000;
+    background: rgba(255, 255, 255, 0.68);
+    border: 1px solid rgba(0, 0, 0, 0.12);
     border-radius: 50%;
     box-sizing: border-box;
+    box-shadow: var(--shadow-softer), var(--shadow-inset-highlight);
+    backdrop-filter: blur(16px) saturate(120%);
+    -webkit-backdrop-filter: blur(16px) saturate(120%);
     top: 50%;
     margin-top: -28px;
     transform: none;
@@ -981,7 +1054,7 @@ textarea {
 }
 
 .drag-letter {
-    fill: #000000;
+    fill: rgba(0, 0, 0, 0.55);
     font-size: 12px;
     letter-spacing: 1.5px;
     font-family: inherit;
@@ -1013,7 +1086,7 @@ textarea {
 	transition: none !important;
 }
 
-/* Arrow indicators */
+/* Arrow indicators — neutral, outline-like weight */
 .arrow-right,
 .arrow-left {
     width: 26px;
@@ -1025,6 +1098,8 @@ textarea {
     display: block;
     transform-origin: center;
     margin: 0;
+    opacity: 0.72;
+    filter: grayscale(1) contrast(1.15);
 }
 
 .arrow-right {
@@ -1178,40 +1253,45 @@ textarea {
     transition: none !important;
 }
 
-/* Step 1: From 0 to boundary 1-2 - White */
+/* Step panels — translucent layers over scene (layout unchanged) */
 .step-slide[data-step="1"] {
     width: var(--boundary-1-2, 75vw);
     left: 0;
-    background: #ffffff; /* White */
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(18px) saturate(118%);
+    -webkit-backdrop-filter: blur(18px) saturate(118%);
     z-index: 1;
-    color: #000; /* Dark text on light background */
+    color: #000;
 }
 
-/* Step 2: From boundary 1-2 to boundary 2-3 - Light gray */
 .step-slide[data-step="2"] {
     width: calc(var(--boundary-2-3, 100vw) - var(--boundary-1-2, 75vw));
     left: var(--boundary-1-2, 75vw);
-    background: #ededed; /* Light gray */
-    z-index: 1; /* Ensure it's above background pseudo-elements */
-    color: #000; /* Dark text on medium-light background */
+    background: rgba(245, 245, 245, 0.58);
+    backdrop-filter: blur(18px) saturate(116%);
+    -webkit-backdrop-filter: blur(18px) saturate(116%);
+    z-index: 1;
+    color: #000;
 }
 
-/* Step 3: From boundary 2-3 to boundary 3-4 - Medium gray */
 .step-slide[data-step="3"] {
     width: calc(var(--boundary-3-4, 100vw) - var(--boundary-2-3, 100vw));
     left: var(--boundary-2-3, 100vw);
-    background: #b0b0b0; /* Medium gray */
+    background: rgba(230, 230, 230, 0.6);
+    backdrop-filter: blur(18px) saturate(114%);
+    -webkit-backdrop-filter: blur(18px) saturate(114%);
     z-index: 1;
-    color: #000; /* Dark text on medium background */
+    color: #000;
 }
 
-/* Step 4: From boundary 3-4 to 100vw - Darkest gray (black) */
 .step-slide[data-step="4"] {
     width: calc(100vw - var(--boundary-3-4, 100vw));
     left: var(--boundary-3-4, 100vw);
-    background: #000000; /* Darkest gray (black) */
+    background: rgba(0, 0, 0, 0.68);
+    backdrop-filter: blur(22px) saturate(108%);
+    -webkit-backdrop-filter: blur(22px) saturate(108%);
     z-index: 1;
-    color: #fff; /* Light text on black background */
+    color: #fff;
 }
 
 /* Step header with navigation */
@@ -1280,8 +1360,11 @@ textarea {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: #ffffff;
-    border: 2px solid #333;
+    background: rgba(255, 255, 255, 0.65);
+    border: 1px solid rgba(0, 0, 0, 0.14);
+    box-shadow: var(--shadow-softer), var(--shadow-inset-highlight);
+    backdrop-filter: blur(14px) saturate(120%);
+    -webkit-backdrop-filter: blur(14px) saturate(120%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1291,12 +1374,14 @@ textarea {
         background-color var(--duration-fast) var(--ease-out-smooth),
         border-color var(--duration-fast) var(--ease-out-smooth),
         transform var(--duration-fast) var(--ease-out-smooth),
-        box-shadow var(--duration-ui) var(--ease-out-smooth);
+        box-shadow var(--duration-ui) var(--ease-out-smooth),
+        opacity var(--duration-fast) var(--ease-out-smooth);
 }
 
 .arrow-button:hover {
-    background: #f0f0f0;
+    background: rgba(255, 255, 255, 0.82);
     transform: scale(1.04);
+    box-shadow: var(--shadow-soft);
 }
 
 .arrow-button:active {
@@ -1316,32 +1401,37 @@ textarea {
 .upload-box {
     width: 520px; /* Fixed size - no scaling */
     height: 520px; /* Fixed size - no scaling */
-    border: none;
-    border-radius: 0;
+    border: 1px solid var(--glass-light-border);
+    border-radius: 18px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: rgba(160, 160, 160, 0.6); /* Lighter/softer grey */
+    background: var(--glass-light-bg);
+    box-shadow: var(--shadow-soft), var(--shadow-inset-highlight);
+    backdrop-filter: var(--glass-blur-strong);
+    -webkit-backdrop-filter: var(--glass-blur-strong);
     cursor: pointer;
     transition:
         background-color var(--duration-ui) var(--ease-out-smooth),
         border-color var(--duration-fast) var(--ease-out-smooth),
         box-shadow var(--duration-ui) var(--ease-out-smooth),
-        transform var(--duration-ui) var(--ease-soft);
+        transform var(--duration-ui) var(--ease-soft),
+        opacity var(--duration-fast) var(--ease-out-smooth);
     position: relative;
     overflow: hidden;
     flex-shrink: 0; /* Don't shrink */
+    isolation: isolate;
 }
 
-/* L-shaped corner brackets */
+/* L-shaped corner brackets — fine neutral lines */
 .upload-box::before,
 .upload-box::after {
     content: '';
     position: absolute;
     width: 28px;
     height: 28px;
-    border: 3px solid #000;
+    border: 1px solid rgba(0, 0, 0, 0.18);
     pointer-events: none;
 }
 
@@ -1368,7 +1458,7 @@ textarea {
     right: 0;
     width: 28px;
     height: 28px;
-    border: 3px solid #000;
+    border: 1px solid rgba(0, 0, 0, 0.18);
     border-left: none;
     border-bottom: none;
     pointer-events: none;
@@ -1381,7 +1471,7 @@ textarea {
     left: 0;
     width: 28px;
     height: 28px;
-    border: 3px solid #000;
+    border: 1px solid rgba(0, 0, 0, 0.18);
     border-right: none;
     border-top: none;
     pointer-events: none;
@@ -1389,7 +1479,8 @@ textarea {
 
 .upload-box.has-image {
     padding: 0;
-    background: #fff; /* White background when image is selected */
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.45);
 }
 
 .upload-box.has-image .upload-icon,
@@ -1410,16 +1501,16 @@ textarea {
 }
 
 .upload-box:hover {
-    background: #909090; /* Slightly lighter grey on hover when no image */
-    border-color: #000;
-    transform: scale(1.008);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+    background: rgba(255, 255, 255, 0.78);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: scale(1.012);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.09);
 }
 
 .upload-box.has-image:hover {
-    background: #fff; /* Keep white when image is selected */
+    background: rgba(255, 255, 255, 0.82);
     transform: none;
-    box-shadow: none;
+    box-shadow: var(--shadow-soft);
 }
 
 .upload-icon {
@@ -1437,6 +1528,8 @@ textarea {
     max-height: 120px;
     object-fit: contain;
     display: block;
+    opacity: 0.85;
+    filter: grayscale(1);
 }
 
 /* Hide upload icon when image is selected */
@@ -1470,9 +1563,13 @@ textarea {
 .image-thumbnail {
     position: relative;
     cursor: pointer;
-    border-radius: 0;
+    border-radius: 12px;
     overflow: hidden;
-    transition: transform var(--duration-ui) var(--ease-out-smooth);
+    transition:
+        transform var(--duration-ui) var(--ease-out-smooth),
+        box-shadow var(--duration-ui) var(--ease-out-smooth),
+        opacity var(--duration-fast) var(--ease-out-smooth);
+    box-shadow: var(--shadow-softer);
 }
 
 .thumbnail-badge {
@@ -1482,9 +1579,12 @@ textarea {
     width: 26px;
     height: 26px;
     border-radius: 50%;
-    background: #ffffff;
-    border: 2px solid #000000;
-    color: #000000;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    color: var(--color-text);
+    box-shadow: var(--shadow-softer);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     font-size: 12px;
     font-weight: 600;
     display: flex;
@@ -1495,7 +1595,9 @@ textarea {
 }
 
 .image-thumbnail:hover {
-    transform: scale(1.05);
+    transform: scale(1.04);
+    box-shadow: var(--shadow-soft);
+    opacity: 0.96;
 }
 
 .image-thumbnail img {
@@ -1525,7 +1627,7 @@ textarea {
 }
 
 .image-thumbnail.selected img {
-    border: 2px solid #000000;
+    border: 1px solid rgba(0, 0, 0, 0.35);
     box-sizing: border-box;
 }
 
@@ -1564,66 +1666,6 @@ textarea {
     overflow-x: hidden;
 }
 
-/* Step 3 Header - absolute position relative to canvas, aligned with Step 1 */
-.step-3-header {
-    position: absolute;
-    top: 90px; /* Match Step 1 header vertical position (from canvas top) */
-    left: 20px; /* Match Step 1 header horizontal position (from canvas left) */
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* Match Step 1 alignment */
-    gap: 10px;
-    width: auto;
-    flex-shrink: 0;
-    z-index: 10;
-    margin-bottom: 0;
-}
-
-.step-3-label {
-    font-size: 16px;
-    font-weight: 500;
-    letter-spacing: 0.02em;
-    color: #000000;
-    text-transform: uppercase;
-    text-align: center;
-}
-
-.step-3-circle {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    border: 2px solid #000000;
-    background: #ffffff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    font-weight: 600;
-    color: #000000;
-    transition: border-color var(--duration-ui) var(--ease-out-smooth);
-}
-
-.step-3-title {
-    font-size: 16px;
-    font-weight: 400;
-    color: inherit; /* Use parent color */
-    text-align: center; /* Match Step 1 alignment */
-}
-
-/* Step 4 Header - absolute position relative to canvas, aligned with Step 1 */
-.step-4-header {
-    position: absolute;
-    top: 90px; /* Match Step 1 header vertical position (from canvas top) */
-    left: 20px; /* Match Step 1 header horizontal position (from canvas left) */
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* Match Step 1 alignment */
-    gap: 10px;
-    width: auto;
-    flex-shrink: 0;
-    z-index: 10;
-}
-
 .step-4-content {
     overflow-y: auto;
     overflow-x: hidden;
@@ -1649,12 +1691,19 @@ textarea {
 
 .step-4-guide {
     max-width: 720px;
-    margin: 140px 0 60px 80px;
-    padding: 0 100px 80px 0;
+    margin: 96px 0 60px 80px;
+    padding: 28px 100px 72px 32px;
     font-size: 15px;
-    line-height: 1.6;
-    color: #ffffff;
+    line-height: 1.65;
+    letter-spacing: 0.01em;
+    color: rgba(255, 255, 255, 0.94);
     white-space: normal;
+    border-radius: 18px;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: blur(20px) saturate(108%);
+    -webkit-backdrop-filter: blur(20px) saturate(108%);
 }
 
 .step-4-guide h1 {
@@ -1712,45 +1761,7 @@ textarea {
     white-space: pre;
 }
 
-.step-4-label {
-    font-size: 16px;
-    font-weight: 500;
-    letter-spacing: 0.02em;
-    color: inherit; /* Use parent color */
-    text-transform: uppercase;
-    text-align: center;
-}
-
-.step-4-circle {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    border: 2px solid #000000;
-    background: #ffffff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    font-weight: 600;
-    color: #000; /* Keep number black */
-    transition: border-color var(--duration-ui) var(--ease-out-smooth);
-}
-
-.step-4-title {
-    font-size: 16px;
-    font-weight: 400;
-    color: inherit; /* Use parent color */
-    text-align: center; /* Match Step 1 alignment */
-}
-
-/* Only show header for the active step */
-.step-slide:not(.is-current-step) .step-2-header,
-.step-slide:not(.is-current-step) .step-3-header,
-.step-slide:not(.is-current-step) .step-4-header {
-    visibility: hidden;
-}
-
-/* Step 3 Options Container - scrollable, positioned below header */
+/* Step 3 Options Container */
 .step-3-options-container {
     display: flex;
     flex-direction: column;
@@ -1758,7 +1769,7 @@ textarea {
     gap: 24px;
     width: auto;
     max-width: 600px;
-    margin-top: 100px; /* Space for header at top */
+    margin-top: 72px;
     padding: 20px;
     box-sizing: border-box;
     scroll-behavior: smooth;
@@ -1779,7 +1790,8 @@ textarea {
 .step-3-option-img {
     display: block;
     object-fit: contain;
-    background: #ffffff;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 12px;
 }
 
 /* Top and bottom thumbnails - smaller */
@@ -1803,24 +1815,29 @@ textarea {
     right: 20px;
     width: 40px;
     height: 40px;
-    background: #ffffff;
-    border: 2px solid #000;
+    background: rgba(255, 255, 255, 0.65);
+    border: 1px solid rgba(0, 0, 0, 0.12);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     z-index: 10;
+    box-shadow: var(--shadow-softer), var(--shadow-inset-highlight);
+    backdrop-filter: blur(14px) saturate(120%);
+    -webkit-backdrop-filter: blur(14px) saturate(120%);
     transition:
         background-color var(--duration-fast) var(--ease-out-smooth),
         border-color var(--duration-fast) var(--ease-out-smooth),
         transform var(--duration-ui) var(--ease-out-smooth),
-        box-shadow var(--duration-ui) var(--ease-out-smooth);
+        box-shadow var(--duration-ui) var(--ease-out-smooth),
+        opacity var(--duration-fast) var(--ease-out-smooth);
 }
 
 .step-3-arrow-indicator:hover {
-    background: #f5f5f5;
-    transform: scale(1.08);
+    background: rgba(255, 255, 255, 0.88);
+    transform: scale(1.06);
+    box-shadow: var(--shadow-soft);
 }
 
 /* Step 3 arrow icon */
@@ -1831,6 +1848,8 @@ textarea {
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
+    opacity: 0.78;
+    filter: grayscale(1) contrast(1.1);
 }
 
 .arrow-diagonal::before,
@@ -1886,73 +1905,28 @@ textarea {
     overflow-x: hidden;
 }
 
-/* Step 2 Header - absolute position relative to canvas, aligned with Step 1 */
-.step-2-header {
-    position: absolute;
-    top: 90px; /* Match Step 1 header vertical position (from canvas top) */
-    left: 20px; /* Match Step 1 header horizontal position (from canvas left) */
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* Match Step 1 alignment */
-    gap: 10px;
-    width: auto;
-    flex-shrink: 0;
-    z-index: 10;
-}
-
-.step-2-label {
-    font-size: 16px;
-    font-weight: 500;
-    letter-spacing: 0.02em;
-    color: #000; /* Dark text on medium-light gray */
-    text-transform: uppercase;
-    text-align: center;
-}
-
-.step-2-circle {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    border: 2px solid #000000;
-    background: #ffffff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    font-weight: 600;
-    color: #000;
-    transition: border-color var(--duration-ui) var(--ease-out-smooth);
-}
-
-.step-slide.is-current-step .step-2-circle,
-.step-slide.is-current-step .step-3-circle,
-.step-slide.is-current-step .step-4-circle {
-    border-color: var(--color-black);
-}
-
-.step-2-title {
-    font-size: 16px;
-    font-weight: 400;
-    color: #000; /* Dark text on medium-light gray */
-    text-align: center; /* Match Step 1 alignment */
-}
-
-/* Step 2 Image Container - fixed size, positioned below header */
+/* Step 2 Image Container */
 .step-2-image-container {
     width: auto;
     display: flex;
     justify-content: center;
     flex-shrink: 0;
-    margin-top: 100px; /* Space for header at top */
+    margin-top: 72px;
 }
 
 .step-2-image-box {
     width: 520px; /* Fixed size - no scaling */
     height: 520px; /* Fixed size - no scaling */
     position: relative;
-    background: #ffffff; /* White background for image box */
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 16px;
+    box-shadow: var(--shadow-soft), var(--shadow-inset-highlight);
+    backdrop-filter: blur(16px) saturate(118%);
+    -webkit-backdrop-filter: blur(16px) saturate(118%);
     overflow: hidden;
     flex-shrink: 0;
+    isolation: isolate;
 }
 
 .step-2-image-box img {
@@ -1975,7 +1949,7 @@ textarea {
     position: absolute;
     width: 28px;
     height: 28px;
-    border: 3px solid #000;
+    border: 1px solid rgba(0, 0, 0, 0.2);
     pointer-events: none;
     z-index: 1;
 }
@@ -2028,16 +2002,20 @@ textarea {
     flex: 1;
     height: 48px;
     padding: 0 16px;
-    background: #e5e5e5; /* Light grey */
-    border: none;
-    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 12px;
     font-size: 16px;
     color: #000;
     outline: none;
     font-family: inherit;
+    box-shadow: var(--shadow-softer), var(--shadow-inset-highlight);
+    backdrop-filter: blur(14px) saturate(118%);
+    -webkit-backdrop-filter: blur(14px) saturate(118%);
     transition:
         background-color var(--duration-fast) var(--ease-out-smooth),
-        box-shadow var(--duration-ui) var(--ease-out-smooth);
+        box-shadow var(--duration-ui) var(--ease-out-smooth),
+        border-color var(--duration-fast) var(--ease-out-smooth);
 }
 
 .step-2-input::placeholder {
@@ -2054,29 +2032,34 @@ textarea {
 .step-2-arrow-button {
     width: 48px;
     height: 48px;
-    background: #ffffff;
-    border: 2px solid #000;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(0, 0, 0, 0.12);
     border-radius: 24px; /* Oval shape */
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    box-shadow: var(--shadow-softer), var(--shadow-inset-highlight);
+    backdrop-filter: blur(14px) saturate(120%);
+    -webkit-backdrop-filter: blur(14px) saturate(120%);
     transition:
         background-color var(--duration-fast) var(--ease-out-smooth),
         border-color var(--duration-fast) var(--ease-out-smooth),
         transform var(--duration-fast) var(--ease-out-smooth),
-        box-shadow var(--duration-ui) var(--ease-in-out-smooth);
+        box-shadow var(--duration-ui) var(--ease-in-out-smooth),
+        opacity var(--duration-fast) var(--ease-out-smooth);
     flex-shrink: 0;
 }
 
 /* Motion shadow on Step 2 arrow circle when Step 2 is active */
 .step-slide.is-current-step .step-2-arrow-button {
-    box-shadow: 0 0 12px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-soft);
     animation: grabber-shadow-neutral 1.6s ease-in-out infinite;
 }
 
 .step-2-arrow-button:hover {
-    background: #f5f5f5;
+    background: rgba(255, 255, 255, 0.82);
+    transform: scale(1.04);
 }
 
 .step-2-arrow-button:active {
@@ -2092,6 +2075,8 @@ textarea {
     background-size: 70%;
     display: block;
     transform: rotate(90deg);
+    opacity: 0.75;
+    filter: grayscale(1) contrast(1.1);
 }
 
 .arrow-right-small::after {
@@ -2110,35 +2095,42 @@ textarea {
 .step-2-option {
     width: 100%;
     height: 48px;
-    background: #e5e5e5; /* Light grey */
-    border: none;
-    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.52);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 12px;
     padding: 0 16px;
     display: flex;
     align-items: center;
     font-size: 16px;
     color: #000;
     cursor: pointer;
+    box-shadow: var(--shadow-softer);
+    backdrop-filter: blur(14px) saturate(116%);
+    -webkit-backdrop-filter: blur(14px) saturate(116%);
     transition:
         background-color var(--duration-fast) var(--ease-out-smooth),
         border-color var(--duration-fast) var(--ease-out-smooth),
         transform var(--duration-ui) var(--ease-out-smooth),
-        box-shadow var(--duration-ui) var(--ease-out-smooth);
+        box-shadow var(--duration-ui) var(--ease-out-smooth),
+        opacity var(--duration-fast) var(--ease-out-smooth);
     font-family: inherit;
 }
 
 .step-2-option:hover {
-    background: #d5d5d5;
-    transform: translateX(4px);
+    background: rgba(255, 255, 255, 0.75);
+    transform: translateX(3px) scale(1.01);
+    box-shadow: var(--shadow-soft);
 }
 
 .step-2-option:active {
-    transform: translateX(2px) scale(0.98);
+    transform: translateX(1px) scale(0.99);
+    opacity: 0.92;
 }
 
 .step-2-option.selected {
-    background: #d5d5d5;
-    border: 2px solid #000;
+    background: rgba(255, 255, 255, 0.88);
+    border: 1px solid rgba(0, 0, 0, 0.22);
+    box-shadow: var(--shadow-soft);
 }
 
 @media (max-width: 768px) {
@@ -2167,70 +2159,69 @@ textarea {
     }
 }
 
-/* Top-left step indicator */
+/* Top-left progress label (minimal; not a card) */
 .step-top-left {
     position: fixed;
-    top: 90px; /* increased distance from logo (was 70px) */
+    top: 90px;
     left: 20px;
     z-index: 3000;
     display: flex;
-    flex-direction: column;
-    gap: 10px;
-    align-items: center; /* Center all elements horizontally */
-}
-
-.step-top-left-label {
-    font-size: 16px;
-    letter-spacing: 0.02em;
-    color: #000;
-    text-align: center;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    padding: 0;
+    margin: 0;
+    background: none;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    pointer-events: none;
 }
 
 .step-top-left-circle {
-    width: 48px;
-    height: 48px;
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
-    border: 2px solid var(--color-black);
+    border: 1px solid rgba(0, 0, 0, 0.28);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
+    font-size: 13px;
     font-weight: 600;
-    color: #000;
-    background: #fff;
-    transition:
-        border-color var(--duration-ui) var(--ease-out-smooth),
-        box-shadow var(--duration-ui) var(--ease-in-out-smooth),
-        transform var(--duration-fast) var(--ease-out-smooth);
+    line-height: 1;
+    color: var(--color-text);
+    background: transparent;
+    box-shadow: none;
 }
 
 .step-top-left-title {
-    font-size: 16px;
-    color: #000;
-    text-align: center;
-    margin-left: 0;
-    position: relative;
-    left: 0; /* Reset to center with the container */
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.35;
+    letter-spacing: 0.01em;
+    color: var(--color-text);
+    text-align: left;
 }
 
 @media (max-width: 768px) {
     .step-top-left {
-        top: 80px; /* increased distance from logo on mobile (was 60px) */
+        top: 80px;
         left: 15px;
+        gap: 10px;
     }
+
     .step-top-left-circle {
-        width: 50px;
-        height: 50px;
-        font-size: 20px;
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
     }
+
     .step-top-left-title {
         font-size: 14px;
     }
 }
-
-/* Force black color for top-left step number and title */
-#step-top-left-number { color: #000 !important; }
-#step-top-left-title { color: #000 !important; }
 
 @media (prefers-reduced-motion: reduce) {
     html {
@@ -2255,6 +2246,58 @@ textarea {
     .loading-spinner {
         animation: none;
         border-top-color: rgba(0, 0, 0, 0.45);
+    }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    .home-intro,
+    #loading-screen,
+    .home-intro__inner,
+    .top-logo,
+    .upload-box,
+    .upload-box.has-image,
+    .loading-screen__group,
+    .model-load-notice,
+    .canvas-slider .progress-circle,
+    .step-slide[data-step='1'],
+    .step-slide[data-step='2'],
+    .step-slide[data-step='3'],
+    .step-slide[data-step='4'],
+    .step-2-input,
+    .step-2-option,
+    .step-2-arrow-button,
+    .step-2-image-box,
+    .step-3-arrow-indicator,
+    .step-4-guide,
+    .thumbnail-badge,
+    .nav-step.active .step-circle {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+
+    .home-intro {
+        background: var(--color-surface);
+    }
+
+    .home-intro__inner,
+    .loading-screen__group {
+        background: rgba(255, 255, 255, 0.96);
+    }
+
+    .step-slide[data-step='1'] {
+        background: rgba(255, 255, 255, 0.98);
+    }
+
+    .step-slide[data-step='2'] {
+        background: rgba(245, 245, 245, 0.98);
+    }
+
+    .step-slide[data-step='3'] {
+        background: rgba(230, 230, 230, 0.98);
+    }
+
+    .step-slide[data-step='4'] {
+        background: rgba(26, 26, 26, 0.96);
     }
 }
 

@@ -132,7 +132,9 @@ class Scene3D {
         this._mainRevealDone = false;
         this._introExitStarted = false;
         this._introExitCompleted = false;
-        this._introOutTimer = null;
+        this._introPhaseAdvanceTimer = null;
+        this._introPhaseTransitionTimer = null;
+        this._introPhase2AutoExitTimer = null;
         this._boundSkipIntro = null;
         this._step2InteractionsBound = false;
         this._step3InteractionsBound = false;
@@ -207,6 +209,21 @@ class Scene3D {
         }
     }
 
+    _clearIntroSequenceTimers() {
+        if (this._introPhaseAdvanceTimer) {
+            clearTimeout(this._introPhaseAdvanceTimer);
+            this._introPhaseAdvanceTimer = null;
+        }
+        if (this._introPhaseTransitionTimer) {
+            clearTimeout(this._introPhaseTransitionTimer);
+            this._introPhaseTransitionTimer = null;
+        }
+        if (this._introPhase2AutoExitTimer) {
+            clearTimeout(this._introPhase2AutoExitTimer);
+            this._introPhase2AutoExitTimer = null;
+        }
+    }
+
     startHomeIntro() {
         const root = document.getElementById('home-intro');
         if (!root) {
@@ -214,18 +231,52 @@ class Scene3D {
             this._tryRevealAfterIntro();
             return;
         }
+        this._clearIntroSequenceTimers();
         const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         if (reduce) {
             root.classList.add('home-intro--reduce-motion');
         }
-        this._boundSkipIntro = (e) => {
-            if (e && e.target && e.target.closest && e.target.closest('.home-intro__actions')) return;
+        this._boundSkipIntro = () => {
             this.skipHomeIntro();
         };
         root.addEventListener('click', this._boundSkipIntro);
         root.addEventListener('wheel', this._boundSkipIntro, { passive: true });
-        const holdMs = reduce ? 450 : 1520;
-        this._introOutTimer = setTimeout(() => this._beginIntroExit(false), holdMs);
+
+        const phase1TotalMs = reduce ? 900 : 4300;
+        this._introPhaseAdvanceTimer = setTimeout(() => this._goIntroPhase2(), phase1TotalMs);
+    }
+
+    _goIntroPhase2() {
+        if (this._introExitStarted || this._introRemoved) return;
+        this._introPhaseAdvanceTimer = null;
+
+        const p1 = document.getElementById('home-intro-phase1');
+        const p2 = document.getElementById('home-intro-phase2');
+        if (!p1 || !p2) {
+            this._beginIntroExit(false);
+            return;
+        }
+
+        const reduce = document.getElementById('home-intro')?.classList.contains('home-intro--reduce-motion');
+        const exitMs = reduce ? 120 : 520;
+
+        p1.classList.add('home-intro__phase--exiting');
+        this._introPhaseTransitionTimer = setTimeout(() => {
+            this._introPhaseTransitionTimer = null;
+            if (this._introExitStarted || this._introRemoved) return;
+
+            p1.classList.add('home-intro__phase--off');
+            p1.setAttribute('aria-hidden', 'true');
+
+            p2.classList.remove('home-intro__phase--hidden');
+            p2.setAttribute('aria-hidden', 'false');
+            requestAnimationFrame(() => {
+                p2.classList.add('home-intro__phase--visible');
+            });
+
+            const phase2HoldMs = reduce ? 1400 : 2600;
+            this._introPhase2AutoExitTimer = setTimeout(() => this._beginIntroExit(false), phase2HoldMs);
+        }, exitMs);
     }
 
     skipHomeIntro() {
@@ -236,13 +287,14 @@ class Scene3D {
     _beginIntroExit(isSkip) {
         if (this._introExitStarted) return;
         this._introExitStarted = true;
-        if (this._introOutTimer) {
-            clearTimeout(this._introOutTimer);
-            this._introOutTimer = null;
-        }
+        this._clearIntroSequenceTimers();
+
+        // Do not open the step slider here: the full-viewport GLB scene (load + chair choice)
+        // must show first; user opens the flow via bottom nav (step 1) when ready.
+
         const root = document.getElementById('home-intro');
         root?.classList.add('home-intro--exiting');
-        const ms = isSkip ? 220 : 480;
+        const ms = isSkip ? 240 : 580;
         setTimeout(() => this._finalizeIntroLayer(), ms);
     }
 
@@ -1262,7 +1314,6 @@ class Scene3D {
 
     setupMaterialUpload() {
         const fileInput = document.getElementById('material-upload-input');
-        const cta = document.getElementById('home-intro-cta');
         const uploadBox = document.querySelector('.upload-box');
         const thumbnails = document.querySelectorAll('.image-thumbnail');
 
@@ -1291,14 +1342,6 @@ class Scene3D {
                 const f = fileInput.files && fileInput.files[0];
                 applyFile(f);
                 fileInput.value = '';
-            });
-        }
-
-        if (cta) {
-            cta.addEventListener('click', (e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                fileInput?.click();
             });
         }
 
@@ -1801,11 +1844,6 @@ class Scene3D {
                     4: 'Get it ready'
                 };
                 stepTitleEl.textContent = titles[this.currentStep] || '';
-            }
-
-            const topLeft = document.querySelector('.step-top-left');
-            if (topLeft) {
-                topLeft.style.display = this.currentStep === 1 ? 'flex' : 'none';
             }
         }
 
