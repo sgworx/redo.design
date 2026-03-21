@@ -1,6 +1,9 @@
 /**
  * Homepage: multiple GLBs from assets.redo.design, normalized (max axis 2), laid out on a shallow arc (bbox widths + gap, centered on x=0).
  * GLB cache bust only on localhost (see GLB_USE_CACHE_BUST). Production loads use stable URLs for HTTP caching.
+ *
+ * Expected same-origin assets (see index.html <head> comment + document.baseURI):
+ *   ./script.js (this file), ./styles.css, Assets/* for UI and step-3 thumbnails.
  */
 const MODEL_ASSETS_BASE = 'https://assets.redo.design/';
 /** When true, append ?v=timestamp so GLBs never cache (dev iteration). False in production for faster repeat visits. */
@@ -81,6 +84,16 @@ function buildModelUrls() {
 }
 
 const R2_MODEL_URLS = buildModelUrls();
+
+/** Resolve repo static paths against document.baseURI (set via <base> in index.html). */
+function redoAssetPath(relativePath) {
+    const p = String(relativePath || '').replace(/^\/+/, '');
+    try {
+        return new URL(p, document.baseURI).href;
+    } catch (e) {
+        return p;
+    }
+}
 
 class Scene3D {
     constructor() {
@@ -1962,9 +1975,9 @@ class Scene3D {
     updateStep3Images(optionNumber) {
         // optionNumber: 1, 2, or 3
         const imageSet = {
-            1: ['Assets/op1_1.png', 'Assets/op1_2.png', 'Assets/op1_3.png'],
-            2: ['Assets/op2_1.png', 'Assets/op2_2.png', 'Assets/op2_3.png'],
-            3: ['Assets/op3_1.png', 'Assets/op3_2.jpg', 'Assets/op3_3.png']
+            1: [redoAssetPath('Assets/op1_1.png'), redoAssetPath('Assets/op1_2.png'), redoAssetPath('Assets/op1_3.png')],
+            2: [redoAssetPath('Assets/op2_1.png'), redoAssetPath('Assets/op2_2.png'), redoAssetPath('Assets/op2_3.png')],
+            3: [redoAssetPath('Assets/op3_1.png'), redoAssetPath('Assets/op3_2.jpg'), redoAssetPath('Assets/op3_3.png')]
         };
         
         const images = imageSet[optionNumber];
@@ -2285,7 +2298,32 @@ class Scene3D {
     }
 }
 
+function logRedoAssetExpectations() {
+    const tag = '[reDO assets]';
+    try {
+        console.info(tag, 'document.baseURI:', document.baseURI);
+        console.info(tag, 'Resolved stylesheet URL:', new URL('./styles.css', document.baseURI).href);
+        console.info(tag, 'Resolved app script URL:', new URL('./script.js', document.baseURI).href);
+        console.info(
+            tag,
+            'Linked stylesheets:',
+            [...document.querySelectorAll('link[rel="stylesheet"]')].map((l) => l.href)
+        );
+        document.querySelectorAll('script[src]').forEach((s) => console.info(tag, 'External script:', s.src));
+        const cssUrl = new URL('./styles.css', document.baseURI).href;
+        fetch(cssUrl, { method: 'HEAD', cache: 'no-store' })
+            .then((r) => {
+                if (!r.ok) console.warn(tag, 'styles.css HEAD failed:', r.status, r.url);
+                else console.info(tag, 'styles.css OK (HEAD', r.status + '):', r.url);
+            })
+            .catch((err) => console.warn(tag, 'styles.css fetch check failed (network/CORS):', err && err.message));
+    } catch (e) {
+        console.warn(tag, 'logging failed:', e);
+    }
+}
+
 window.addEventListener('load', () => {
+    logRedoAssetExpectations();
     try {
         if (typeof THREE === 'undefined') {
             throw new Error('Three.js did not load (CDN blocked or offline).');

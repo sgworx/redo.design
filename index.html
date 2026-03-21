@@ -3,11 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <!--
+      reDO static assets (same origin):
+        • ./styles.css  — site layout (must return 200, text/css)
+        • ./script.js   — app logic (end of <body>)
+        • Assets/       — images, icons; also referenced from styles.css url(Assets/…)
+      CDNs: fonts.googleapis.com, cdnjs, jsdelivr (Three.js, GLTFLoader, OrbitControls, Tween)
+      GitHub Pages: add empty .nojekyll at repo root so Jekyll does not strip CSS/JS.
+      Project-page URL (https://user.github.io/repo/) — set window.__REDO_PUBLISH_BASE = '/repo' on the line below before bootstrap runs.
+    -->
+    <script>
+        (function () {
+            var sub = typeof window.__REDO_PUBLISH_BASE === 'string' ? window.__REDO_PUBLISH_BASE.trim() : '';
+            if (sub && !sub.startsWith('/')) sub = '/' + sub;
+            sub = sub.replace(/\/$/, '');
+            var href = sub
+                ? window.location.origin + sub + '/'
+                : (function () {
+                      try {
+                          return new URL('./', window.location.href).href;
+                      } catch (e) {
+                          return window.location.origin + '/';
+                      }
+                  })();
+            var b = document.createElement('base');
+            b.href = href;
+            var cs = document.querySelector('meta[charset]');
+            if (cs && cs.parentNode) cs.parentNode.insertBefore(b, cs.nextSibling);
+            else document.head.prepend(b);
+        })();
+    </script>
     <title>3D Objects Gallery</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="./styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -578,24 +608,28 @@ Cut cleanly</pre>
     <!-- Navigation steps -->
     <div class="nav-steps">
         <div class="nav-step active" data-flow-step="1">
+            <span class="step-pretitle">Step</span>
             <div class="step-circle">
                 <span class="step-number">1</span>
             </div>
             <span class="step-label">Select Image</span>
         </div>
         <div class="nav-step nav-step--locked" data-flow-step="2">
+            <span class="step-pretitle">Step</span>
             <div class="step-circle">
                 <span class="step-number">2</span>
             </div>
             <span class="step-label">Design Prompt</span>
         </div>
         <div class="nav-step nav-step--locked" data-flow-step="3">
+            <span class="step-pretitle">Step</span>
             <div class="step-circle">
                 <span class="step-number">3</span>
             </div>
             <span class="step-label">Choose Design</span>
         </div>
         <div class="nav-step nav-step--locked" data-flow-step="4">
+            <span class="step-pretitle">Step</span>
             <div class="step-circle">
                 <span class="step-number">4</span>
             </div>
@@ -613,6 +647,6 @@ Cut cleanly</pre>
 
     <p id="model-load-notice" class="model-load-notice hidden" role="alert"></p>
 
-    <script src="script.js"></script>
+    <script src="./script.js"></script>
 </body>
 </html>

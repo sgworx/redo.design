@@ -1,3 +1,8 @@
+/*
+ * reDO — site stylesheet (loaded from index as ./styles.css).
+ * url() assets (relative to this file): Assets/arrow.png, Assets/arrow2.png
+ * Ensure this file and Assets/ deploy beside index.html with matching case (Linux hosts are case-sensitive).
+ */
 :root {
     --font-site:
         "Inter", system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial,
@@ -31,11 +36,19 @@
     /* Flat panels (non-card) */
     --panel-border: rgba(0, 0, 0, 0.12);
     --panel-border-strong: rgba(0, 0, 0, 0.18);
-    /* Photos: soft embossed lift (inset highlight + diffuse shadow) */
+    /* Photos & option tabs: embossed lift (inset highlight + layered soft shadow) */
     --photo-emboss-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.5),
-        0 1px 3px rgba(0, 0, 0, 0.04),
-        0 4px 14px rgba(0, 0, 0, 0.045);
+        inset 0 1px 0 rgba(255, 255, 255, 0.82),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.03),
+        0 2px 6px rgba(0, 0, 0, 0.07),
+        0 6px 18px rgba(0, 0, 0, 0.085),
+        0 14px 36px rgba(0, 0, 0, 0.065);
+    --photo-emboss-shadow-hover:
+        inset 0 1px 0 rgba(255, 255, 255, 0.88),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.035),
+        0 3px 8px rgba(0, 0, 0, 0.09),
+        0 8px 24px rgba(0, 0, 0, 0.095),
+        0 18px 44px rgba(0, 0, 0, 0.075);
     /* Motion — consistent, premium easing (stack: vanilla CSS + rAF + Tween where used in JS) */
     --ease-out-smooth: cubic-bezier(0.22, 1, 0.36, 1);
     --ease-in-out-smooth: cubic-bezier(0.45, 0, 0.55, 1);
@@ -699,7 +712,8 @@ textarea {
 }
 
 .nav-step--locked .step-number,
-.nav-step--locked .step-label {
+.nav-step--locked .step-label,
+.nav-step--locked .step-pretitle {
     color: var(--color-disabled);
 }
 
@@ -714,6 +728,30 @@ textarea {
 
 .nav-step--completed:not(.active) .step-label {
     color: var(--color-text-secondary);
+}
+
+.nav-step--completed:not(.active) .step-pretitle {
+    color: var(--color-text-muted);
+}
+
+.step-pretitle {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+    text-align: center;
+    line-height: 1.2;
+    user-select: none;
+    margin-bottom: 0.1rem;
+}
+
+.nav-step:not(.active):not(.nav-step--locked):not(.nav-step--completed) .step-pretitle {
+    color: var(--color-text-muted);
+}
+
+.nav-step.active .step-pretitle {
+    color: var(--color-text);
 }
 
 .step-circle {
@@ -811,6 +849,11 @@ textarea {
         font-size: 12px;
         max-width: 6.5rem;
     }
+
+    .step-pretitle {
+        font-size: 10px;
+        letter-spacing: 0.08em;
+    }
 }
 
 /* Top logo - only visible when slider is open */
@@ -839,8 +882,8 @@ textarea {
     height: 40px;
     width: auto;
     display: block;
-    border-radius: 2px;
-    box-shadow: var(--photo-emboss-shadow);
+    border-radius: 0;
+    box-shadow: none;
 }
 
 @media (max-width: 768px) {
@@ -2101,12 +2144,13 @@ textarea {
     font-size: 16px;
     color: #000;
     cursor: pointer;
-    box-shadow: none;
+    box-shadow: var(--photo-emboss-shadow);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     transition:
         background-color var(--duration-fast) var(--ease-out-smooth),
         border-color var(--duration-fast) var(--ease-out-smooth),
+        box-shadow var(--duration-ui) var(--ease-out-smooth),
         transform var(--duration-ui) var(--ease-out-smooth),
         opacity var(--duration-fast) var(--ease-out-smooth);
     font-family: inherit;
@@ -2116,16 +2160,19 @@ textarea {
     background: var(--color-surface);
     transform: translateX(2px);
     border-color: var(--panel-border-strong);
+    box-shadow: var(--photo-emboss-shadow-hover);
 }
 
 .step-2-option:active {
     transform: translateX(1px) scale(0.99);
     opacity: 0.92;
+    box-shadow: var(--photo-emboss-shadow);
 }
 
 .step-2-option.selected {
     background: var(--color-white);
     border: 1px solid var(--color-black);
+    box-shadow: var(--photo-emboss-shadow-hover);
 }
 
 @media (max-width: 768px) {
