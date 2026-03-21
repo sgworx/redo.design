@@ -28,6 +28,14 @@
     --color-step-completed-bg: #d0d0d0;
     --color-step-completed-border: #555555;
     --color-focus-ring: rgba(0, 0, 0, 0.12);
+    /* Flat panels (non-card) */
+    --panel-border: rgba(0, 0, 0, 0.12);
+    --panel-border-strong: rgba(0, 0, 0, 0.18);
+    /* Photos: soft embossed lift (inset highlight + diffuse shadow) */
+    --photo-emboss-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.5),
+        0 1px 3px rgba(0, 0, 0, 0.04),
+        0 4px 14px rgba(0, 0, 0, 0.045);
     /* Motion — consistent, premium easing (stack: vanilla CSS + rAF + Tween where used in JS) */
     --ease-out-smooth: cubic-bezier(0.22, 1, 0.36, 1);
     --ease-in-out-smooth: cubic-bezier(0.45, 0, 0.55, 1);
@@ -96,9 +104,9 @@ textarea {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(245, 245, 245, 0.72);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
+    background: rgba(250, 250, 250, 0.97);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     opacity: 1;
     transition: opacity 0.58s var(--ease-in-out-smooth, cubic-bezier(0.45, 0, 0.55, 1));
     padding: clamp(24px, 5vw, 56px);
@@ -120,13 +128,12 @@ textarea {
     width: 100%;
     margin: 0 auto;
     padding: clamp(2rem, 5vw, 2.75rem);
-    border-radius: 20px;
-    background: var(--glass-light-bg);
-    border: 1px solid var(--glass-light-border);
-    box-shadow: var(--shadow-soft), var(--shadow-inset-highlight);
-    backdrop-filter: var(--glass-blur-strong);
-    -webkit-backdrop-filter: var(--glass-blur-strong);
-    isolation: isolate;
+    border-radius: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     position: relative;
     min-height: min(42vh, 320px);
     display: flex;
@@ -299,9 +306,9 @@ textarea {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(245, 245, 245, 0.85);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
+    background: rgba(250, 250, 250, 0.96);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -319,13 +326,13 @@ textarea {
     flex-direction: column;
     align-items: center;
     gap: 1.25rem;
-    padding: 1.75rem 2.25rem;
-    border-radius: 18px;
-    background: var(--glass-light-bg);
-    border: 1px solid var(--glass-light-border);
-    box-shadow: var(--shadow-soft), var(--shadow-inset-highlight);
-    backdrop-filter: var(--glass-blur-strong);
-    -webkit-backdrop-filter: var(--glass-blur-strong);
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
 }
 
 .loading-screen__caption {
@@ -358,11 +365,11 @@ textarea {
     letter-spacing: 0.01em;
     color: var(--color-text);
     text-align: center;
-    background: rgba(255, 255, 255, 0.72);
-    border-top: 1px solid rgba(255, 255, 255, 0.4);
-    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.06);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
+    background: var(--color-white);
+    border-top: 1px solid var(--color-border);
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     transition:
         opacity var(--duration-ui) var(--ease-out-smooth),
         transform var(--duration-ui) var(--ease-out-smooth),
@@ -815,14 +822,13 @@ textarea {
     pointer-events: none;
     opacity: 0;
     transition: opacity var(--duration-ui) var(--ease-out-smooth);
-    padding: 10px 16px;
-    border-radius: 14px;
-    background: var(--glass-light-bg);
-    border: 1px solid var(--glass-light-border);
-    box-shadow: var(--shadow-softer), var(--shadow-inset-highlight);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    isolation: isolate;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
 }
 
 .top-logo.visible {
@@ -832,6 +838,9 @@ textarea {
 .top-logo img {
     height: 40px;
     width: auto;
+    display: block;
+    border-radius: 2px;
+    box-shadow: var(--photo-emboss-shadow);
 }
 
 @media (max-width: 768px) {
@@ -959,23 +968,21 @@ textarea {
 }
 
 .step-slider.image-selected .step-slide[data-step="1"] .slider-right .progress-circle {
-    box-shadow: var(--shadow-soft);
-    animation: grabber-shadow-neutral 1.6s ease-in-out infinite;
+    box-shadow: none;
+    animation: grabber-border-pulse 1.6s ease-in-out infinite;
 }
 
 .step-slider.image-selected .step-slide[data-step="1"] .slider-right .drag-label {
     opacity: 1;
 }
 
-@keyframes grabber-shadow-neutral {
-    0% {
-        box-shadow: var(--shadow-softer);
+@keyframes grabber-border-pulse {
+    0%,
+    100% {
+        border-color: rgba(0, 0, 0, 0.12);
     }
     50% {
-        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.1);
-    }
-    100% {
-        box-shadow: var(--shadow-softer);
+        border-color: rgba(0, 0, 0, 0.38);
     }
 }
 
@@ -998,11 +1005,8 @@ textarea {
 
 #step-slider.design-selected .step-slide[data-step="2"] .slider-right .progress-circle {
     border-color: var(--color-black);
-}
-
-#step-slider.design-selected .step-slide[data-step="2"] .slider-right .progress-circle {
-    box-shadow: var(--shadow-soft);
-    animation: grabber-shadow-neutral 1.6s ease-in-out infinite;
+    box-shadow: none;
+    animation: grabber-border-pulse 1.6s ease-in-out infinite;
 }
 
 #step-slider.design-selected .step-slide[data-step="2"] .slider-right .drag-label {
@@ -1019,19 +1023,18 @@ textarea {
     max-width: 56px;
     max-height: 56px;
     flex: 0 0 56px;
-    background: rgba(255, 255, 255, 0.68);
-    border: 1px solid rgba(0, 0, 0, 0.12);
+    background: var(--color-white);
+    border: 1px solid var(--panel-border-strong);
     border-radius: 50%;
     box-sizing: border-box;
-    box-shadow: var(--shadow-softer), var(--shadow-inset-highlight);
-    backdrop-filter: blur(16px) saturate(120%);
-    -webkit-backdrop-filter: blur(16px) saturate(120%);
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     top: 50%;
     margin-top: -28px;
     transform: none;
     transition:
         border-color var(--duration-ui) var(--ease-out-smooth),
-        box-shadow var(--duration-ui) var(--ease-in-out-smooth),
         background-color var(--duration-fast) var(--ease-out-smooth);
     z-index: 1001;
     cursor: grab;
@@ -1253,44 +1256,40 @@ textarea {
     transition: none !important;
 }
 
-/* Step panels — translucent layers over scene (layout unchanged) */
+/* Step panels — flat opaque (no glass) */
 .step-slide[data-step="1"] {
     width: var(--boundary-1-2, 75vw);
     left: 0;
-    background: rgba(255, 255, 255, 0.55);
-    backdrop-filter: blur(18px) saturate(118%);
-    -webkit-backdrop-filter: blur(18px) saturate(118%);
-    z-index: 1;
+    background: #fafafa;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     color: #000;
 }
 
 .step-slide[data-step="2"] {
     width: calc(var(--boundary-2-3, 100vw) - var(--boundary-1-2, 75vw));
     left: var(--boundary-1-2, 75vw);
-    background: rgba(245, 245, 245, 0.58);
-    backdrop-filter: blur(18px) saturate(116%);
-    -webkit-backdrop-filter: blur(18px) saturate(116%);
-    z-index: 1;
+    background: #f5f5f5;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     color: #000;
 }
 
 .step-slide[data-step="3"] {
     width: calc(var(--boundary-3-4, 100vw) - var(--boundary-2-3, 100vw));
     left: var(--boundary-2-3, 100vw);
-    background: rgba(230, 230, 230, 0.6);
-    backdrop-filter: blur(18px) saturate(114%);
-    -webkit-backdrop-filter: blur(18px) saturate(114%);
-    z-index: 1;
+    background: #ebebeb;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     color: #000;
 }
 
 .step-slide[data-step="4"] {
     width: calc(100vw - var(--boundary-3-4, 100vw));
     left: var(--boundary-3-4, 100vw);
-    background: rgba(0, 0, 0, 0.68);
-    backdrop-filter: blur(22px) saturate(108%);
-    -webkit-backdrop-filter: blur(22px) saturate(108%);
-    z-index: 1;
+    background: #1a1a1a;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     color: #fff;
 }
 
@@ -1360,11 +1359,11 @@ textarea {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.65);
-    border: 1px solid rgba(0, 0, 0, 0.14);
-    box-shadow: var(--shadow-softer), var(--shadow-inset-highlight);
-    backdrop-filter: blur(14px) saturate(120%);
-    -webkit-backdrop-filter: blur(14px) saturate(120%);
+    background: var(--color-white);
+    border: 1px solid var(--panel-border-strong);
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1374,14 +1373,12 @@ textarea {
         background-color var(--duration-fast) var(--ease-out-smooth),
         border-color var(--duration-fast) var(--ease-out-smooth),
         transform var(--duration-fast) var(--ease-out-smooth),
-        box-shadow var(--duration-ui) var(--ease-out-smooth),
         opacity var(--duration-fast) var(--ease-out-smooth);
 }
 
 .arrow-button:hover {
-    background: rgba(255, 255, 255, 0.82);
+    background: var(--color-surface-subtle);
     transform: scale(1.04);
-    box-shadow: var(--shadow-soft);
 }
 
 .arrow-button:active {
@@ -1401,16 +1398,16 @@ textarea {
 .upload-box {
     width: 520px; /* Fixed size - no scaling */
     height: 520px; /* Fixed size - no scaling */
-    border: 1px solid var(--glass-light-border);
-    border-radius: 18px;
+    border: 1px solid var(--panel-border);
+    border-radius: 2px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: var(--glass-light-bg);
-    box-shadow: var(--shadow-soft), var(--shadow-inset-highlight);
-    backdrop-filter: var(--glass-blur-strong);
-    -webkit-backdrop-filter: var(--glass-blur-strong);
+    background: var(--color-white);
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     cursor: pointer;
     transition:
         background-color var(--duration-ui) var(--ease-out-smooth),
@@ -1421,7 +1418,6 @@ textarea {
     position: relative;
     overflow: hidden;
     flex-shrink: 0; /* Don't shrink */
-    isolation: isolate;
 }
 
 /* L-shaped corner brackets — fine neutral lines */
@@ -1479,8 +1475,9 @@ textarea {
 
 .upload-box.has-image {
     padding: 0;
-    background: rgba(255, 255, 255, 0.72);
-    border: 1px solid rgba(255, 255, 255, 0.45);
+    background: var(--color-white);
+    border: 1px solid var(--panel-border);
+    box-shadow: var(--photo-emboss-shadow);
 }
 
 .upload-box.has-image .upload-icon,
@@ -1501,16 +1498,14 @@ textarea {
 }
 
 .upload-box:hover {
-    background: rgba(255, 255, 255, 0.78);
-    border-color: rgba(255, 255, 255, 0.5);
-    transform: scale(1.012);
-    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.09);
+    background: var(--color-surface);
+    border-color: var(--panel-border-strong);
+    transform: scale(1.004);
 }
 
 .upload-box.has-image:hover {
-    background: rgba(255, 255, 255, 0.82);
+    background: var(--color-white);
     transform: none;
-    box-shadow: var(--shadow-soft);
 }
 
 .upload-icon {
@@ -1530,6 +1525,8 @@ textarea {
     display: block;
     opacity: 0.85;
     filter: grayscale(1);
+    border-radius: 2px;
+    box-shadow: var(--photo-emboss-shadow);
 }
 
 /* Hide upload icon when image is selected */
@@ -1563,13 +1560,14 @@ textarea {
 .image-thumbnail {
     position: relative;
     cursor: pointer;
-    border-radius: 12px;
+    border-radius: 2px;
     overflow: hidden;
+    border: 1px solid var(--panel-border);
     transition:
         transform var(--duration-ui) var(--ease-out-smooth),
-        box-shadow var(--duration-ui) var(--ease-out-smooth),
+        border-color var(--duration-ui) var(--ease-out-smooth),
         opacity var(--duration-fast) var(--ease-out-smooth);
-    box-shadow: var(--shadow-softer);
+    box-shadow: var(--photo-emboss-shadow);
 }
 
 .thumbnail-badge {
@@ -1579,12 +1577,12 @@ textarea {
     width: 26px;
     height: 26px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.72);
-    border: 1px solid rgba(255, 255, 255, 0.45);
+    background: var(--color-white);
+    border: 1px solid var(--panel-border);
     color: var(--color-text);
-    box-shadow: var(--shadow-softer);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     font-size: 12px;
     font-weight: 600;
     display: flex;
@@ -1595,8 +1593,8 @@ textarea {
 }
 
 .image-thumbnail:hover {
-    transform: scale(1.04);
-    box-shadow: var(--shadow-soft);
+    transform: scale(1.02);
+    border-color: var(--panel-border-strong);
     opacity: 0.96;
 }
 
@@ -1698,12 +1696,12 @@ textarea {
     letter-spacing: 0.01em;
     color: rgba(255, 255, 255, 0.94);
     white-space: normal;
-    border-radius: 18px;
-    background: rgba(0, 0, 0, 0.35);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: var(--shadow-soft);
-    backdrop-filter: blur(20px) saturate(108%);
-    -webkit-backdrop-filter: blur(20px) saturate(108%);
+    border-radius: 2px;
+    background: #141414;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
 }
 
 .step-4-guide h1 {
@@ -1790,8 +1788,10 @@ textarea {
 .step-3-option-img {
     display: block;
     object-fit: contain;
-    background: rgba(255, 255, 255, 0.4);
-    border-radius: 12px;
+    background: var(--color-white);
+    border: 1px solid var(--panel-border);
+    border-radius: 2px;
+    box-shadow: var(--photo-emboss-shadow);
 }
 
 /* Top and bottom thumbnails - smaller */
@@ -1815,29 +1815,27 @@ textarea {
     right: 20px;
     width: 40px;
     height: 40px;
-    background: rgba(255, 255, 255, 0.65);
-    border: 1px solid rgba(0, 0, 0, 0.12);
+    background: var(--color-white);
+    border: 1px solid var(--panel-border-strong);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     z-index: 10;
-    box-shadow: var(--shadow-softer), var(--shadow-inset-highlight);
-    backdrop-filter: blur(14px) saturate(120%);
-    -webkit-backdrop-filter: blur(14px) saturate(120%);
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     transition:
         background-color var(--duration-fast) var(--ease-out-smooth),
         border-color var(--duration-fast) var(--ease-out-smooth),
         transform var(--duration-ui) var(--ease-out-smooth),
-        box-shadow var(--duration-ui) var(--ease-out-smooth),
         opacity var(--duration-fast) var(--ease-out-smooth);
 }
 
 .step-3-arrow-indicator:hover {
-    background: rgba(255, 255, 255, 0.88);
-    transform: scale(1.06);
-    box-shadow: var(--shadow-soft);
+    background: var(--color-surface-subtle);
+    transform: scale(1.04);
 }
 
 /* Step 3 arrow icon */
@@ -1918,15 +1916,19 @@ textarea {
     width: 520px; /* Fixed size - no scaling */
     height: 520px; /* Fixed size - no scaling */
     position: relative;
-    background: rgba(255, 255, 255, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.35);
-    border-radius: 16px;
-    box-shadow: var(--shadow-soft), var(--shadow-inset-highlight);
-    backdrop-filter: blur(16px) saturate(118%);
-    -webkit-backdrop-filter: blur(16px) saturate(118%);
+    background: var(--color-white);
+    border: 1px solid var(--panel-border);
+    border-radius: 2px;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     overflow: hidden;
     flex-shrink: 0;
-    isolation: isolate;
+    transition: box-shadow var(--duration-ui) var(--ease-out-smooth);
+}
+
+.step-2-image-box:has(img[src]:not([src=""])) {
+    box-shadow: var(--photo-emboss-shadow);
 }
 
 .step-2-image-box img {
@@ -2002,19 +2004,18 @@ textarea {
     flex: 1;
     height: 48px;
     padding: 0 16px;
-    background: rgba(255, 255, 255, 0.55);
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    border-radius: 12px;
+    background: var(--color-white);
+    border: 1px solid var(--panel-border);
+    border-radius: 2px;
     font-size: 16px;
     color: #000;
     outline: none;
     font-family: inherit;
-    box-shadow: var(--shadow-softer), var(--shadow-inset-highlight);
-    backdrop-filter: blur(14px) saturate(118%);
-    -webkit-backdrop-filter: blur(14px) saturate(118%);
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     transition:
         background-color var(--duration-fast) var(--ease-out-smooth),
-        box-shadow var(--duration-ui) var(--ease-out-smooth),
         border-color var(--duration-fast) var(--ease-out-smooth);
 }
 
@@ -2026,39 +2027,35 @@ textarea {
 .step-2-input:focus {
     outline: 2px solid var(--color-black);
     outline-offset: 2px;
-    box-shadow: 0 0 0 3px var(--color-focus-ring);
 }
 
 .step-2-arrow-button {
     width: 48px;
     height: 48px;
-    background: rgba(255, 255, 255, 0.6);
-    border: 1px solid rgba(0, 0, 0, 0.12);
-    border-radius: 24px; /* Oval shape */
+    background: var(--color-white);
+    border: 1px solid var(--panel-border-strong);
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: var(--shadow-softer), var(--shadow-inset-highlight);
-    backdrop-filter: blur(14px) saturate(120%);
-    -webkit-backdrop-filter: blur(14px) saturate(120%);
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     transition:
         background-color var(--duration-fast) var(--ease-out-smooth),
         border-color var(--duration-fast) var(--ease-out-smooth),
         transform var(--duration-fast) var(--ease-out-smooth),
-        box-shadow var(--duration-ui) var(--ease-in-out-smooth),
         opacity var(--duration-fast) var(--ease-out-smooth);
     flex-shrink: 0;
 }
 
-/* Motion shadow on Step 2 arrow circle when Step 2 is active */
 .step-slide.is-current-step .step-2-arrow-button {
-    box-shadow: var(--shadow-soft);
-    animation: grabber-shadow-neutral 1.6s ease-in-out infinite;
+    animation: grabber-border-pulse 1.6s ease-in-out infinite;
 }
 
 .step-2-arrow-button:hover {
-    background: rgba(255, 255, 255, 0.82);
+    background: var(--color-surface-subtle);
     transform: scale(1.04);
 }
 
@@ -2095,31 +2092,30 @@ textarea {
 .step-2-option {
     width: 100%;
     height: 48px;
-    background: rgba(255, 255, 255, 0.52);
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    border-radius: 12px;
+    background: var(--color-white);
+    border: 1px solid var(--panel-border);
+    border-radius: 2px;
     padding: 0 16px;
     display: flex;
     align-items: center;
     font-size: 16px;
     color: #000;
     cursor: pointer;
-    box-shadow: var(--shadow-softer);
-    backdrop-filter: blur(14px) saturate(116%);
-    -webkit-backdrop-filter: blur(14px) saturate(116%);
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     transition:
         background-color var(--duration-fast) var(--ease-out-smooth),
         border-color var(--duration-fast) var(--ease-out-smooth),
         transform var(--duration-ui) var(--ease-out-smooth),
-        box-shadow var(--duration-ui) var(--ease-out-smooth),
         opacity var(--duration-fast) var(--ease-out-smooth);
     font-family: inherit;
 }
 
 .step-2-option:hover {
-    background: rgba(255, 255, 255, 0.75);
-    transform: translateX(3px) scale(1.01);
-    box-shadow: var(--shadow-soft);
+    background: var(--color-surface);
+    transform: translateX(2px);
+    border-color: var(--panel-border-strong);
 }
 
 .step-2-option:active {
@@ -2128,9 +2124,8 @@ textarea {
 }
 
 .step-2-option.selected {
-    background: rgba(255, 255, 255, 0.88);
-    border: 1px solid rgba(0, 0, 0, 0.22);
-    box-shadow: var(--shadow-soft);
+    background: var(--color-white);
+    border: 1px solid var(--color-black);
 }
 
 @media (max-width: 768px) {
