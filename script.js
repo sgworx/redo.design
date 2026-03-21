@@ -1,3 +1,6 @@
+/** Public R2 bucket for GLB models (CDN). Upload as Assets/1.glb … Assets/5.glb */
+const R2_MODELS_BASE = 'https://pub-a0087db496614ca196c3749acf71706e.r2.dev';
+
 class Scene3D {
     constructor() {
         this.scene = null;
@@ -41,11 +44,11 @@ class Scene3D {
         };
         
         this.modelFiles = [
-            'Assets/1.glb',
-            'Assets/2.glb',
-            'Assets/3.glb',
-            'Assets/4.glb',
-            'Assets/5.glb'
+            `${R2_MODELS_BASE}/Assets/1.glb`,
+            `${R2_MODELS_BASE}/Assets/2.glb`,
+            `${R2_MODELS_BASE}/Assets/3.glb`,
+            `${R2_MODELS_BASE}/Assets/4.glb`,
+            `${R2_MODELS_BASE}/Assets/5.glb`
         ];
 
         this.modelAdjustments = {
