@@ -1,14 +1,35 @@
 /**
- * Homepage 3D models — Cloudflare R2 public URLs only (no local Assets/*.glb).
- * CORS on the bucket must allow your site origin for browser loads.
+ * Homepage: multiple GLBs from assets.redo.design, normalized (max axis 2), laid out on X from bbox widths + gap, row centered.
+ * Cache bust in loadModel().
  */
-const R2_MODEL_URLS = [
-    'https://pub-a0087db496614ca196c3749acf71706e.r2.dev/1.glb',
-    'https://pub-a0087db496614ca196c3749acf71706e.r2.dev/2.glb',
-    'https://pub-a0087db496614ca196c3749acf71706e.r2.dev/3.glb',
-    'https://pub-a0087db496614ca196c3749acf71706e.r2.dev/4.glb',
-    'https://pub-a0087db496614ca196c3749acf71706e.r2.dev/5.glb'
-];
+const MODEL_ASSETS_BASE = 'https://assets.redo.design/';
+const MODEL_FILE_STEM = 'text';
+const MODEL_COUNT = 5;
+
+/** After load, largest bbox dimension is scaled to this (world units) */
+const targetMaxDimension = 2.0;
+
+/** World units between adjacent models (edge-to-edge along X) */
+const MODEL_ROW_GAP = 0.35;
+
+const VIEW_CAMERA_FOV = 30;
+const VIEW_CAMERA_POSITION = new THREE.Vector3(0, 0.9, 4.6);
+const VIEW_CAMERA_LOOK_AT = new THREE.Vector3(0, 0.7, 0);
+
+/** BAM-style presentation (pivot); ambient motion applied on top in animate() */
+const HERO_PIVOT_ROT_X = -0.08;
+const HERO_PIVOT_ROT_Y_BASE = 0.55;
+
+function buildModelUrls() {
+    const urls = [];
+    for (let n = 1; n <= MODEL_COUNT; n++) {
+        const MODEL_NAME = `${MODEL_FILE_STEM}${n}.glb`;
+        urls.push(`${MODEL_ASSETS_BASE}${MODEL_NAME}`);
+    }
+    return urls;
+}
+
+const R2_MODEL_URLS = buildModelUrls();
 
 class Scene3D {
     constructor() {
@@ -22,7 +43,8 @@ class Scene3D {
         this.isLoading = true;
         this.selectedModel = null;
         this.originalPositions = [];
-        
+        this.modelPivots = [];
+
         // Motion and interaction state
         this.clock = new THREE.Clock();
         this.pointer = new THREE.Vector2(0, 0); // normalized device coords
@@ -41,7 +63,7 @@ class Scene3D {
         this.imageSelected = false; // track if image is selected (required for dragging)
         this.currentStep = 1; // current active step (1-4)
         this.selectedDesignOption = null; // track which design option was selected in Step 2 (1, 2, or 3)
-        
+
         // Boundary positions for canvas transitions (in vw)
         // Each boundary represents the position between two steps
         // Minimum step width: 25vw to ensure each step is always visible
@@ -54,10 +76,6 @@ class Scene3D {
         
         this.modelFiles = R2_MODEL_URLS;
 
-        this.modelAdjustments = {
-            0: { scale: 0.85 } // Tweak 1.glb to match others
-        };
-        
         this.init();
         if (this.renderer && this.camera && this.controls) {
             this.setupEventListeners();
@@ -70,13 +88,13 @@ class Scene3D {
             this.scene.background = new THREE.Color(0xffffff);
 
             this.camera = new THREE.PerspectiveCamera(
-                75,
+                VIEW_CAMERA_FOV,
                 window.innerWidth / window.innerHeight,
                 0.1,
                 1000
             );
-            this.camera.position.set(20, 70, 95);
-            this.camera.lookAt(0, 0, 0);
+            this.camera.position.copy(VIEW_CAMERA_POSITION);
+            this.camera.lookAt(VIEW_CAMERA_LOOK_AT);
 
             this.renderer = new THREE.WebGLRenderer({ antialias: true });
             this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -94,9 +112,8 @@ class Scene3D {
             this.controls.dampingFactor = 0.05;
             this.controls.enableZoom = true;
             this.controls.enablePan = false;
-            this.controls.autoRotate = true;
-            this.controls.autoRotateSpeed = 0.1;
-            this.controls.target.set(0, 0, 0);
+            this.controls.autoRotate = false;
+            this.controls.target.copy(VIEW_CAMERA_LOOK_AT);
             this.controls.update();
 
             this.raycaster = new THREE.Raycaster();
@@ -137,11 +154,6 @@ class Scene3D {
         directionalLight.shadow.mapSize.width = 2048;
         directionalLight.shadow.mapSize.height = 2048;
         this.scene.add(directionalLight);
-        
-        // Point light for better illumination
-        const pointLight = new THREE.PointLight(0xffffff, 0.5);
-        pointLight.position.set(-10, -10, -5);
-        this.scene.add(pointLight);
     }
     
     dismissLoadingOverlay(loadedCount) {
@@ -166,33 +178,155 @@ class Scene3D {
         }, delayMs);
     }
 
+    disposeObjectSubtree(root) {
+        root.traverse((obj) => {
+            if (!obj.isMesh) return;
+            obj.geometry?.dispose?.();
+            const mats = obj.material;
+            if (Array.isArray(mats)) mats.forEach((m) => m.dispose?.());
+            else mats?.dispose?.();
+        });
+    }
+
+    clearLoadedModels() {
+        if (!this.scene) return;
+        this.modelPivots.forEach((pivot) => {
+            this.scene.remove(pivot);
+            this.disposeObjectSubtree(pivot);
+        });
+        this.modelPivots = [];
+        this.models = [];
+        this.intersectTargets = [];
+        this.originalPositions = [];
+        this.defaultColorModel = null;
+    }
+
+    /** World-space AABB width along X after pivot + model transforms (for row spacing). */
+    getPivotWorldWidthX(pivot) {
+        pivot.updateMatrixWorld(true);
+        const box = new THREE.Box3().setFromObject(pivot);
+        if (box.isEmpty()) return 0;
+        return Math.max(0, box.max.x - box.min.x);
+    }
+
+    findIntersectRoot(object) {
+        let o = object;
+        while (o) {
+            if (this.intersectTargets.includes(o)) return o;
+            o = o.parent;
+        }
+        return null;
+    }
+
+    /**
+     * Normalize scale (max axis → targetMaxDimension), recenter at origin, then shift Y so mesh rests on y≈0.
+     * Call with pivot at scene origin so box center and position.sub(center) align.
+     */
+    normalizeCenterGroundModel(model) {
+        model.updateMatrixWorld(true);
+        let box = new THREE.Box3().setFromObject(model);
+        if (box.isEmpty()) {
+            console.warn('[Hero normalize] Empty bounds', model.userData.modelIndex);
+            return;
+        }
+        const size = box.getSize(new THREE.Vector3());
+        const largestDimension = Math.max(size.x, size.y, size.z);
+        if (!isFinite(largestDimension) || largestDimension < 1e-6) return;
+
+        console.log('[Hero normalize] bbox size (x,y,z):', size.x.toFixed(4), size.y.toFixed(4), size.z.toFixed(4));
+
+        const scaleFactor = targetMaxDimension / largestDimension;
+        console.log('[Hero normalize] scaleFactor:', scaleFactor.toFixed(6));
+        model.scale.setScalar(scaleFactor);
+
+        model.updateMatrixWorld(true);
+        box.setFromObject(model);
+        const center = box.getCenter(new THREE.Vector3());
+        model.position.sub(center);
+
+        model.updateMatrixWorld(true);
+        box.setFromObject(model);
+        model.position.y -= box.min.y;
+
+        console.log(
+            '[Hero normalize] final model.position:',
+            model.position.x.toFixed(4),
+            model.position.y.toFixed(4),
+            model.position.z.toFixed(4)
+        );
+    }
+
+    layoutModelRowFromWidths(pivots, widths) {
+        const n = pivots.length;
+        if (n === 0) return;
+
+        const centersX = [];
+        let prevHalf = 0;
+        for (let i = 0; i < n; i++) {
+            const w = widths[i];
+            const half = w * 0.5;
+            if (i === 0) {
+                centersX.push(half);
+            } else {
+                centersX.push(centersX[i - 1] + prevHalf + MODEL_ROW_GAP + half);
+            }
+            prevHalf = half;
+        }
+
+        const rowWidth = centersX[n - 1] + widths[n - 1] * 0.5;
+        const xShift = -rowWidth * 0.5;
+
+        console.log('[Row layout] widths:', widths.map((w) => w.toFixed(4)), 'gap:', MODEL_ROW_GAP, 'rowWidth:', rowWidth.toFixed(4), 'xShift:', xShift.toFixed(4));
+
+        for (let i = 0; i < n; i++) {
+            const pivot = pivots[i];
+            const x = centersX[i] + xShift;
+            pivot.position.set(x, 0, 0);
+            pivot.userData.baseX = x;
+            pivot.userData.baseZ = 0;
+        }
+    }
+
     async loadModels() {
         const notice = document.getElementById('model-load-notice');
         if (notice) notice.classList.add('hidden');
 
         try {
+            this.clearLoadedModels();
+
             const loader = new THREE.GLTFLoader();
             if (typeof loader.setCrossOrigin === 'function') {
                 loader.setCrossOrigin('anonymous');
             }
-            console.log(`Starting to load ${this.modelFiles.length} models:`, this.modelFiles);
+            console.log(`Loading ${this.modelFiles.length} GLBs for bbox-spaced row`);
+
+            const widths = [];
+            const pivots = [];
 
             for (let i = 0; i < this.modelFiles.length; i++) {
                 try {
                     const url = this.modelFiles[i];
-                    console.log(`[${i}] Loading from R2: ${url}`);
                     const gltf = await this.loadModel(loader, url);
                     this.models.push(gltf);
 
                     const model = gltf.scene;
                     model.userData.modelIndex = i;
-                    console.log(`[${i}] Model loaded, adding to scene`);
-                    this.scene.add(model);
 
-                    model.rotation.y += THREE.MathUtils.degToRad(-30);
+                    const pivot = new THREE.Group();
+                    pivot.position.set(0, 0, 0);
+                    pivot.rotation.set(HERO_PIVOT_ROT_X, HERO_PIVOT_ROT_Y_BASE, 0);
+                    pivot.add(model);
+                    model.userData.pivot = pivot;
+                    this.scene.add(pivot);
+                    pivots.push(pivot);
+                    this.modelPivots.push(pivot);
 
-                    this.positionModelCloud(model, i);
-                    this.centerAndScaleModel(model);
+                    this.normalizeCenterGroundModel(model);
+
+                    pivot.rotation.set(HERO_PIVOT_ROT_X, HERO_PIVOT_ROT_Y_BASE, 0);
+                    const widthX = this.getPivotWorldWidthX(pivot);
+                    widths.push(widthX);
+                    console.log(`[Row] model ${i} world X width (AABB):`, widthX.toFixed(4));
 
                     this.enableShadows(model);
                     try {
@@ -205,8 +339,6 @@ class Scene3D {
                         this.defaultColorModel = model;
                     }
 
-                    this.addFloatingOrbitAnimation(model, i);
-
                     this.originalPositions.push({
                         x: model.position.x,
                         y: model.position.y,
@@ -214,40 +346,38 @@ class Scene3D {
                         scale: model.scale.clone()
                     });
 
-                    console.log(`[${i}] Successfully loaded and positioned model`);
+                    console.log(`[${i}] Loaded:`, url);
                 } catch (error) {
-                    console.error(`[${i}] Error loading model (all sources failed):`, error);
+                    console.error(`[${i}] Error loading model:`, error);
                 }
             }
 
-            console.log(`Total models in scene: ${this.models.length}`);
-            console.log(`Total objects in Three.js scene: ${this.scene.children.length}`);
-            console.log(`Loaded ${this.models.length} models`);
-            if (this.models.length > 1) {
-                const pos1 = this.models[0].scene.position;
-                const pos2 = this.models[1].scene.position;
-                console.log(`Distance between first two models: ${pos1.distanceTo(pos2).toFixed(2)} units`);
+            if (pivots.length > 0) {
+                this.layoutModelRowFromWidths(pivots, widths);
             }
+
+            this.camera.fov = VIEW_CAMERA_FOV;
+            this.camera.position.copy(VIEW_CAMERA_POSITION);
+            this.camera.updateProjectionMatrix();
+            this.camera.lookAt(VIEW_CAMERA_LOOK_AT);
+
+            if (this.controls && this.models.length > 0) {
+                const union = new THREE.Box3();
+                this.models.forEach((g) => union.expandByObject(g.scene));
+                if (!union.isEmpty()) {
+                    this.controls.target.copy(union.getCenter(new THREE.Vector3()));
+                } else {
+                    this.controls.target.copy(VIEW_CAMERA_LOOK_AT);
+                }
+                this.controls.update();
+            }
+
+            console.log(`Scene models loaded: ${this.models.length}`);
         } catch (e) {
             console.error('loadModels fatal:', e);
         } finally {
             this.dismissLoadingOverlay(this.models.length);
         }
-    }
-    
-    positionModelCloud(model, index) {
-        // Simple test: place models in a clear pattern to verify they're separating
-        const spacing = 20;
-        const positionIndex = index === 0 ? 1 : index === 1 ? 0 : index;
-        const angle = (positionIndex / this.modelFiles.length) * Math.PI * 2;
-        const x = Math.cos(angle) * spacing;
-        const z = Math.sin(angle) * spacing;
-        const y = (positionIndex - 2) * 5; // Vertical offset for visibility
-        
-        const position = new THREE.Vector3(x, y, z);
-        model.position.add(position);
-        
-        console.log(`Model ${index} positioned at:`, model.position.toArray());
     }
     
     isTooClose(newPosition, minDistance) {
@@ -275,6 +405,7 @@ class Scene3D {
                 fn(arg);
             };
 
+            // Bypass browser/CDN cache during development — each load gets ?v=timestamp (e.g. …/1.glb?v=173…)
             const cacheBustUrl = url.includes('?') ? `${url}&v=${Date.now()}` : `${url}?v=${Date.now()}`;
             loader.load(
                 cacheBustUrl,
@@ -288,30 +419,6 @@ class Scene3D {
                 (error) => finish(reject, error)
             );
         });
-    }
-    
-    centerAndScaleModel(model) {
-        // First, position the model in the cloud BEFORE centering
-        // This way centering won't override our positioning
-        
-        // Scale to fit in view - significantly larger scale
-        const box = new THREE.Box3().setFromObject(model);
-        const size = box.getSize(new THREE.Vector3());
-        const maxDim = Math.max(size.x, size.y, size.z);
-        if (!isFinite(maxDim) || maxDim < 1e-6) {
-            console.warn('Model has empty or invalid bounds; leaving scale unchanged', model.userData.modelIndex);
-            return;
-        }
-        const scale = (10.0 / maxDim) * 1.872; // 30% larger
-        model.scale.setScalar(scale);
-
-        const adjustment = this.modelAdjustments && this.modelAdjustments[model.userData.modelIndex];
-        if (adjustment && adjustment.scale) {
-            model.scale.multiplyScalar(adjustment.scale);
-        }
-        
-        // DON'T center the model - let it keep its position
-        console.log("Skipping centering to preserve position");
     }
     
     enableShadows(model) {
@@ -426,13 +533,7 @@ class Scene3D {
 
         let nextHovered = null;
         if (intersects.length > 0) {
-            let current = intersects[0].object;
-            while (current.parent && current.parent !== this.scene) {
-                current = current.parent;
-            }
-            if (this.intersectTargets.includes(current)) {
-                nextHovered = current;
-            }
+            nextHovered = this.findIntersectRoot(intersects[0].object);
         }
 
         if (nextHovered !== this.hoveredModel) {
@@ -507,33 +608,6 @@ class Scene3D {
         }
     }
     
-    addFloatingOrbitAnimation(model, index) {
-        // BAM Works style: very slow, gentle orbital motion
-        model.userData.motion = {
-            baseOffset: model.position.clone(),
-            amplitude: new THREE.Vector3(
-                0.3 + Math.random() * 0.4, // Much smaller amplitude
-                0.3 + Math.random() * 0.4,
-                0.2 + Math.random() * 0.3
-            ),
-            speed: new THREE.Vector3(
-                0.08 + Math.random() * 0.06, // Much slower speeds
-                0.07 + Math.random() * 0.06,
-                0.06 + Math.random() * 0.05
-            ),
-            phase: new THREE.Vector3(
-                Math.random() * Math.PI * 2,
-                Math.random() * Math.PI * 2,
-                Math.random() * Math.PI * 2
-            ),
-            rotSpeed: new THREE.Vector3(
-                0.02 + Math.random() * 0.03, // Very slow rotation
-                0.02 + Math.random() * 0.03,
-                0.015 + Math.random() * 0.025
-            )
-        };
-    }
-    
     onMouseClick(event) {
         // Calculate mouse position in normalized device coordinates
         this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -546,25 +620,14 @@ class Scene3D {
         const intersects = this.raycaster.intersectObjects(this.scene.children, true);
         
         if (intersects.length > 0) {
-            // Find which model was clicked
             let clickedModel = null;
-            for (let intersect of intersects) {
-                // Traverse up the parent chain to find the root model
-                let current = intersect.object;
-                while (current.parent && current.parent !== this.scene) {
-                    current = current.parent;
+            for (const intersect of intersects) {
+                const root = this.findIntersectRoot(intersect.object);
+                if (root) {
+                    clickedModel = root;
+                    break;
                 }
-                
-                // Check if this is one of our loaded models
-                for (let modelData of this.models) {
-                    if (modelData.scene === current) {
-                        clickedModel = current;
-                        break;
-                    }
-                }
-                if (clickedModel) break;
             }
-            
             if (clickedModel) {
                 this.handleModelClick(clickedModel);
             }
@@ -585,12 +648,18 @@ class Scene3D {
     resetAllModels() {
         this.models.forEach((modelData, index) => {
             const model = modelData.scene;
+            const pivot = model.userData.pivot;
             const original = this.originalPositions[index];
-            
-            if (original) {
-                // Reset position and scale
+
+            if (original && pivot && model) {
                 model.position.set(original.x, original.y, original.z);
                 model.scale.copy(original.scale);
+                pivot.position.set(
+                    pivot.userData.baseX ?? 0,
+                    0,
+                    pivot.userData.baseZ ?? 0
+                );
+                pivot.rotation.set(HERO_PIVOT_ROT_X, HERO_PIVOT_ROT_Y_BASE, 0);
             }
         });
     }
@@ -1681,23 +1750,28 @@ class Scene3D {
 
         if (!this.isLoading) {
             const elapsed = this.clock.getElapsedTime();
-            const parallaxX = this.pointer.x * this.parallaxStrength;
-            const parallaxY = -this.pointer.y * this.parallaxStrength;
-            this.models.forEach((modelData) => {
-                const model = modelData.scene;
-                const motion = model.userData.motion;
-                if (!model || !motion) return;
-                model.position.x = motion.baseOffset.x + Math.sin(elapsed * motion.speed.x + motion.phase.x) * motion.amplitude.x + parallaxX;
-                model.position.y = motion.baseOffset.y + Math.cos(elapsed * motion.speed.y + motion.phase.y) * motion.amplitude.y + parallaxY;
-                model.position.z = motion.baseOffset.z + Math.sin(elapsed * motion.speed.z + motion.phase.z) * motion.amplitude.z;
 
-                model.rotation.x += 0.002 * motion.rotSpeed.x;
-                model.rotation.y += 0.002 * motion.rotSpeed.y;
-                model.rotation.z += 0.0015 * motion.rotSpeed.z;
+            this.modelPivots.forEach((pivot) => {
+                pivot.rotation.x = HERO_PIVOT_ROT_X;
+                pivot.rotation.y = HERO_PIVOT_ROT_Y_BASE + Math.sin(elapsed * 0.35) * 0.04;
+                pivot.position.set(
+                    pivot.userData.baseX ?? 0,
+                    Math.sin(elapsed * 0.8) * 0.03,
+                    pivot.userData.baseZ ?? 0
+                );
+                pivot.rotation.z = 0;
             });
 
+            if (this.controls && this.models.length > 0) {
+                const union = new THREE.Box3();
+                this.models.forEach((g) => union.expandByObject(g.scene));
+                if (!union.isEmpty()) {
+                    this.controls.target.copy(union.getCenter(new THREE.Vector3()));
+                }
+            }
+
             if (typeof TWEEN !== 'undefined' && TWEEN.update) TWEEN.update();
-            this.controls.update();
+            if (this.controls) this.controls.update();
             this.updateHoverFromPointer();
         }
 
