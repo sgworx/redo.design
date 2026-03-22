@@ -6,7 +6,14 @@
 :root {
     /* Helvetica Neue (macOS/iOS); Helvetica + Arial cover most others */
     --font-site: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    /* Technical / numeric UI (system mono stack; no webfont) */
+    --font-mono: ui-monospace, "SF Mono", "Segoe UI Mono", "Roboto Mono", Menlo, Consolas, monospace;
     /* Monochrome UI — black, white, greys only (no accent hues) */
+    /* OLED-friendly deep base (large fills), vs pure #000 for hairline UI strokes */
+    --color-obsidian: #0a0a0a;
+    --color-surface-low: #f5f5f5;
+    --color-border-stroke: #e0e0e0;
+    --color-surface-muted: #ebebeb;
     --glass-light-bg: rgba(255, 255, 255, 0.62);
     --glass-light-border: rgba(255, 255, 255, 0.38);
     --glass-dark-bg: rgba(0, 0, 0, 0.72);
@@ -22,9 +29,9 @@
     --color-text-secondary: #666666;
     --color-text-muted: #888888;
     --color-disabled: #cccccc;
-    --color-border: #e0e0e0;
+    --color-border: var(--color-border-stroke);
     --color-surface: #fafafa;
-    --color-surface-subtle: #f5f5f5;
+    --color-surface-subtle: var(--color-surface-low);
     --color-white: #ffffff;
     --color-ui-strong: #1a1a1a;
     --color-step-idle: #e0e0e0;
@@ -52,9 +59,20 @@
     --ease-out-smooth: cubic-bezier(0.22, 1, 0.36, 1);
     --ease-in-out-smooth: cubic-bezier(0.45, 0, 0.55, 1);
     --ease-soft: cubic-bezier(0.33, 1, 0.68, 1);
+    /* Material / elastic UI standard */
+    --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
     --duration-fast: 0.22s;
     --duration-ui: 0.36s;
     --duration-slow: 0.55s;
+    /* Snappy “active” press feedback */
+    --duration-tap: 0.1s;
+    /* Hover / press scale on buttons & cards */
+    --duration-interact: 0.28s;
+    /* Subtle glass lift on step cards */
+    --card-glass-glow:
+        0 0 0 1px rgba(255, 255, 255, 0.45) inset,
+        0 10px 36px rgba(0, 0, 0, 0.07),
+        0 0 24px rgba(255, 255, 255, 0.12);
 }
 
 html {
@@ -94,18 +112,67 @@ input,
 select,
 textarea {
     transition:
-        color var(--duration-fast) var(--ease-out-smooth),
-        background-color var(--duration-fast) var(--ease-out-smooth),
-        border-color var(--duration-fast) var(--ease-out-smooth),
-        box-shadow var(--duration-ui) var(--ease-out-smooth),
-        transform var(--duration-fast) var(--ease-out-smooth),
-        opacity var(--duration-fast) var(--ease-out-smooth);
+        color var(--duration-interact) var(--ease-standard),
+        background-color var(--duration-interact) var(--ease-standard),
+        border-color var(--duration-interact) var(--ease-standard),
+        box-shadow var(--duration-interact) var(--ease-standard),
+        transform var(--duration-interact) var(--ease-standard),
+        opacity var(--duration-interact) var(--ease-standard),
+        filter var(--duration-interact) var(--ease-standard);
 }
 
+/* WebGL root: reserve viewport up-front so the canvas never shifts layout when GL initializes */
 #container {
     width: 100vw;
+    max-width: 100%;
     height: 100vh;
+    min-height: 100svh;
+    min-block-size: 100dvh;
     position: relative;
+    overflow: hidden;
+    background: var(--color-surface-subtle);
+}
+
+#container canvas {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* —— Primary controls: elastic easing, hover lift, press tuck —— */
+.arrow-button,
+.step-2-arrow-button,
+.step-3-arrow-indicator {
+    transition:
+        transform var(--duration-interact) var(--ease-standard),
+        box-shadow var(--duration-interact) var(--ease-standard),
+        border-color var(--duration-interact) var(--ease-standard),
+        background-color var(--duration-interact) var(--ease-standard),
+        backdrop-filter var(--duration-interact) var(--ease-standard),
+        opacity var(--duration-interact) var(--ease-standard),
+        filter var(--duration-interact) var(--ease-standard);
+}
+
+.arrow-button:hover,
+.step-2-arrow-button:hover,
+.step-3-arrow-indicator:hover {
+    transform: scale(1.02);
+}
+
+.arrow-button:active,
+.step-2-arrow-button:active,
+.step-3-arrow-indicator:active {
+    transform: scale(0.98);
+}
+
+.upload-box:not(.has-image):hover {
+    transform: scale(1.02);
+}
+
+.upload-box:not(.has-image):active {
+    transform: scale(0.98);
 }
 
 /* —— Homepage intro: motion typography → 3D handoff —— */
@@ -179,7 +246,7 @@ textarea {
     font-family: var(--font-site);
     font-size: clamp(1.35rem, 4.5vw, 2.25rem);
     line-height: 1.3;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.025em;
     color: #000000;
     margin: 0 0 0.25em;
     text-align: center;
@@ -199,7 +266,7 @@ textarea {
 .home-intro__phase--1 .home-intro__line.home-intro__line--bold {
     font-weight: 700;
     font-synthesis: weight;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.038em;
 }
 
 .home-intro__phase--1 .home-intro__line:last-child {
@@ -280,7 +347,7 @@ textarea {
     font-family: var(--font-site);
     font-size: clamp(1.85rem, 5.5vw, 3rem);
     line-height: 1.2;
-    letter-spacing: 0.02em;
+    letter-spacing: -0.02em;
     font-weight: 700;
     color: var(--color-text);
     margin: 0;
@@ -378,9 +445,11 @@ textarea {
 .loading-screen__caption {
     margin: 0;
     font-size: 0.8125rem;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: var(--color-text-muted);
+    color: var(--color-text-secondary);
 }
 
 .loading-spinner {
@@ -722,8 +791,8 @@ textarea {
     cursor: pointer;
     pointer-events: auto;
     transition:
-        transform var(--duration-fast) var(--ease-out-smooth),
-        opacity var(--duration-fast) var(--ease-out-smooth);
+        transform var(--duration-interact) var(--ease-standard),
+        opacity var(--duration-interact) var(--ease-standard);
     position: relative;
 }
 
@@ -794,10 +863,10 @@ textarea {
     justify-content: center;
     margin-bottom: 0;
     transition:
-        background-color var(--duration-ui) var(--ease-out-smooth),
-        border-color var(--duration-ui) var(--ease-out-smooth),
-        transform var(--duration-ui) var(--ease-out-smooth),
-        opacity var(--duration-fast) var(--ease-out-smooth);
+        background var(--duration-interact) var(--ease-standard),
+        border-color var(--duration-interact) var(--ease-standard),
+        transform var(--duration-interact) var(--ease-standard),
+        opacity var(--duration-interact) var(--ease-standard);
     border: 1px solid var(--color-step-idle-border);
     box-shadow: none;
     opacity: 1;
@@ -818,17 +887,44 @@ textarea {
 }
 
 .nav-step.active .step-circle {
-    background: var(--color-black);
-    border: 1px solid rgba(0, 0, 0, 0.35);
+    background: var(--color-obsidian);
+    border: 1px solid rgba(10, 10, 10, 0.45);
     position: relative;
     box-shadow: none;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
+    transition:
+        background var(--duration-interact) var(--ease-standard),
+        border-color var(--duration-interact) var(--ease-standard),
+        transform var(--duration-interact) var(--ease-standard),
+        opacity var(--duration-interact) var(--ease-standard);
 }
 
-.nav-step:not(.nav-step--locked):hover .step-circle {
-    transform: scale(1.04);
-    opacity: 0.94;
+.nav-step:not(.active):not(.nav-step--locked):hover .step-circle {
+    transform: scale(1.02);
+    opacity: 0.98;
+}
+
+/* Active step: lift on hover, tuck on press + subtle grey gradient */
+.nav-step.active:not(.nav-step--locked):hover .step-circle {
+    transform: scale(1.02);
+    opacity: 1;
+    background: linear-gradient(155deg, #1f1f1f 0%, var(--color-obsidian) 42%, #141414 100%);
+}
+
+.nav-step.active:not(.nav-step--locked):active .step-circle {
+    transform: scale(0.98);
+    background: linear-gradient(155deg, #2a2a2a 0%, #121212 50%, #1a1a1a 100%);
+}
+
+.nav-steps .step-pretitle {
+    font-family: var(--font-mono);
+    letter-spacing: 0.14em;
+}
+
+.nav-steps .step-number {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
 }
 
 .step-number {
@@ -1033,7 +1129,7 @@ textarea {
 
 /* Ready for next step: full contrast */
 .step-slider.image-selected .canvas-slider .progress-line {
-    background: var(--color-black) !important;
+    background: var(--color-obsidian) !important;
 }
 
 .step-slider.image-selected .step-slide[data-step="1"] .canvas-slider .progress-circle {
@@ -1047,6 +1143,8 @@ textarea {
 
 .step-slider.image-selected .step-slide[data-step="1"] .slider-right .drag-label {
     opacity: 1;
+    pointer-events: auto;
+    cursor: grab;
 }
 
 @keyframes grabber-border-pulse {
@@ -1065,11 +1163,11 @@ textarea {
 }
 
 .step-slide[data-step="2"] .slider-right .progress-line {
-    background: var(--color-black) !important;
+    background: var(--color-obsidian) !important;
 }
 
 #step-slider.design-selected .step-slide[data-step="2"] .slider-left .progress-line {
-    background: var(--color-black) !important;
+    background: var(--color-obsidian) !important;
 }
 
 #step-slider.design-selected .step-slide[data-step="2"] .slider-right .progress-line {
@@ -1084,6 +1182,7 @@ textarea {
 
 #step-slider.design-selected .step-slide[data-step="2"] .slider-right .drag-label {
     opacity: 1;
+    pointer-events: auto;
 }
 
 /* Progress circle inside canvas slider */
@@ -1097,7 +1196,7 @@ textarea {
     max-height: 56px;
     flex: 0 0 56px;
     background: var(--color-white);
-    border: 1px solid var(--panel-border-strong);
+    border: 1px solid var(--color-border-stroke);
     border-radius: 50%;
     box-sizing: border-box;
     box-shadow: none;
@@ -1107,8 +1206,9 @@ textarea {
     margin-top: -28px;
     transform: none;
     transition:
-        border-color var(--duration-ui) var(--ease-out-smooth),
-        background-color var(--duration-fast) var(--ease-out-smooth);
+        border-color var(--duration-interact) var(--ease-standard),
+        background var(--duration-interact) var(--ease-standard),
+        transform var(--duration-interact) var(--ease-standard);
     z-index: 1001;
     cursor: grab;
     display: flex;
@@ -1133,7 +1233,7 @@ textarea {
     fill: rgba(0, 0, 0, 0.55);
     font-size: 12px;
     letter-spacing: 1.5px;
-    font-family: inherit;
+    font-family: var(--font-mono);
     dominant-baseline: middle;
     text-anchor: middle;
 }
@@ -1142,7 +1242,56 @@ textarea {
     letter-spacing: 1.5px;
 }
 
+@keyframes drag-label-shake {
+    0%,
+    100% {
+        transform: translate(-50%, -50%) translateX(0);
+    }
+    15% {
+        transform: translate(-50%, -50%) translateX(-4px);
+    }
+    30% {
+        transform: translate(-50%, -50%) translateX(4px);
+    }
+    45% {
+        transform: translate(-50%, -50%) translateX(-3px);
+    }
+    60% {
+        transform: translate(-50%, -50%) translateX(3px);
+    }
+    75% {
+        transform: translate(-50%, -50%) translateX(-2px);
+    }
+    90% {
+        transform: translate(-50%, -50%) translateX(1px);
+    }
+}
+
+.drag-label.drag-label--shake {
+    animation: drag-label-shake 0.42s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .drag-label.drag-label--shake {
+        animation: none;
+    }
+}
+
+.canvas-slider .progress-circle:hover {
+    transform: scale(1.02);
+    background: linear-gradient(165deg, #ffffff 0%, #ececec 50%, #f4f4f4 100%);
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
 .canvas-slider .progress-circle:active {
+    cursor: grabbing;
+    transform: scale(0.98);
+    background: linear-gradient(165deg, #e6e6e6 0%, #f0f0f0 100%);
+}
+
+/* DRAG label follows circle: keep grab while pointer is over label during handle drag */
+.step-slider.image-selected .step-slide[data-step="1"] .slider-right .progress-circle:active .drag-label,
+#step-slider.design-selected .step-slide[data-step="2"] .slider-right .progress-circle:active .drag-label {
     cursor: grabbing;
 }
 
@@ -1289,10 +1438,18 @@ textarea {
     box-sizing: border-box;
     overflow: visible; /* Allow dragger circle to straddle both canvases */
     transition:
-        width var(--duration-ui) var(--ease-out-smooth),
-        left var(--duration-ui) var(--ease-out-smooth),
+        width var(--duration-ui) var(--ease-standard),
+        left var(--duration-ui) var(--ease-standard),
         background-color var(--duration-slow) var(--ease-in-out-smooth);
     z-index: 0;
+}
+
+/* Choreographed flow: longer, same easing when advancing after step completion */
+.step-slider--flow-animate .step-slide {
+    transition:
+        width 0.88s var(--ease-standard),
+        left 0.88s var(--ease-standard),
+        background-color var(--duration-slow) var(--ease-in-out-smooth);
 }
 
 /* Keep active step (and its dragger) above adjacent canvases */
@@ -1310,6 +1467,81 @@ textarea {
     display: flex;
     align-items: center;
     justify-content: center;
+    will-change: opacity, transform;
+}
+
+/* Entrance: fade + 20px rise (IntersectionObserver adds .step-content--revealed) */
+#step-slider:not(.hidden) .step-slide .canvas-content:not(.step-content--revealed) {
+    opacity: 0;
+    transform: translateY(20px);
+    transition:
+        opacity 0.55s var(--ease-standard),
+        transform 0.55s var(--ease-standard);
+}
+
+#step-slider:not(.hidden) .step-slide .canvas-content.step-content--revealed {
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+        opacity 0.55s var(--ease-standard),
+        transform 0.55s var(--ease-standard);
+}
+
+/*
+ * Step 2 (Prompt) → Step 3 (Result): cross-fade between panels while widths animate.
+ * Static site — no React / Framer Motion; this mirrors AnimatePresence-style opacity handoff.
+ */
+#step-slider.step-slider--crossfade-2-3 .step-slide[data-step='2'] .canvas-content.step-2-content,
+#step-slider.step-slider--crossfade-2-3 .step-slide[data-step='3'] .canvas-content.step-3-content {
+    transition:
+        opacity 0.62s var(--ease-standard),
+        transform 0.62s var(--ease-standard);
+}
+
+#step-slider.step-slider--crossfade-2-3:not(.step-slider--crossfade-2-3-active)
+    .step-slide[data-step='2']
+    .canvas-content.step-2-content {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+#step-slider.step-slider--crossfade-2-3:not(.step-slider--crossfade-2-3-active)
+    .step-slide[data-step='3']
+    .canvas-content.step-3-content {
+    opacity: 0;
+    transform: translateY(0);
+}
+
+#step-slider.step-slider--crossfade-2-3.step-slider--crossfade-2-3-active
+    .step-slide[data-step='2']
+    .canvas-content.step-2-content {
+    opacity: 0;
+    transform: translateY(0);
+}
+
+#step-slider.step-slider--crossfade-2-3.step-slider--crossfade-2-3-active
+    .step-slide[data-step='3']
+    .canvas-content.step-3-content {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Stable vertical footprint while step columns resize (reduces perceived jump) */
+.step-slide[data-step='2'] .canvas-content.step-2-content,
+.step-slide[data-step='3'] .canvas-content.step-3-content {
+    min-height: min(520px, 58vh);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #step-slider:not(.hidden) .step-slide .canvas-content {
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
+    }
+
+    .step-slider--flow-animate .step-slide {
+        transition: none !important;
+    }
 }
 
 /* Step 1 specific canvas content */
@@ -1342,7 +1574,7 @@ textarea {
 .step-slide[data-step="2"] {
     width: calc(var(--boundary-2-3, 100vw) - var(--boundary-1-2, 75vw));
     left: var(--boundary-1-2, 75vw);
-    background: #f5f5f5;
+    background: var(--color-surface-low);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     color: #000;
@@ -1351,7 +1583,7 @@ textarea {
 .step-slide[data-step="3"] {
     width: calc(var(--boundary-3-4, 100vw) - var(--boundary-2-3, 100vw));
     left: var(--boundary-2-3, 100vw);
-    background: #ebebeb;
+    background: var(--color-surface-muted);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     color: #000;
@@ -1360,7 +1592,7 @@ textarea {
 .step-slide[data-step="4"] {
     width: calc(100vw - var(--boundary-3-4, 100vw));
     left: var(--boundary-3-4, 100vw);
-    background: #1a1a1a;
+    background: var(--color-obsidian);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     color: #fff;
@@ -1442,20 +1674,14 @@ textarea {
     justify-content: center;
     font-size: 18px;
     cursor: pointer;
-    transition:
-        background-color var(--duration-fast) var(--ease-out-smooth),
-        border-color var(--duration-fast) var(--ease-out-smooth),
-        transform var(--duration-fast) var(--ease-out-smooth),
-        opacity var(--duration-fast) var(--ease-out-smooth);
 }
 
 .arrow-button:hover {
     background: var(--color-surface-subtle);
-    transform: scale(1.04);
 }
 
 .arrow-button:active {
-    transform: scale(0.98);
+    background: linear-gradient(160deg, #ececec 0%, #f8f8f8 100%);
 }
 
 /* Upload area - fixed size, centered */
@@ -1483,11 +1709,11 @@ textarea {
     -webkit-backdrop-filter: none;
     cursor: pointer;
     transition:
-        background-color var(--duration-ui) var(--ease-out-smooth),
-        border-color var(--duration-fast) var(--ease-out-smooth),
-        box-shadow var(--duration-ui) var(--ease-out-smooth),
-        transform var(--duration-ui) var(--ease-soft),
-        opacity var(--duration-fast) var(--ease-out-smooth);
+        background-color var(--duration-interact) var(--ease-standard),
+        border-color var(--duration-interact) var(--ease-standard),
+        box-shadow var(--duration-interact) var(--ease-standard),
+        transform var(--duration-interact) var(--ease-standard),
+        opacity var(--duration-interact) var(--ease-standard);
     position: relative;
     overflow: hidden;
     flex-shrink: 0; /* Don't shrink */
@@ -1549,8 +1775,19 @@ textarea {
 .upload-box.has-image {
     padding: 0;
     background: var(--color-white);
-    border: 1px solid var(--color-black);
-    box-shadow: var(--photo-emboss-shadow);
+    border: none;
+    box-shadow: none;
+}
+
+/* No frame or corner ticks around the preview — keep those for empty state only */
+.upload-box.has-image::before,
+.upload-box.has-image::after {
+    display: none;
+}
+
+.upload-box.has-image .corner-tr,
+.upload-box.has-image .corner-bl {
+    display: none;
 }
 
 .upload-box.has-image .upload-icon,
@@ -1573,13 +1810,60 @@ textarea {
 .upload-box:hover {
     background: var(--color-surface);
     border-color: var(--color-black);
-    transform: scale(1.004);
 }
 
 .upload-box.has-image:hover {
     background: var(--color-white);
-    border-color: var(--color-black);
+    border: none;
     transform: none;
+}
+
+/* Magnetic drop target: pulse while a catalog thumbnail is dragged over the slot */
+@keyframes redo-drop-zone-pulse {
+    0%,
+    100% {
+        box-shadow:
+            0 0 0 1px rgba(0, 0, 0, 0.12),
+            0 0 20px rgba(0, 0, 0, 0.06);
+    }
+    50% {
+        box-shadow:
+            0 0 0 2px rgba(0, 0, 0, 0.18),
+            0 0 36px rgba(0, 0, 0, 0.1);
+    }
+}
+
+.upload-box.drop-target--active {
+    animation: redo-drop-zone-pulse 1.15s ease-in-out infinite;
+}
+
+.upload-box.has-image.drop-target--active {
+    animation: redo-drop-zone-pulse 1.15s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .upload-box.drop-target--active,
+    .upload-box.has-image.drop-target--active {
+        animation: none;
+        box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.14);
+    }
+}
+
+/* Floating preview while dragging a thumbnail toward the upload slot */
+.redo-drag-ghost {
+    position: fixed;
+    left: 0;
+    top: 0;
+    pointer-events: none;
+    z-index: 10050;
+    object-fit: cover;
+    border-radius: 2px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    box-shadow:
+        0 16px 40px rgba(0, 0, 0, 0.2),
+        0 4px 12px rgba(0, 0, 0, 0.12);
+    will-change: transform;
+    opacity: 0.96;
 }
 
 .upload-icon {
@@ -1648,14 +1932,17 @@ textarea {
 
 .image-thumbnail {
     position: relative;
-    cursor: pointer;
+    cursor: grab;
     border-radius: 2px;
     overflow: hidden;
     border: 1px solid var(--panel-border);
     transition:
-        transform var(--duration-ui) var(--ease-out-smooth),
-        border-color var(--duration-ui) var(--ease-out-smooth),
-        opacity var(--duration-fast) var(--ease-out-smooth);
+        transform var(--duration-interact) var(--ease-standard),
+        border-color var(--duration-interact) var(--ease-standard),
+        box-shadow var(--duration-interact) var(--ease-standard),
+        opacity var(--duration-interact) var(--ease-standard),
+        backdrop-filter var(--duration-interact) var(--ease-standard),
+        filter var(--duration-interact) var(--ease-standard);
     box-shadow: var(--photo-emboss-shadow);
 }
 
@@ -1666,6 +1953,8 @@ textarea {
     width: 26px;
     height: 26px;
     border-radius: 50%;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
     background: var(--color-white);
     border: 1px solid var(--panel-border);
     color: var(--color-text);
@@ -1683,8 +1972,27 @@ textarea {
 
 .image-thumbnail:hover {
     transform: scale(1.02);
-    border-color: var(--panel-border-strong);
-    opacity: 0.96;
+    border-color: rgba(0, 0, 0, 0.22);
+    opacity: 1;
+    box-shadow: var(--photo-emboss-shadow-hover), var(--card-glass-glow);
+    backdrop-filter: blur(10px) saturate(115%);
+    -webkit-backdrop-filter: blur(10px) saturate(115%);
+}
+
+.image-thumbnail:active {
+    transform: scale(0.98);
+    cursor: grabbing;
+}
+
+.image-thumbnail.image-thumbnail--dragging {
+    touch-action: none;
+    opacity: 0.35;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .image-thumbnail.image-thumbnail--dragging {
+        opacity: 1;
+    }
 }
 
 .image-thumbnail.selected,
@@ -1701,6 +2009,27 @@ textarea {
     transition:
         filter var(--duration-ui) var(--ease-out-smooth),
         opacity var(--duration-fast) var(--ease-out-smooth);
+}
+
+/* Catalogue / picker: wireframe-like pass, then full photo when scrolled into view (see script.js) */
+.image-thumbnail img.redo-blueprint-pending,
+.step-3-option-img.redo-blueprint-pending {
+    filter: grayscale(1) contrast(1.38) brightness(1.1);
+    opacity: 0.52;
+}
+
+.image-thumbnail img.redo-blueprint-revealed,
+.step-3-option-img.redo-blueprint-revealed {
+    filter: none;
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .image-thumbnail img.redo-blueprint-pending,
+    .step-3-option-img.redo-blueprint-pending {
+        filter: none;
+        opacity: 1;
+    }
 }
 
 .selection-indicator {
@@ -1792,8 +2121,8 @@ textarea {
     color: rgba(255, 255, 255, 0.94);
     white-space: normal;
     border-radius: 2px;
-    background: #141414;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: var(--color-obsidian);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: none;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
@@ -1802,18 +2131,40 @@ textarea {
 .step-4-guide h1 {
     font-size: 30px;
     font-weight: 700;
+    letter-spacing: -0.03em;
     margin: 0 0 18px;
+}
+
+/* Stitched scroll: section titles stick briefly while content passes underneath */
+.step-4-guide h2,
+.step-4-guide h3 {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: linear-gradient(
+        to bottom,
+        var(--color-obsidian) 0%,
+        var(--color-obsidian) 78%,
+        rgba(10, 10, 10, 0) 100%
+    );
+    padding: 10px 0 12px;
+    margin-left: -4px;
+    margin-right: -4px;
+    padding-left: 4px;
+    padding-right: 4px;
 }
 
 .step-4-guide h2 {
     font-size: 22px;
     font-weight: 700;
+    letter-spacing: -0.025em;
     margin: 28px 0 12px;
 }
 
 .step-4-guide h3 {
     font-size: 18px;
     font-weight: 700;
+    letter-spacing: -0.02em;
     margin: 22px 0 8px;
 }
 
@@ -1848,7 +2199,7 @@ textarea {
     color: #ffffff;
     margin: 8px 0 16px;
     padding: 0;
-    font-family: inherit;
+    font-family: var(--font-mono);
     font-size: 13px;
     line-height: 1.4;
     white-space: pre;
@@ -1856,6 +2207,7 @@ textarea {
 
 /* Step 3 Options Container */
 .step-3-options-container {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -1869,6 +2221,121 @@ textarea {
     scroll-snap-type: y proximity;
 }
 
+/* Step 3 — “AI generation” feedback: skeleton + progressive status */
+.step-3-generation-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 15;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 12px 16px 24px;
+    gap: 22px;
+    box-sizing: border-box;
+    background: rgba(235, 235, 235, 0.72);
+    backdrop-filter: blur(12px) saturate(118%);
+    -webkit-backdrop-filter: blur(12px) saturate(118%);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+        opacity 0.4s var(--ease-standard),
+        visibility 0.4s var(--ease-standard);
+}
+
+.step-3-options-container.step-3-generation--busy .step-3-generation-overlay {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.step-3-options-container.step-3-generation--busy .step-3-option-img {
+    opacity: 0.22;
+    filter: grayscale(0.35);
+    transition:
+        opacity 0.35s var(--ease-standard),
+        filter 0.35s var(--ease-standard);
+}
+
+.step-3-options-container.step-3-generation--busy .step-3-arrow-indicator {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s var(--ease-standard);
+}
+
+.step-3-generation-skeleton {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    width: 100%;
+    pointer-events: none;
+}
+
+.step-3-skel {
+    flex-shrink: 0;
+    border-radius: 2px;
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    background: linear-gradient(
+        105deg,
+        #d8d8d8 0%,
+        #d8d8d8 38%,
+        #ececec 50%,
+        #d8d8d8 62%,
+        #d8d8d8 100%
+    );
+    background-size: 220% 100%;
+    animation: step3SkeletonShimmer 1.4s var(--ease-standard) infinite;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.step-3-skel--thumb {
+    width: 320px;
+    height: 200px;
+}
+
+.step-3-skel--main {
+    width: min(416px, 92vw);
+    height: 280px;
+}
+
+@keyframes step3SkeletonShimmer {
+    0% {
+        background-position: 100% 0;
+    }
+    100% {
+        background-position: -100% 0;
+    }
+}
+
+.step-3-generation-status {
+    margin: 0;
+    padding: 0 12px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+    text-align: center;
+    max-width: 24rem;
+    line-height: 1.45;
+    min-height: 1.45em;
+    pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .step-3-skel {
+        animation: none;
+        background: #d0d0d0;
+    }
+
+    .step-3-generation-overlay {
+        transition: none;
+    }
+}
+
 /* Step 3 Option Images */
 .step-3-option {
     position: relative;
@@ -1877,7 +2344,13 @@ textarea {
     justify-content: center;
     flex-shrink: 0;
     cursor: pointer;
-    transition: transform var(--duration-ui) var(--ease-out-smooth);
+    border-radius: 4px;
+    transition:
+        transform var(--duration-interact) var(--ease-standard),
+        box-shadow var(--duration-interact) var(--ease-standard),
+        filter var(--duration-interact) var(--ease-standard),
+        backdrop-filter var(--duration-interact) var(--ease-standard);
+    scroll-snap-align: center;
 }
 
 .step-3-option-img {
@@ -1911,7 +2384,7 @@ textarea {
     width: 40px;
     height: 40px;
     background: var(--color-white);
-    border: 1px solid var(--panel-border-strong);
+    border: 1px solid var(--color-border-stroke);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -1921,16 +2394,15 @@ textarea {
     box-shadow: none;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    transition:
-        background-color var(--duration-fast) var(--ease-out-smooth),
-        border-color var(--duration-fast) var(--ease-out-smooth),
-        transform var(--duration-ui) var(--ease-out-smooth),
-        opacity var(--duration-fast) var(--ease-out-smooth);
 }
 
 .step-3-arrow-indicator:hover {
-    background: var(--color-surface-subtle);
-    transform: scale(1.04);
+    background: linear-gradient(160deg, #ffffff 0%, #ececec 55%, #f2f2f2 100%);
+    border-color: rgba(0, 0, 0, 0.22);
+}
+
+.step-3-arrow-indicator:active {
+    background: linear-gradient(160deg, #e8e8e8 0%, #f5f5f5 100%);
 }
 
 /* Step 3 arrow icon */
@@ -1960,12 +2432,14 @@ textarea {
 }
 
 .step-3-option:hover {
-    transform: scale(1.012);
+    transform: scale(1.02);
+    box-shadow: var(--card-glass-glow);
+    backdrop-filter: blur(12px) saturate(115%);
+    -webkit-backdrop-filter: blur(12px) saturate(115%);
 }
 
-/* Scroll snap for better UX */
-.step-3-option {
-    scroll-snap-align: center;
+.step-3-option:active {
+    transform: scale(0.98);
 }
 
 .step-content h2 {
@@ -2128,7 +2602,7 @@ textarea {
     width: 48px;
     height: 48px;
     background: var(--color-white);
-    border: 1px solid var(--panel-border-strong);
+    border: 1px solid var(--color-border-stroke);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -2137,11 +2611,6 @@ textarea {
     box-shadow: none;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    transition:
-        background-color var(--duration-fast) var(--ease-out-smooth),
-        border-color var(--duration-fast) var(--ease-out-smooth),
-        transform var(--duration-fast) var(--ease-out-smooth),
-        opacity var(--duration-fast) var(--ease-out-smooth);
     flex-shrink: 0;
 }
 
@@ -2150,12 +2619,12 @@ textarea {
 }
 
 .step-2-arrow-button:hover {
-    background: var(--color-surface-subtle);
-    transform: scale(1.04);
+    background: linear-gradient(160deg, #ffffff 0%, #ececec 55%, #f2f2f2 100%);
+    border-color: rgba(0, 0, 0, 0.22);
 }
 
 .step-2-arrow-button:active {
-    transform: scale(0.95);
+    background: linear-gradient(160deg, #e8e8e8 0%, #f5f5f5 100%);
 }
 
 .arrow-right-small {
@@ -2200,24 +2669,27 @@ textarea {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     transition:
-        background-color var(--duration-fast) var(--ease-out-smooth),
-        border-color var(--duration-fast) var(--ease-out-smooth),
-        box-shadow var(--duration-ui) var(--ease-out-smooth),
-        transform var(--duration-ui) var(--ease-out-smooth),
-        opacity var(--duration-fast) var(--ease-out-smooth);
+        background-color var(--duration-interact) var(--ease-standard),
+        border-color var(--duration-interact) var(--ease-standard),
+        box-shadow var(--duration-interact) var(--ease-standard),
+        transform var(--duration-interact) var(--ease-standard),
+        opacity var(--duration-interact) var(--ease-standard),
+        filter var(--duration-interact) var(--ease-standard);
     font-family: inherit;
 }
 
 .step-2-option:hover {
     background: var(--color-surface);
-    transform: translateX(2px);
-    border-color: var(--panel-border-strong);
-    box-shadow: var(--photo-emboss-shadow-hover);
+    transform: scale(1.02);
+    border-color: rgba(0, 0, 0, 0.22);
+    box-shadow: var(--photo-emboss-shadow-hover), var(--card-glass-glow);
+    backdrop-filter: blur(14px) saturate(118%);
+    -webkit-backdrop-filter: blur(14px) saturate(118%);
 }
 
 .step-2-option:active {
-    transform: translateX(1px) scale(0.99);
-    opacity: 0.92;
+    transform: scale(0.98);
+    opacity: 0.96;
     box-shadow: var(--photo-emboss-shadow);
 }
 
@@ -2282,6 +2754,8 @@ textarea {
     display: flex;
     align-items: center;
     justify-content: center;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
     font-size: 13px;
     font-weight: 600;
     line-height: 1;
@@ -2297,6 +2771,16 @@ textarea {
     letter-spacing: 0.01em;
     color: var(--color-text);
     text-align: left;
+}
+
+/* Step 4 obsidian canvas: invert fixed progress label for contrast */
+#step-slider[data-active-flow-step='4'] .step-top-left-circle {
+    color: rgba(255, 255, 255, 0.94);
+    border-color: rgba(255, 255, 255, 0.35);
+}
+
+#step-slider[data-active-flow-step='4'] .step-top-left-title {
+    color: rgba(255, 255, 255, 0.92);
 }
 
 @media (max-width: 768px) {

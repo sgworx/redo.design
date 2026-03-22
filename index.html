@@ -34,7 +34,8 @@
         })();
     </script>
     <title>3D Objects Gallery</title>
-    <!-- Typography: Helvetica Neue stack via CSS --font-site (system fonts; no webfont). -->
+    <!-- Typography: Helvetica Neue via --font-site; technical numerals/labels via --font-mono (system mono stack). -->
+    <!-- UI motion: vanilla CSS + JS; catalog thumbnail snap uses Motion (Framer spring API) via dynamic import. Step 2→3: CSS cross-fade on #step-slider. -->
     <link rel="stylesheet" href="./styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
@@ -71,7 +72,7 @@
     </div>
     
     <!-- Step slider interface -->
-    <div id="step-slider" class="step-slider hidden">
+    <div id="step-slider" class="step-slider hidden" data-active-flow-step="1">
         <!-- Step badges (positioned globally) -->
         <div class="next-step-badge hidden" id="next-step-badge">2</div>
         <div class="prev-step-badge hidden" id="prev-step-badge">1</div>
@@ -138,9 +139,11 @@
                             <defs>
                                 <path id="drag-arc-1" d="M45,7 A34,34 0 0,0 45,83"></path>
                             </defs>
-                            <text class="drag-letter">
-                                <textPath href="#drag-arc-1" startOffset="50%" text-anchor="middle">DRAG</textPath>
-                            </text>
+                            <g class="drag-magnetic-group">
+                                <text class="drag-letter">
+                                    <textPath href="#drag-arc-1" startOffset="50%" text-anchor="middle">DRAG</textPath>
+                                </text>
+                            </g>
                         </svg>
                     </div>
                 </div>
@@ -202,9 +205,11 @@
                             <defs>
                                 <path id="drag-arc-2" d="M45,7 A34,34 0 0,0 45,83"></path>
                             </defs>
-                            <text class="drag-letter">
-                                <textPath href="#drag-arc-2" startOffset="50%" text-anchor="middle">DRAG</textPath>
-                            </text>
+                            <g class="drag-magnetic-group">
+                                <text class="drag-letter">
+                                    <textPath href="#drag-arc-2" startOffset="50%" text-anchor="middle">DRAG</textPath>
+                                </text>
+                            </g>
                         </svg>
                     </div>
                 </div>
@@ -223,6 +228,24 @@
                 <!-- Canvas content -->
                 <div class="canvas-content step-3-content">
                     <div class="step-3-options-container" id="step-3-options">
+                        <div
+                            class="step-3-generation-overlay"
+                            id="step-3-generation-overlay"
+                            aria-hidden="true"
+                        >
+                            <div class="step-3-generation-skeleton" aria-hidden="true">
+                                <div class="step-3-skel step-3-skel--thumb"></div>
+                                <div class="step-3-skel step-3-skel--main"></div>
+                                <div class="step-3-skel step-3-skel--thumb"></div>
+                            </div>
+                            <p
+                                class="step-3-generation-status"
+                                id="step-3-generation-status"
+                                role="status"
+                                aria-live="polite"
+                                aria-atomic="true"
+                            ></p>
+                        </div>
                         <!-- Top thumbnail -->
                         <div class="step-3-option step-3-thumbnail" data-option-index="0">
                             <img src="" alt="Design option 1" class="step-3-option-img">
@@ -252,9 +275,11 @@
                             <defs>
                                 <path id="drag-arc-3" d="M45,7 A34,34 0 0,0 45,83"></path>
                             </defs>
-                            <text class="drag-letter">
-                                <textPath href="#drag-arc-3" startOffset="50%" text-anchor="middle">DRAG</textPath>
-                            </text>
+                            <g class="drag-magnetic-group">
+                                <text class="drag-letter">
+                                    <textPath href="#drag-arc-3" startOffset="50%" text-anchor="middle">DRAG</textPath>
+                                </text>
+                            </g>
                         </svg>
                     </div>
                 </div>

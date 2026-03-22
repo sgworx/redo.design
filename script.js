@@ -5,6 +5,17 @@
  * Expected same-origin assets (see index.html <head> comment + document.baseURI):
  *   ./script.js (this file), ./styles.css, Assets/* for UI and step-3 thumbnails.
  */
+/** Step 3 — progressive copy while design previews load (perceived “generation”) */
+const STEP3_GEN_MESSAGES = [
+    'Analyzing structure…',
+    'Generating folds…',
+    'Optimizing for weight…',
+    'Resolving intersections…',
+    'Preparing preview…'
+];
+const STEP3_GEN_MIN_MS = 2400;
+const STEP3_GEN_STATUS_INTERVAL_MS = 1700;
+
 const MODEL_ASSETS_BASE = 'https://assets.redo.design/';
 /** When true, append ?v=timestamp so GLBs never cache (dev iteration). False in production for faster repeat visits. */
 const GLB_USE_CACHE_BUST =
@@ -95,6 +106,443 @@ function redoAssetPath(relativePath) {
     }
 }
 
+const REDO_BLUEPRINT_PENDING = 'redo-blueprint-pending';
+const REDO_BLUEPRINT_REVEALED = 'redo-blueprint-revealed';
+
+function redoBlueprintRevealSupported() {
+    return (
+        typeof IntersectionObserver === 'function' &&
+        !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    );
+}
+
+function redoObserveBlueprintImg(img) {
+    if (!img || img.tagName !== 'IMG') return;
+    const io = window._redoBlueprintIO;
+    if (!io) return;
+    io.unobserve(img);
+    img.classList.remove(REDO_BLUEPRINT_REVEALED);
+    img.classList.add(REDO_BLUEPRINT_PENDING);
+    io.observe(img);
+}
+
+function initRedoBlueprintReveal() {
+    if (!redoBlueprintRevealSupported()) return;
+    if (window._redoBlueprintIO) return;
+    window._redoBlueprintIO = new IntersectionObserver(
+        (entries) => {
+            entries.forEach((ent) => {
+                if (!ent.isIntersecting) return;
+                const el = ent.target;
+                el.classList.remove(REDO_BLUEPRINT_PENDING);
+                el.classList.add(REDO_BLUEPRINT_REVEALED);
+                window._redoBlueprintIO.unobserve(el);
+            });
+        },
+        { threshold: 0.14, rootMargin: '0px 0px -6% 0px' }
+    );
+    document.querySelectorAll('.image-thumbnail img').forEach((img) => redoObserveBlueprintImg(img));
+}
+
+function initRedoStepContentReveal() {
+    if (typeof IntersectionObserver === 'undefined' || window._redoStepContentRevealIO) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    window._redoStepContentRevealIO = new IntersectionObserver(
+        (entries) => {
+            entries.forEach((ent) => {
+                if (!ent.isIntersecting || ent.intersectionRatio < 0.055) return;
+                ent.target.classList.add('step-content--revealed');
+            });
+        },
+        { threshold: [0, 0.06, 0.12, 0.2, 0.35], root: null, rootMargin: '0px' }
+    );
+
+    document.querySelectorAll('.step-slide .canvas-content').forEach((el) => {
+        window._redoStepContentRevealIO.observe(el);
+    });
+}
+
+/** DRAG arc label: cursor-follow lean + click-without-horizontal-move shake hint */
+let _redoDragLabelShakePending = null;
+
+function initDragLabelMagnetic() {
+    if (typeof document === 'undefined') return;
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const bindGlobalShakeOnce = () => {
+        if (window._redoDragLabelShakeBound) return;
+        window._redoDragLabelShakeBound = true;
+
+        const trackPeakDx = (e) => {
+            const pending = _redoDragLabelShakePending;
+            if (!pending || e.pointerId !== pending.pointerId) return;
+            const d = Math.abs(e.clientX - pending.downX);
+            if (d > pending.peakDx) pending.peakDx = d;
+        };
+
+        const finish = (e) => {
+            const pending = _redoDragLabelShakePending;
+            if (!pending) return;
+            if (e && Number.isFinite(e.pointerId) && e.pointerId !== pending.pointerId) {
+                return;
+            }
+            _redoDragLabelShakePending = null;
+            if (reduceMotion) return;
+            if (pending.peakDx >= 10) return;
+            const svg = pending.svg;
+            svg.classList.remove('drag-label--shake');
+            void svg.offsetWidth;
+            svg.classList.add('drag-label--shake');
+            window.setTimeout(() => svg.classList.remove('drag-label--shake'), 480);
+        };
+
+        const cancel = (e) => {
+            const pending = _redoDragLabelShakePending;
+            if (!pending) return;
+            if (Number.isFinite(e.pointerId) && e.pointerId !== pending.pointerId) return;
+            _redoDragLabelShakePending = null;
+        };
+
+        window.addEventListener('pointermove', trackPeakDx, { passive: true });
+        window.addEventListener('pointerup', finish);
+        window.addEventListener('pointercancel', cancel);
+    };
+
+    bindGlobalShakeOnce();
+
+    document.querySelectorAll('svg.drag-label').forEach((svg) => {
+        if (svg.dataset.dragMagneticInit === '1') return;
+        svg.dataset.dragMagneticInit = '1';
+
+        const group = svg.querySelector('.drag-magnetic-group');
+        if (!group) return;
+
+        const cx = 45;
+        const cy = 45;
+        const mag = 5;
+        const maxRot = 6;
+        const maxSkew = 3.5;
+
+        const labelVisible = () => {
+            const st = getComputedStyle(svg);
+            const o = parseFloat(st.opacity);
+            return !Number.isNaN(o) && o > 0.02;
+        };
+
+        const setNeutral = () => {
+            group.removeAttribute('transform');
+        };
+
+        const applyMagnetic = (clientX, clientY) => {
+            if (reduceMotion || !labelVisible()) return;
+            const rect = svg.getBoundingClientRect();
+            if (rect.width < 4 || rect.height < 4) return;
+            const nx = (clientX - rect.left) / rect.width - 0.5;
+            const ny = (clientY - rect.top) / rect.height - 0.5;
+            const tx = nx * mag * 2;
+            const ty = ny * mag * 2;
+            const rot = nx * maxRot;
+            const sk = nx * maxSkew;
+            group.setAttribute(
+                'transform',
+                `translate(${cx} ${cy}) translate(${tx.toFixed(2)} ${ty.toFixed(2)}) rotate(${rot.toFixed(2)}) skewX(${sk.toFixed(2)}) translate(${-cx} ${-cy})`
+            );
+        };
+
+        svg.addEventListener('pointermove', (e) => {
+            if (!labelVisible()) return;
+            applyMagnetic(e.clientX, e.clientY);
+        });
+
+        svg.addEventListener('pointerleave', () => {
+            setNeutral();
+        });
+
+        if (!reduceMotion) {
+            svg.addEventListener('pointerdown', (e) => {
+                if (!labelVisible()) return;
+                if (e.pointerType === 'mouse' && e.button !== 0) return;
+                _redoDragLabelShakePending = {
+                    svg,
+                    downX: e.clientX,
+                    peakDx: 0,
+                    pointerId: e.pointerId
+                };
+            });
+        }
+
+        document.addEventListener(
+            'pointerdown',
+            (e) => {
+                if (!svg.contains(e.target)) setNeutral();
+            },
+            true
+        );
+    });
+}
+
+/** ESM entry for Motion (Framer spring API in vanilla JS) — cached after first snap */
+const REDO_MOTION_ESM = 'https://cdn.jsdelivr.net/npm/motion@11.18.2/+esm';
+let _redoMotionAnimate = null;
+
+async function redoLoadMotionAnimate() {
+    if (_redoMotionAnimate) return _redoMotionAnimate;
+    const mod = await import(REDO_MOTION_ESM);
+    _redoMotionAnimate = mod.animate;
+    return _redoMotionAnimate;
+}
+
+/** Spring to match Framer Motion `type: "spring", stiffness: 300, damping: 20` (mass 1) */
+function redoSpringTranslateXY(el, x0, y0, x1, y1, onDone) {
+    const stiffness = 300;
+    const damping = 20;
+    const mass = 1;
+    const k = stiffness / mass;
+    const c = damping / mass;
+    let x = x0;
+    let y = y0;
+    let vx = 0;
+    let vy = 0;
+    let last = performance.now();
+
+    function step(now) {
+        const dt = Math.min((now - last) / 1000, 0.055);
+        last = now;
+        const ax = -k * (x - x1) - c * vx;
+        const ay = -k * (y - y1) - c * vy;
+        vx += ax * dt;
+        vy += ay * dt;
+        x += vx * dt;
+        y += vy * dt;
+        el.style.transform = `translate3d(${x}px,${y}px,0)`;
+        if (
+            Math.abs(x - x1) < 0.5 &&
+            Math.abs(y - y1) < 0.5 &&
+            Math.abs(vx) < 6 &&
+            Math.abs(vy) < 6
+        ) {
+            el.style.transform = `translate3d(${x1}px,${y1}px,0)`;
+            onDone();
+            return;
+        }
+        requestAnimationFrame(step);
+    }
+    el.style.transform = `translate3d(${x0}px,${y0}px,0)`;
+    requestAnimationFrame(step);
+}
+
+function redoDistPointToRect(px, py, rect) {
+    const cx = Math.min(Math.max(px, rect.left), rect.right);
+    const cy = Math.min(Math.max(py, rect.top), rect.bottom);
+    return Math.hypot(px - cx, py - cy);
+}
+
+/**
+ * Drag catalog thumbnails into the Step 1 upload slot: 50px magnetic zone, Motion spring snap, ghost preview.
+ */
+function initThumbnailDragToSlot(scene) {
+    const bottomImages = document.querySelector('.bottom-images');
+    const uploadBox = document.querySelector('.upload-box');
+    if (!bottomImages || !uploadBox || bottomImages.dataset.redoThumbDropInit === '1') return;
+    bottomImages.dataset.redoThumbDropInit = '1';
+
+    const SNAP_PX = 50;
+    const DRAG_THRESHOLD_PX = 9;
+    const GHOST_LERP = 0.22;
+    const MAGNET_STRENGTH = 0.48;
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    async function springGhost(ghost, x0, y0, x1, y1) {
+        if (reduceMotion) {
+            ghost.style.transform = `translate3d(${x1}px,${y1}px,0)`;
+            return;
+        }
+        ghost.style.transform = `translate3d(${x0}px,${y0}px,0)`;
+        try {
+            const animate = await redoLoadMotionAnimate();
+            const ctrl = animate(
+                ghost,
+                { transform: `translate3d(${x1}px,${y1}px,0)` },
+                { type: 'spring', stiffness: 300, damping: 20 }
+            );
+            if (ctrl && ctrl.finished) await ctrl.finished;
+            else if (ctrl && typeof ctrl.then === 'function') await ctrl;
+        } catch {
+            await new Promise((resolve) => {
+                redoSpringTranslateXY(ghost, x0, y0, x1, y1, resolve);
+            });
+        }
+    }
+
+    bottomImages.addEventListener('pointerdown', (e) => {
+        const thumb = e.target && e.target.closest('.image-thumbnail');
+        if (!thumb || !bottomImages.contains(thumb)) return;
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        if (scene.currentStep !== 1) return;
+
+        const img = thumb.querySelector('img');
+        if (!img || !img.src) return;
+
+        const startX = e.clientX;
+        const startY = e.clientY;
+        let dragging = false;
+        let ghost = null;
+        let gx = 0;
+        let gy = 0;
+        let cursorX = startX;
+        let cursorY = startY;
+        let rafId = 0;
+        const pointerId = e.pointerId;
+
+        const stopRaf = () => {
+            if (rafId) {
+                cancelAnimationFrame(rafId);
+                rafId = 0;
+            }
+        };
+
+        const ghostLoop = () => {
+            if (!dragging || !ghost) {
+                rafId = 0;
+                return;
+            }
+            tick();
+            rafId = requestAnimationFrame(ghostLoop);
+        };
+
+        const readGhostSize = () => {
+            const r = thumb.getBoundingClientRect();
+            return { w: r.width, h: r.height };
+        };
+
+        let gw = 0;
+        let gh = 0;
+
+        const tick = () => {
+            rafId = 0;
+            if (!ghost) return;
+            const boxRect = uploadBox.getBoundingClientRect();
+            const dist = redoDistPointToRect(cursorX, cursorY, boxRect);
+            const inZone = dist <= SNAP_PX;
+            if (inZone) {
+                uploadBox.classList.add('drop-target--active');
+            } else {
+                uploadBox.classList.remove('drop-target--active');
+            }
+
+            let targetX = cursorX - gw / 2;
+            let targetY = cursorY - gh / 2;
+            if (inZone && !reduceMotion) {
+                const cx = boxRect.left + boxRect.width / 2 - gw / 2;
+                const cy = boxRect.top + boxRect.height / 2 - gh / 2;
+                const pull = MAGNET_STRENGTH * (1 - Math.min(dist, SNAP_PX) / SNAP_PX);
+                targetX += (cx - targetX) * pull;
+                targetY += (cy - targetY) * pull;
+            }
+
+            const lerp = reduceMotion ? 1 : GHOST_LERP;
+            gx += (targetX - gx) * lerp;
+            gy += (targetY - gy) * lerp;
+            ghost.style.transform = `translate3d(${gx}px,${gy}px,0)`;
+        };
+
+        const startGhostLoop = () => {
+            if (rafId) return;
+            rafId = requestAnimationFrame(ghostLoop);
+        };
+
+        const onMove = (ev) => {
+            if (ev.pointerId !== pointerId) return;
+            const dx = ev.clientX - startX;
+            const dy = ev.clientY - startY;
+            cursorX = ev.clientX;
+            cursorY = ev.clientY;
+
+            if (!dragging) {
+                if (Math.hypot(dx, dy) < DRAG_THRESHOLD_PX) return;
+                dragging = true;
+                thumb.classList.add('image-thumbnail--dragging');
+                thumb.dataset.suppressNextClick = '1';
+                document.body.style.cursor = 'grabbing';
+
+                const br = readGhostSize();
+                gw = br.w;
+                gh = br.h;
+                gx = startX - gw / 2;
+                gy = startY - gh / 2;
+
+                ghost = document.createElement('img');
+                ghost.className = 'redo-drag-ghost';
+                ghost.src = img.src;
+                ghost.alt = '';
+                ghost.draggable = false;
+                ghost.style.width = `${gw}px`;
+                ghost.style.height = `${gh}px`;
+                document.body.appendChild(ghost);
+                ghost.style.transform = `translate3d(${gx}px,${gy}px,0)`;
+
+                try {
+                    thumb.setPointerCapture(pointerId);
+                } catch {
+                    /* ignore */
+                }
+                startGhostLoop();
+            }
+        };
+
+        const onUp = async (ev) => {
+            if (ev.pointerId !== pointerId) return;
+            window.removeEventListener('pointermove', onMove);
+            window.removeEventListener('pointerup', onUp);
+            window.removeEventListener('pointercancel', onUp);
+
+            if (!dragging) return;
+
+            stopRaf();
+            dragging = false;
+            document.body.style.cursor = '';
+            thumb.classList.remove('image-thumbnail--dragging');
+            uploadBox.classList.remove('drop-target--active');
+
+            const boxRect = uploadBox.getBoundingClientRect();
+            const dist = redoDistPointToRect(cursorX, cursorY, boxRect);
+            const inZone = dist <= SNAP_PX;
+
+            const ghostEl = ghost;
+            const endX = gx;
+            const endY = gy;
+            ghost = null;
+
+            try {
+                thumb.releasePointerCapture(pointerId);
+            } catch {
+                /* ignore */
+            }
+
+            if (inZone && ghostEl) {
+                const targetX = boxRect.left + boxRect.width / 2 - gw / 2;
+                const targetY = boxRect.top + boxRect.height / 2 - gh / 2;
+                await springGhost(ghostEl, endX, endY, targetX, targetY);
+                if (ghostEl.parentNode) ghostEl.parentNode.removeChild(ghostEl);
+                scene.selectCatalogThumbnail(thumb);
+            } else if (ghostEl) {
+                const tr = thumb.getBoundingClientRect();
+                const homeX = tr.left + tr.width / 2 - gw / 2;
+                const homeY = tr.top + tr.height / 2 - gh / 2;
+                await springGhost(ghostEl, endX, endY, homeX, homeY);
+                if (ghostEl.parentNode) ghostEl.parentNode.removeChild(ghostEl);
+            }
+        };
+
+        window.addEventListener('pointermove', onMove, { passive: true });
+        window.addEventListener('pointerup', onUp);
+        window.addEventListener('pointercancel', onUp);
+    });
+}
+
 class Scene3D {
     constructor() {
         this.scene = null;
@@ -126,6 +574,13 @@ class Scene3D {
         this.imageSelected = false; // track if image is selected (required for dragging)
         this.currentStep = 1; // current active step (1-4)
         this.selectedDesignOption = null; // track which design option was selected in Step 2 (1, 2, or 3)
+        this._suppressNextContentReveal = false;
+        this._flowAnimateTimer = null;
+        this._revealFallbackTimer = null;
+        this._step3GenRunId = 0;
+        this._step3GenStatusTimer = null;
+        this._step3GenCompleteTimer = null;
+        this._crossfade23Timer = null;
 
         // Boundary positions for canvas transitions (in vw)
         // Each boundary represents the position between two steps
@@ -294,12 +749,64 @@ class Scene3D {
 
     skipHomeIntro() {
         if (this._introExitStarted) return;
-        this._beginIntroExit(true);
+        if (this._introScrambleRunning) return;
+
+        const root = document.getElementById('home-intro');
+        const reduce = root?.classList.contains('home-intro--reduce-motion');
+        if (reduce || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            this._beginIntroExit(true);
+            return;
+        }
+
+        const p2 = document.getElementById('home-intro-phase2');
+        const p2visible =
+            p2 &&
+            !p2.classList.contains('home-intro__phase--hidden') &&
+            p2.classList.contains('home-intro__phase--visible');
+
+        const el = p2visible
+            ? document.getElementById('home-intro-tagline')
+            : document.getElementById('home-intro-line-4');
+
+        const finalText = el && el.textContent ? el.textContent : '';
+        if (!finalText.trim()) {
+            this._beginIntroExit(true);
+            return;
+        }
+
+        const pool = '01█▒░╱╲·°∴┤├▖▗';
+        const scrambleChar = (ch) => {
+            if (!/\S/.test(ch)) return ch;
+            if (/[→•…]/.test(ch)) return ch;
+            return pool[Math.floor(Math.random() * pool.length)];
+        };
+
+        this._introScrambleRunning = true;
+        const start = performance.now();
+        const duration = 300;
+
+        const tick = (now) => {
+            if (this._introExitStarted) {
+                el.textContent = finalText;
+                this._introScrambleRunning = false;
+                return;
+            }
+            if (now - start >= duration) {
+                el.textContent = finalText;
+                this._introScrambleRunning = false;
+                this._beginIntroExit(true);
+                return;
+            }
+            el.textContent = [...finalText].map(scrambleChar).join('');
+            requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
     }
 
     _beginIntroExit(isSkip) {
         if (this._introExitStarted) return;
         this._introExitStarted = true;
+        this._introScrambleRunning = false;
         this._clearIntroSequenceTimers();
 
         // Do not open the step slider here: the full-viewport GLB scene (load + chair choice)
@@ -1193,6 +1700,9 @@ class Scene3D {
         this.setupStep2Interactions();
         this.setupStep3Interactions();
         this.setupMaterialUpload();
+        initRedoBlueprintReveal();
+        initRedoStepContentReveal();
+        initDragLabelMagnetic();
         this.syncNavStepsFromFlow();
     }
 
@@ -1291,6 +1801,7 @@ class Scene3D {
 
         this.syncFlowStateFromDom();
 
+        const prevStep = this.currentStep;
         this.currentStep = step;
         if (stepRange) stepRange.value = step;
         this.currentSliderValue = step;
@@ -1318,6 +1829,16 @@ class Scene3D {
             this.updateSliderColor();
             this.syncNavStepsFromFlow();
         });
+
+        queueMicrotask(() => {
+            document
+                .querySelector('.step-slide.is-current-step .canvas-content')
+                ?.classList.add('step-content--revealed');
+        });
+
+        if (prevStep === 2 && step === 3) {
+            queueMicrotask(() => this._runStep2To3Crossfade());
+        }
     }
 
     /** @deprecated Use openStepSliderToStep(1) — kept for clarity at call sites */
@@ -1348,6 +1869,7 @@ class Scene3D {
             this.updateSliderColor();
             this.updateStep2Image(url);
             this.syncNavStepsFromFlow();
+            queueMicrotask(() => this.choreographAdvanceToStep(2));
         };
 
         if (fileInput) {
@@ -1510,79 +2032,74 @@ class Scene3D {
         logo.classList.remove('visible');
         this.syncNavStepsFromFlow();
     }
+
+    selectCatalogThumbnail(thumbnailEl) {
+        const thumbnails = document.querySelectorAll('.image-thumbnail');
+        const thumbnailImg = thumbnailEl.querySelector('img');
+        const imageSrc = thumbnailImg && thumbnailImg.src;
+        const imageName = thumbnailEl.dataset.image;
+        if (!imageSrc) return;
+
+        thumbnails.forEach((thumb) => {
+            thumb.classList.remove('selected');
+            const indicator = thumb.querySelector('.selection-indicator');
+            if (indicator) indicator.remove();
+        });
+        thumbnailEl.classList.add('selected');
+
+        const uploadBox = document.querySelector('.upload-box');
+        const uploadBoxImg = uploadBox ? uploadBox.querySelector('.selected-image') : null;
+        if (uploadBox && uploadBoxImg) {
+            uploadBoxImg.src = imageSrc;
+            uploadBox.classList.add('has-image');
+            uploadBoxImg.style.display = 'block';
+        }
+
+        this.imageSelected = true;
+        this.enableSliderDragging();
+        this.updateSliderColor();
+        this.updateStep2Image(imageSrc);
+        this.syncNavStepsFromFlow();
+        queueMicrotask(() => this.choreographAdvanceToStep(2));
+
+        if (imageName) console.log(`Selected image: ${imageName}`);
+    }
     
     setupStepSlider() {
         const thumbnails = document.querySelectorAll('.image-thumbnail');
         const arrowButtons = document.querySelectorAll('.arrow-button');
-        const uploadBox = document.querySelector('.upload-box');
         const stepRange = document.getElementById('step-range');
 
-        // Handle thumbnail selection
-        thumbnails.forEach(thumbnail => {
-            thumbnail.addEventListener('click', () => {
-                // Remove selected class from all thumbnails
-                thumbnails.forEach(thumb => {
-                    thumb.classList.remove('selected');
-                    const indicator = thumb.querySelector('.selection-indicator');
-                    if (indicator) indicator.remove();
-                });
-                
-                // Add selected class to clicked thumbnail
-                thumbnail.classList.add('selected');
-                
-                // Get the image source from the clicked thumbnail
-                const thumbnailImg = thumbnail.querySelector('img');
-                const imageSrc = thumbnailImg && thumbnailImg.src;
-                const imageName = thumbnail.dataset.image;
-                
-                // Update the upload box to show the selected image
-                const uploadBox = document.querySelector('.upload-box');
-                const uploadBoxImg = uploadBox ? uploadBox.querySelector('.selected-image') : null;
-                if (uploadBox && uploadBoxImg && imageSrc) {
-                    uploadBoxImg.src = imageSrc;
-                    uploadBox.classList.add('has-image');
-                    uploadBoxImg.style.display = 'block'; // force visible in case of stale styles
-                }
-                
-                // Enable dragging after image selection
-                this.imageSelected = true;
-                this.enableSliderDragging();
-                this.updateSliderColor(); // Update slider to yellow
-                
-                // Update Step 2 image if it exists
-                this.updateStep2Image(imageSrc);
-                this.syncNavStepsFromFlow();
-
-                console.log(`Selected image: ${imageName}`);
-            });
-        });
-        
-        // Fallback delegated handler (in case thumbnails are re-rendered)
         const bottomImages = document.querySelector('.bottom-images');
+
+        // Block the synthetic click after a drag-drop (capture, before bubble selection)
+        thumbnails.forEach((thumbnail) => {
+            thumbnail.addEventListener(
+                'click',
+                (e) => {
+                    if (thumbnail.dataset.suppressNextClick === '1') {
+                        delete thumbnail.dataset.suppressNextClick;
+                        e.preventDefault();
+                        e.stopImmediatePropagation();
+                        e.stopPropagation();
+                    }
+                },
+                true
+            );
+        });
+
+        // Single selection path (delegated so re-rendered thumbnails still work)
         if (bottomImages) {
             bottomImages.addEventListener('click', (e) => {
                 const item = e.target && e.target.closest('.image-thumbnail');
                 if (!item) return;
                 const img = item.querySelector('img');
                 if (!img) return;
-                thumbnails.forEach((thumb) => thumb.classList.remove('selected'));
-                item.classList.add('selected');
-                const uploadBoxInner = document.querySelector('.upload-box');
-                const uploadBoxImg = uploadBoxInner ? uploadBoxInner.querySelector('.selected-image') : null;
-                if (uploadBoxInner && uploadBoxImg) {
-                    uploadBoxImg.src = img.src;
-                    uploadBoxInner.classList.add('has-image');
-                    uploadBoxImg.style.display = 'block';
-                }
-
-                this.imageSelected = true;
-                this.enableSliderDragging();
-                this.updateSliderColor();
-
-                this.updateStep2Image(img.src);
-                this.syncNavStepsFromFlow();
+                this.selectCatalogThumbnail(item);
             });
         }
+
+        initThumbnailDragToSlot(this);
 
         // Handle arrow button clicks for navigation
         arrowButtons.forEach(button => {
@@ -1815,6 +2332,7 @@ class Scene3D {
     }
     
     updateCurrentStepFromBoundaries() {
+        const prevStep = this.currentStep;
         // Determine current step based on which canvas is widest
         // Use threshold to prevent switching too early
         const threshold = 10; // Only switch when a canvas is clearly dominant (10vw threshold)
@@ -1858,6 +2376,10 @@ class Scene3D {
                 };
                 stepTitleEl.textContent = titles[this.currentStep] || '';
             }
+
+            if (prevStep === 2 && newStep === 3) {
+                queueMicrotask(() => this._runStep2To3Crossfade());
+            }
         }
 
         if (!this.isUserSliding) {
@@ -1869,6 +2391,9 @@ class Scene3D {
     }
 
     updateActiveSlideClasses() {
+        const slider = document.getElementById('step-slider');
+        if (slider) slider.dataset.activeFlowStep = String(this.currentStep);
+
         const slides = document.querySelectorAll('.step-slide');
         slides.forEach((slide) => {
             const step = parseInt(slide.dataset.step);
@@ -1878,6 +2403,11 @@ class Scene3D {
                 slide.classList.remove('is-current-step');
             }
         });
+
+        if (!this._suppressNextContentReveal) {
+            const cur = document.querySelector('.step-slide.is-current-step .canvas-content');
+            if (cur) cur.classList.add('step-content--revealed');
+        }
     }
 
     applyStepComposition() {
@@ -1905,6 +2435,106 @@ class Scene3D {
         }
 
         this.updateCanvasPositions();
+    }
+
+    /**
+     * Cross-fade Step 2 ↔ Step 3 panel content (CSS-driven; no Framer Motion in this static build).
+     */
+    _runStep2To3Crossfade() {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        const slider = document.getElementById('step-slider');
+        if (!slider || slider.classList.contains('hidden')) return;
+
+        window.clearTimeout(this._crossfade23Timer);
+        slider.classList.remove('step-slider--crossfade-2-3-active');
+        slider.classList.add('step-slider--crossfade-2-3');
+
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                slider.classList.add('step-slider--crossfade-2-3-active');
+            });
+        });
+
+        this._crossfade23Timer = window.setTimeout(() => {
+            slider.classList.remove('step-slider--crossfade-2-3', 'step-slider--crossfade-2-3-active');
+            document
+                .querySelector('.step-slide[data-step="3"] .canvas-content.step-3-content')
+                ?.classList.add('step-content--revealed');
+        }, 720);
+    }
+
+    /**
+     * After completing a step, animate panel boundaries to the next step (choreographed width/left).
+     * Incoming step content reveals via IntersectionObserver + CSS (fade / 20px rise).
+     */
+    choreographAdvanceToStep(targetStep) {
+        const slider = document.getElementById('step-slider');
+        if (!slider || slider.classList.contains('hidden')) return;
+        if (targetStep < 1 || targetStep > 4) return;
+        if (targetStep !== this.currentStep + 1) return;
+
+        const fromStep = this.currentStep;
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        if (!reduce && targetStep === 3 && fromStep === 2) {
+            this._runStep2To3Crossfade();
+        }
+        const nextContent = document.querySelector(`.step-slide[data-step="${targetStep}"] .canvas-content`);
+
+        if (!reduce && nextContent) {
+            nextContent.classList.remove('step-content--revealed');
+        }
+
+        this._suppressNextContentReveal = true;
+        this.currentStep = targetStep;
+        this.maxFlowStepReached = Math.max(this.maxFlowStepReached || 1, targetStep);
+
+        if (!reduce) {
+            slider.classList.add('step-slider--flow-animate');
+        }
+
+        this.applyStepComposition();
+        this.updateCanvasPositions();
+        this.updateSliderVisibility();
+        this.updateActiveSlideClasses();
+        this._suppressNextContentReveal = false;
+        this.updateCanvasBlur();
+        this.syncNavStepsFromFlow();
+        this.updateStep2Draggers();
+
+        const stepNumEl = document.getElementById('step-top-left-number');
+        const stepTitleEl = document.getElementById('step-top-left-title');
+        if (stepNumEl && stepTitleEl) {
+            stepNumEl.textContent = String(this.currentStep);
+            const titles = {
+                1: 'Select Image',
+                2: 'Design Prompt',
+                3: 'Choose Design',
+                4: 'Get it ready'
+            };
+            stepTitleEl.textContent = titles[this.currentStep] || '';
+        }
+
+        queueMicrotask(() => this.updateSliderColor());
+
+        if (reduce) {
+            document.querySelectorAll('.step-slide .canvas-content').forEach((el) => {
+                el.classList.add('step-content--revealed');
+            });
+            return;
+        }
+
+        window.clearTimeout(this._flowAnimateTimer);
+        this._flowAnimateTimer = window.setTimeout(() => {
+            slider.classList.remove('step-slider--flow-animate');
+        }, 940);
+
+        if (!reduce && nextContent) {
+            window.clearTimeout(this._revealFallbackTimer);
+            this._revealFallbackTimer = window.setTimeout(() => {
+                nextContent.classList.add('step-content--revealed');
+            }, 480);
+        }
     }
     
     updateStep2Image(imageSrc) {
@@ -1950,6 +2580,12 @@ class Scene3D {
                 this.updateStep3Images(this.selectedDesignOption);
                 this.updateStep2Draggers();
                 this.syncNavStepsFromFlow();
+                queueMicrotask(() => {
+                    const s = document.getElementById('step-slider');
+                    if (s && !s.classList.contains('hidden') && this.currentStep === 2) {
+                        this.choreographAdvanceToStep(3);
+                    }
+                });
             });
         });
 
@@ -1972,6 +2608,49 @@ class Scene3D {
         }
     }
     
+    _clearStep3GenerationTimers() {
+        if (this._step3GenStatusTimer != null) {
+            clearInterval(this._step3GenStatusTimer);
+            this._step3GenStatusTimer = null;
+        }
+        if (this._step3GenCompleteTimer != null) {
+            clearTimeout(this._step3GenCompleteTimer);
+            this._step3GenCompleteTimer = null;
+        }
+    }
+
+    _beginStep3GenerationFeedback() {
+        this._clearStep3GenerationTimers();
+        const container = document.getElementById('step-3-options');
+        const overlay = document.getElementById('step-3-generation-overlay');
+        const statusEl = document.getElementById('step-3-generation-status');
+        if (!container || !overlay || !statusEl) return;
+
+        container.classList.add('step-3-generation--busy');
+        overlay.setAttribute('aria-hidden', 'false');
+
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        let idx = 0;
+        statusEl.textContent = STEP3_GEN_MESSAGES[0];
+
+        const tick = () => {
+            idx = (idx + 1) % STEP3_GEN_MESSAGES.length;
+            statusEl.textContent = STEP3_GEN_MESSAGES[idx];
+        };
+
+        this._step3GenStatusTimer = window.setInterval(tick, reduce ? 2800 : STEP3_GEN_STATUS_INTERVAL_MS);
+    }
+
+    _finishStep3GenerationFeedback() {
+        this._clearStep3GenerationTimers();
+        const container = document.getElementById('step-3-options');
+        const overlay = document.getElementById('step-3-generation-overlay');
+        const statusEl = document.getElementById('step-3-generation-status');
+        if (container) container.classList.remove('step-3-generation--busy');
+        if (overlay) overlay.setAttribute('aria-hidden', 'true');
+        if (statusEl) statusEl.textContent = '';
+    }
+
     updateStep3Images(optionNumber) {
         // optionNumber: 1, 2, or 3
         const imageSet = {
@@ -1985,16 +2664,26 @@ class Scene3D {
             console.warn(`No image set found for option ${optionNumber}`);
             return;
         }
+
+        this._step3GenRunId += 1;
+        const runId = this._step3GenRunId;
+        this._clearStep3GenerationTimers();
+        this._beginStep3GenerationFeedback();
+        const loadStartedAt = performance.now();
         
         const optionElements = document.querySelectorAll('.step-3-option');
         console.log(`Updating Step 3 images for option ${optionNumber}, found ${optionElements.length} option elements`);
         
+        const imgs = [];
+
         if (optionElements.length >= 3) {
             // Top thumbnail (index 0)
             const topImg = optionElements[0].querySelector('.step-3-option-img');
             if (topImg) {
                 topImg.src = images[0];
                 topImg.style.display = 'block';
+                redoObserveBlueprintImg(topImg);
+                imgs.push(topImg);
                 console.log(`Set top image: ${images[0]}`);
             }
             
@@ -2003,6 +2692,8 @@ class Scene3D {
             if (mainImg) {
                 mainImg.src = images[1];
                 mainImg.style.display = 'block';
+                redoObserveBlueprintImg(mainImg);
+                imgs.push(mainImg);
                 console.log(`Set main image: ${images[1]}`);
             }
             
@@ -2011,10 +2702,45 @@ class Scene3D {
             if (bottomImg) {
                 bottomImg.src = images[2];
                 bottomImg.style.display = 'block';
+                redoObserveBlueprintImg(bottomImg);
+                imgs.push(bottomImg);
                 console.log(`Set bottom image: ${images[2]}`);
             }
         } else {
             console.warn(`Expected 3 option elements, found ${optionElements.length}`);
+        }
+
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const minMs = reduceMotion ? 400 : STEP3_GEN_MIN_MS;
+
+        const scheduleFinish = () => {
+            if (runId !== this._step3GenRunId) return;
+            const elapsed = performance.now() - loadStartedAt;
+            const wait = Math.max(0, minMs - elapsed);
+            this._step3GenCompleteTimer = window.setTimeout(() => {
+                if (runId !== this._step3GenRunId) return;
+                this._finishStep3GenerationFeedback();
+            }, wait);
+        };
+
+        if (imgs.length === 0) {
+            scheduleFinish();
+        } else {
+            let done = 0;
+            const onOne = () => {
+                if (runId !== this._step3GenRunId) return;
+                done += 1;
+                if (done >= imgs.length) scheduleFinish();
+            };
+
+            imgs.forEach((img) => {
+                if (img.complete && img.naturalWidth > 0) {
+                    onOne();
+                } else {
+                    img.addEventListener('load', onOne, { once: true });
+                    img.addEventListener('error', onOne, { once: true });
+                }
+            });
         }
         
         // Auto-scroll to center image
