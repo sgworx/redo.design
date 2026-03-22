@@ -182,16 +182,28 @@ textarea {
     letter-spacing: -0.02em;
     color: #000000;
     margin: 0 0 0.25em;
-    font-weight: 400;
     text-align: center;
     opacity: 0;
     transform: translate3d(0, 14px, 0);
     animation: homeIntroLineIn 0.62s var(--ease-out-smooth, cubic-bezier(0.22, 1, 0.36, 1)) forwards;
 }
 
+/* First three lines: true regular only — do NOT put font-synthesis:none on parent (it inherits and kills bold on line 4). */
+.home-intro__phase--1 .home-intro__line:not(.home-intro__line--bold) {
+    font-weight: 400;
+    font-synthesis: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.home-intro__phase--1 .home-intro__line.home-intro__line--bold {
+    font-weight: 700;
+    font-synthesis: weight;
+    letter-spacing: -0.03em;
+}
+
 .home-intro__phase--1 .home-intro__line:last-child {
     margin-bottom: 0;
-    font-weight: 700;
 }
 
 .home-intro__phase--1 .home-intro__line:nth-child(1) {
