@@ -4,9 +4,8 @@
  * Ensure this file and Assets/ deploy beside index.html with matching case (Linux hosts are case-sensitive).
  */
 :root {
-    --font-site:
-        "Inter", system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial,
-        sans-serif;
+    /* Helvetica Neue (macOS/iOS); Helvetica + Arial cover most others */
+    --font-site: "Helvetica Neue", Helvetica, Arial, sans-serif;
     /* Monochrome UI — black, white, greys only (no accent hues) */
     --glass-light-bg: rgba(255, 255, 255, 0.62);
     --glass-light-border: rgba(255, 255, 255, 0.38);
@@ -117,7 +116,7 @@ textarea {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(250, 250, 250, 0.97);
+    background: #ffffff;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     opacity: 1;
@@ -154,11 +153,12 @@ textarea {
     justify-content: center;
 }
 
-/* Phase 1 — narrative (message only) */
+/* Phase 1 — narrative (Helvetica Neue, centered, black on white) */
 .home-intro__phase--1 {
     position: relative;
     z-index: 1;
     width: 100%;
+    text-align: center;
     transition:
         opacity 0.52s var(--ease-out-smooth),
         transform 0.52s var(--ease-out-smooth);
@@ -175,15 +175,21 @@ textarea {
 }
 
 .home-intro__phase--1 .home-intro__line {
-    font-size: clamp(1.05rem, 2.4vw, 1.32rem);
-    line-height: 1.55;
-    letter-spacing: -0.015em;
-    color: var(--color-text);
-    margin: 0 0 1.1rem;
+    font-family: var(--font-site);
+    font-size: clamp(1rem, 2.4vw, 1.2rem);
+    line-height: 1.45;
+    letter-spacing: -0.01em;
+    color: #000000;
+    margin: 0 0 0.2em;
     font-weight: 400;
+    text-align: center;
     opacity: 0;
     transform: translate3d(0, 14px, 0);
     animation: homeIntroLineIn 0.62s var(--ease-out-smooth, cubic-bezier(0.22, 1, 0.36, 1)) forwards;
+}
+
+.home-intro__phase--1 .home-intro__line:last-child {
+    margin-bottom: 0;
 }
 
 .home-intro__phase--1 .home-intro__line:nth-child(1) {
@@ -198,9 +204,8 @@ textarea {
     animation-delay: 1.08s;
 }
 
-.home-intro__line--emphasis {
-    font-weight: 600;
-    margin-bottom: 0 !important;
+.home-intro__phase--1 .home-intro__line:nth-child(4) {
+    animation-delay: 1.58s;
 }
 
 @keyframes homeIntroLineIn {
@@ -251,10 +256,11 @@ textarea {
 }
 
 .home-intro__tagline {
-    font-size: clamp(1.22rem, 2.85vw, 1.55rem);
-    line-height: 1.45;
-    letter-spacing: 0.035em;
-    font-weight: 500;
+    font-family: var(--font-site);
+    font-size: clamp(1.85rem, 5.5vw, 3rem);
+    line-height: 1.2;
+    letter-spacing: 0.02em;
+    font-weight: 700;
     color: var(--color-text);
     margin: 0;
     opacity: 0;

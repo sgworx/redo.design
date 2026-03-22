@@ -255,7 +255,7 @@ class Scene3D {
         root.addEventListener('click', this._boundSkipIntro);
         root.addEventListener('wheel', this._boundSkipIntro, { passive: true });
 
-        const phase1TotalMs = reduce ? 900 : 4300;
+        const phase1TotalMs = reduce ? 1000 : 4800;
         this._introPhaseAdvanceTimer = setTimeout(() => this._goIntroPhase2(), phase1TotalMs);
     }
 
