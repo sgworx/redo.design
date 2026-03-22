@@ -730,18 +730,21 @@ textarea {
 .nav-step--locked {
     pointer-events: none;
     cursor: not-allowed;
-    opacity: 0.38;
+    opacity: 1;
 }
 
 .nav-step--locked .step-circle {
-    border-color: var(--color-disabled);
-    background: var(--color-step-idle);
+    border-color: #4a4a4a;
+    background: #9a9a9a;
 }
 
-.nav-step--locked .step-number,
+.nav-step--locked .step-number {
+    color: #0a0a0a;
+}
+
 .nav-step--locked .step-label,
 .nav-step--locked .step-pretitle {
-    color: var(--color-disabled);
+    color: #2a2a2a;
 }
 
 .nav-step--completed:not(.active) .step-circle {
