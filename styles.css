@@ -1471,7 +1471,7 @@ textarea {
 .upload-box {
     width: 520px; /* Fixed size - no scaling */
     height: 520px; /* Fixed size - no scaling */
-    border: 1px solid var(--panel-border);
+    border: 1px solid var(--color-black);
     border-radius: 2px;
     display: flex;
     flex-direction: column;
@@ -1500,7 +1500,7 @@ textarea {
     position: absolute;
     width: 28px;
     height: 28px;
-    border: 1px solid rgba(0, 0, 0, 0.18);
+    border: 1px solid var(--color-black);
     pointer-events: none;
 }
 
@@ -1527,7 +1527,7 @@ textarea {
     right: 0;
     width: 28px;
     height: 28px;
-    border: 1px solid rgba(0, 0, 0, 0.18);
+    border: 1px solid var(--color-black);
     border-left: none;
     border-bottom: none;
     pointer-events: none;
@@ -1540,7 +1540,7 @@ textarea {
     left: 0;
     width: 28px;
     height: 28px;
-    border: 1px solid rgba(0, 0, 0, 0.18);
+    border: 1px solid var(--color-black);
     border-right: none;
     border-top: none;
     pointer-events: none;
@@ -1549,7 +1549,7 @@ textarea {
 .upload-box.has-image {
     padding: 0;
     background: var(--color-white);
-    border: 1px solid var(--panel-border);
+    border: 1px solid var(--color-black);
     box-shadow: var(--photo-emboss-shadow);
 }
 
@@ -1572,12 +1572,13 @@ textarea {
 
 .upload-box:hover {
     background: var(--color-surface);
-    border-color: var(--panel-border-strong);
+    border-color: var(--color-black);
     transform: scale(1.004);
 }
 
 .upload-box.has-image:hover {
     background: var(--color-white);
+    border-color: var(--color-black);
     transform: none;
 }
 
@@ -1585,21 +1586,36 @@ textarea {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 24px; /* Space between logo and text */
+    margin-bottom: 24px;
 }
 
-/* Upload logo styling */
-.upload-logo {
-    width: auto;
-    height: auto;
-    max-width: 120px;
-    max-height: 120px;
-    object-fit: contain;
+/* Minimal crosshair + (replaces raster upload graphic) */
+.upload-plus {
     display: block;
-    opacity: 0.85;
-    filter: grayscale(1);
-    border-radius: 2px;
-    box-shadow: var(--photo-emboss-shadow);
+    width: 44px;
+    height: 44px;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.upload-plus::before,
+.upload-plus::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    background: var(--color-black);
+    transform: translate(-50%, -50%);
+}
+
+.upload-plus::before {
+    width: 2px;
+    height: 100%;
+}
+
+.upload-plus::after {
+    width: 100%;
+    height: 2px;
 }
 
 /* Hide upload icon when image is selected */
@@ -1671,6 +1687,12 @@ textarea {
     opacity: 0.96;
 }
 
+.image-thumbnail.selected,
+.image-thumbnail.selected:hover {
+    border-color: var(--color-black);
+    opacity: 1;
+}
+
 .image-thumbnail img {
     width: 110px;
     height: 160px; /* vertical rectangle */
@@ -1698,7 +1720,7 @@ textarea {
 }
 
 .image-thumbnail.selected img {
-    border: 1px solid rgba(0, 0, 0, 0.35);
+    border: none;
     box-sizing: border-box;
 }
 
