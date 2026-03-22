@@ -72,6 +72,8 @@
     --duration-tap: 0.1s;
     /* Hover / press scale on buttons & cards */
     --duration-interact: 0.28s;
+    /* `redologo.png` often has transparent left padding; nudge step marker to align with visible “r” */
+    --logo-optical-left-pad: 6px;
     /* Subtle glass lift on step cards */
     --card-glass-glow:
         0 0 0 1px rgba(255, 255, 255, 0.45) inset,
@@ -3007,7 +3009,7 @@ textarea {
 .step-top-left {
     position: fixed;
     top: 90px;
-    left: 20px;
+    left: calc(20px + var(--logo-optical-left-pad));
     z-index: 3000;
     display: flex;
     flex-direction: row;
@@ -3028,7 +3030,7 @@ textarea {
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    border: 1px solid rgba(0, 0, 0, 0.28);
+    border: 1px solid var(--color-black);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3037,8 +3039,8 @@ textarea {
     font-size: 13px;
     font-weight: 600;
     line-height: 1;
-    color: var(--color-text);
-    background: transparent;
+    color: var(--color-white);
+    background: var(--color-black);
     box-shadow: none;
 }
 
@@ -3051,10 +3053,11 @@ textarea {
     text-align: left;
 }
 
-/* Step 4 obsidian canvas: invert fixed progress label for contrast */
+/* Step 4 obsidian canvas: light disc + dark num so the marker reads on dark bg */
 #step-slider[data-active-flow-step='4'] .step-top-left-circle {
-    color: rgba(255, 255, 255, 0.94);
-    border-color: rgba(255, 255, 255, 0.35);
+    color: var(--color-black);
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.45);
 }
 
 #step-slider[data-active-flow-step='4'] .step-top-left-title {
@@ -3064,7 +3067,7 @@ textarea {
 @media (max-width: 768px) {
     .step-top-left {
         top: 80px;
-        left: 15px;
+        left: calc(15px + var(--logo-optical-left-pad));
         gap: 10px;
     }
 
