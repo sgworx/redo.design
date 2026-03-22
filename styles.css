@@ -8,6 +8,10 @@
     --font-site: "Helvetica Neue", Helvetica, Arial, sans-serif;
     /* Technical / numeric UI (system mono stack; no webfont) */
     --font-mono: ui-monospace, "SF Mono", "Segoe UI Mono", "Roboto Mono", Menlo, Consolas, monospace;
+    /* DRAG arc + hint copy: one palette, shared bounce timing (1.65s) */
+    --redo-drag-label-fill: rgba(0, 0, 0, 0.72);
+    --redo-drag-label-fill-on-dark: rgba(218, 218, 218, 0.82);
+    --redo-drag-hint-copy: rgba(0, 0, 0, 0.74);
     /* Monochrome UI — black, white, greys only (no accent hues) */
     /* OLED-friendly deep base (large fills), vs pure #000 for hairline UI strokes */
     --color-obsidian: #0a0a0a;
@@ -1014,7 +1018,7 @@ textarea {
 
 .nav-step[data-flow-step='1'].active:not(.nav-step--locked):not(:hover):not(:active)
     .step-circle {
-    animation: nav-step-1-cta-breathe 2.5s ease-in-out infinite;
+    animation: nav-step-1-cta-breathe 1.65s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1209,7 +1213,7 @@ textarea {
     background: var(--color-black);
     border-color: rgba(255, 255, 255, 0.26);
     box-shadow: none;
-    animation: grabber-border-pulse-inverse 1.6s ease-in-out infinite;
+    animation: grabber-border-pulse-inverse 1.65s ease-in-out infinite;
 }
 
 .step-slider.image-selected .step-slide[data-step="1"] .slider-right .progress-circle .arrow-right {
@@ -1217,9 +1221,9 @@ textarea {
     opacity: 0.92;
 }
 
-/* Keep DRAG label soft grey on dark handle (same quiet contrast as default, not bright white) */
+/* DRAG on dark handle: same token family, a bit darker for readability */
 .step-slider.image-selected .step-slide[data-step="1"] .slider-right .drag-letter {
-    fill: rgba(200, 200, 200, 0.52);
+    fill: var(--redo-drag-label-fill-on-dark);
 }
 
 /* “Drag next” affordance: bounce + glow (replaces border-only pulse while hint is active) */
@@ -1245,26 +1249,6 @@ textarea {
             0 0 0 2px rgba(0, 0, 0, 0.1),
             0 6px 22px rgba(0, 0, 0, 0.12);
         border-color: rgba(0, 0, 0, 0.28);
-    }
-}
-
-@keyframes drag-letter-soft-pulse {
-    0%,
-    100% {
-        fill: rgba(0, 0, 0, 0.52);
-    }
-    50% {
-        fill: rgba(0, 0, 0, 0.88);
-    }
-}
-
-@keyframes drag-letter-soft-pulse-inverse {
-    0%,
-    100% {
-        fill: rgba(188, 188, 188, 0.48);
-    }
-    50% {
-        fill: rgba(218, 218, 218, 0.72);
     }
 }
 
@@ -1297,14 +1281,14 @@ textarea {
     .step-slide[data-step='1'].is-current-step
     .slider-right
     .progress-circle {
-    animation: drag-handle-next-hint-inverse 1.85s ease-in-out infinite;
+    animation: drag-handle-next-hint-inverse 1.65s ease-in-out infinite;
 }
 
 #step-slider.step-slider--drag-hint-next#step-slider.design-selected
     .step-slide[data-step='2'].is-current-step
     .slider-right
     .progress-circle {
-    animation: drag-handle-next-hint 1.85s ease-in-out infinite;
+    animation: drag-handle-next-hint 1.65s ease-in-out infinite;
 }
 
 #step-slider.step-slider--drag-hint-next.step-slider.image-selected
@@ -1315,33 +1299,6 @@ textarea {
     .step-slide[data-step='2'].is-current-step
     .slider-right
     .progress-circle:hover {
-    animation-play-state: paused;
-}
-
-#step-slider.step-slider--drag-hint-next.step-slider.image-selected
-    .step-slide[data-step='1'].is-current-step
-    .slider-right
-    .drag-letter {
-    animation: drag-letter-soft-pulse-inverse 1.85s ease-in-out infinite;
-}
-
-#step-slider.step-slider--drag-hint-next#step-slider.design-selected
-    .step-slide[data-step='2'].is-current-step
-    .slider-right
-    .drag-letter {
-    animation: drag-letter-soft-pulse 1.85s ease-in-out infinite;
-}
-
-#step-slider.step-slider--drag-hint-next.step-slider.image-selected
-    .step-slide[data-step='1'].is-current-step
-    .slider-right
-    .progress-circle:hover
-    .drag-letter,
-#step-slider.step-slider--drag-hint-next#step-slider.design-selected
-    .step-slide[data-step='2'].is-current-step
-    .slider-right
-    .progress-circle:hover
-    .drag-letter {
     animation-play-state: paused;
 }
 
@@ -1368,20 +1325,25 @@ textarea {
             0 0 28px rgba(0, 0, 0, 0.1);
     }
 
-    #step-slider.step-slider--drag-hint-next.step-slider.image-selected
-        .step-slide[data-step='1'].is-current-step
-        .slider-right
-        .drag-letter {
-        animation: none;
-        fill: rgba(200, 200, 200, 0.58);
-    }
+}
 
-    #step-slider.step-slider--drag-hint-next#step-slider.design-selected
-        .step-slide[data-step='2'].is-current-step
-        .slider-right
-        .drag-letter {
-        animation: none;
-        fill: rgba(0, 0, 0, 0.72);
+/* Same vertical bounce rhythm as upload hint (1.65s); whole SVG moves so textPath stays valid */
+@keyframes redo-drag-label-bounce {
+    0%,
+    100% {
+        transform: translate(-50%, -50%) translateY(0);
+    }
+    30% {
+        transform: translate(-50%, -50%) translateY(-8px);
+    }
+    50% {
+        transform: translate(-50%, -50%) translateY(-2px);
+    }
+    65% {
+        transform: translate(-50%, -50%) translateY(-5px);
+    }
+    80% {
+        transform: translate(-50%, -50%) translateY(-1px);
     }
 }
 
@@ -1389,6 +1351,16 @@ textarea {
     opacity: 1;
     pointer-events: auto;
     cursor: grab;
+}
+
+.step-slider.image-selected .step-slide[data-step="1"] .slider-right .drag-label:not(.drag-label--shake),
+#step-slider.design-selected .step-slide[data-step="2"] .slider-right .drag-label:not(.drag-label--shake) {
+    animation: redo-drag-label-bounce 1.65s ease-in-out infinite;
+}
+
+.step-slider.image-selected .step-slide[data-step="1"] .slider-right .progress-circle:hover .drag-label:not(.drag-label--shake),
+#step-slider.design-selected .step-slide[data-step="2"] .slider-right .progress-circle:hover .drag-label:not(.drag-label--shake) {
+    animation-play-state: paused;
 }
 
 @keyframes grabber-border-pulse {
@@ -1431,7 +1403,7 @@ textarea {
 #step-slider.design-selected .step-slide[data-step="2"] .slider-right .progress-circle {
     border-color: var(--color-black);
     box-shadow: none;
-    animation: grabber-border-pulse 1.6s ease-in-out infinite;
+    animation: grabber-border-pulse 1.65s ease-in-out infinite;
 }
 
 #step-slider.design-selected .step-slide[data-step="2"] .slider-right .drag-label {
@@ -1485,7 +1457,7 @@ textarea {
 }
 
 .drag-letter {
-    fill: rgba(0, 0, 0, 0.55);
+    fill: var(--redo-drag-label-fill);
     font-size: 12px;
     letter-spacing: 1.5px;
     font-family: var(--font-mono);
@@ -2207,12 +2179,19 @@ textarea {
     .upload-box:not(.has-image):not(.drop-target--active):not(:hover):not(:active)
     .upload-text {
     animation: redo-upload-text-bounce 1.65s ease-in-out infinite;
+    color: var(--redo-drag-hint-copy);
 }
 
 @media (prefers-reduced-motion: reduce) {
     .step-slide[data-step='1'].is-current-step .upload-box:not(.has-image) .upload-text {
         animation: none;
         transform: none;
+    }
+
+    .step-slider.image-selected .step-slide[data-step="1"] .slider-right .drag-label:not(.drag-label--shake),
+    #step-slider.design-selected .step-slide[data-step="2"] .slider-right .drag-label:not(.drag-label--shake) {
+        animation: none;
+        transform: translate(-50%, -50%);
     }
 }
 
@@ -2914,7 +2893,7 @@ textarea {
 }
 
 .step-slide.is-current-step .step-2-arrow-button {
-    animation: grabber-border-pulse 1.6s ease-in-out infinite;
+    animation: grabber-border-pulse 1.65s ease-in-out infinite;
 }
 
 .step-2-arrow-button:hover {
