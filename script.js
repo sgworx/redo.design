@@ -574,9 +574,6 @@ class Scene3D {
         this.imageSelected = false; // track if image is selected (required for dragging)
         this.currentStep = 1; // current active step (1-4)
         this.selectedDesignOption = null; // track which design option was selected in Step 2 (1, 2, or 3)
-        this._suppressNextContentReveal = false;
-        this._flowAnimateTimer = null;
-        this._revealFallbackTimer = null;
         this._step3GenRunId = 0;
         this._step3GenStatusTimer = null;
         this._step3GenCompleteTimer = null;
@@ -1828,6 +1825,7 @@ class Scene3D {
         queueMicrotask(() => {
             this.updateSliderColor();
             this.syncNavStepsFromFlow();
+            this.updateDragHandleHint();
         });
 
         queueMicrotask(() => {
@@ -1869,7 +1867,7 @@ class Scene3D {
             this.updateSliderColor();
             this.updateStep2Image(url);
             this.syncNavStepsFromFlow();
-            queueMicrotask(() => this.choreographAdvanceToStep(2));
+            queueMicrotask(() => this.updateDragHandleHint());
         };
 
         if (fileInput) {
@@ -2030,6 +2028,7 @@ class Scene3D {
         slider.classList.add('hidden');
         slider.classList.remove('step-slider--raise-above-intro');
         logo.classList.remove('visible');
+        slider.classList.remove('step-slider--drag-hint-next');
         this.syncNavStepsFromFlow();
     }
 
@@ -2060,9 +2059,54 @@ class Scene3D {
         this.updateSliderColor();
         this.updateStep2Image(imageSrc);
         this.syncNavStepsFromFlow();
-        queueMicrotask(() => this.choreographAdvanceToStep(2));
+        queueMicrotask(() => this.updateDragHandleHint());
 
         if (imageName) console.log(`Selected image: ${imageName}`);
+    }
+
+    /** True if `el` is “empty” UI on step 1 (not upload, tiles, or dragger). */
+    isStep1WhitespaceDeselectTarget(el) {
+        if (!el || typeof el.closest !== 'function') return false;
+        const slide = document.querySelector('.step-slide[data-step="1"]');
+        if (!slide || !slide.classList.contains('is-current-step') || !slide.contains(el)) return false;
+        if (el.closest('a, button, input, textarea, label, [role="button"]')) return false;
+        if (el.closest('.upload-box')) return false;
+        if (el.closest('.image-thumbnail')) return false;
+        if (el.closest('.bottom-images')) return false;
+        if (el.closest('.canvas-slider')) return false;
+        return true;
+    }
+
+    clearCatalogImageSelection() {
+        if (!this.imageSelected) return;
+
+        document.querySelectorAll('.image-thumbnail').forEach((thumb) => {
+            thumb.classList.remove('selected');
+            const indicator = thumb.querySelector('.selection-indicator');
+            if (indicator) indicator.remove();
+        });
+
+        const uploadBox = document.querySelector('.upload-box');
+        const uploadBoxImg = uploadBox ? uploadBox.querySelector('.selected-image') : null;
+        if (uploadBoxImg) {
+            const prev = uploadBoxImg.getAttribute('src') || '';
+            if (prev.startsWith('blob:')) {
+                try {
+                    URL.revokeObjectURL(prev);
+                } catch {
+                    /* ignore */
+                }
+            }
+            uploadBoxImg.removeAttribute('src');
+            uploadBoxImg.style.display = 'none';
+        }
+        if (uploadBox) uploadBox.classList.remove('has-image');
+
+        this.imageSelected = false;
+        this.updateSliderColor();
+        this.updateStep2Image('');
+        this.syncNavStepsFromFlow();
+        queueMicrotask(() => this.updateDragHandleHint());
     }
     
     setupStepSlider() {
@@ -2100,6 +2144,21 @@ class Scene3D {
         }
 
         initThumbnailDragToSlot(this);
+
+        const step1Slide = document.querySelector('.step-slide[data-step="1"]');
+        if (step1Slide && step1Slide.dataset.redoWhitespaceClearBound !== '1') {
+            step1Slide.dataset.redoWhitespaceClearBound = '1';
+            step1Slide.addEventListener(
+                'click',
+                (e) => {
+                    if (!this.imageSelected || this.currentStep !== 1) return;
+                    if (!this.isStep1WhitespaceDeselectTarget(e.target)) return;
+                    e.preventDefault();
+                    this.clearCatalogImageSelection();
+                },
+                true
+            );
+        }
 
         // Handle arrow button clicks for navigation
         arrowButtons.forEach(button => {
@@ -2258,6 +2317,7 @@ class Scene3D {
             
             isDragging = true;
             this.isUserSliding = true;
+            this.updateDragHandleHint();
             e.preventDefault();
             e.stopPropagation();
             
@@ -2315,6 +2375,7 @@ class Scene3D {
                 handle.style.cursor = 'grab';
             });
             document.body.style.cursor = '';
+            this.updateDragHandleHint();
         };
         
         // Attach event listeners to all handles
@@ -2388,6 +2449,7 @@ class Scene3D {
 
         this.updateActiveSlideClasses();
         this.syncNavStepsFromFlow();
+        this.updateDragHandleHint();
     }
 
     updateActiveSlideClasses() {
@@ -2404,9 +2466,28 @@ class Scene3D {
             }
         });
 
-        if (!this._suppressNextContentReveal) {
-            const cur = document.querySelector('.step-slide.is-current-step .canvas-content');
-            if (cur) cur.classList.add('step-content--revealed');
+        const cur = document.querySelector('.step-slide.is-current-step .canvas-content');
+        if (cur) cur.classList.add('step-content--revealed');
+    }
+
+    /** Bounce/glow on the “next” drag handle; cleared while the user is dragging. */
+    updateDragHandleHint() {
+        const slider = document.getElementById('step-slider');
+        if (!slider) return;
+        if (slider.classList.contains('hidden')) {
+            slider.classList.remove('step-slider--drag-hint-next');
+            return;
+        }
+
+        const wantsHint =
+            !this.isUserSliding &&
+            ((this.imageSelected && this.currentStep === 1) ||
+                (this.selectedDesignOption != null && this.currentStep === 2));
+
+        if (wantsHint) {
+            slider.classList.add('step-slider--drag-hint-next');
+        } else {
+            slider.classList.remove('step-slider--drag-hint-next');
         }
     }
 
@@ -2463,80 +2544,6 @@ class Scene3D {
         }, 720);
     }
 
-    /**
-     * After completing a step, animate panel boundaries to the next step (choreographed width/left).
-     * Incoming step content reveals via IntersectionObserver + CSS (fade / 20px rise).
-     */
-    choreographAdvanceToStep(targetStep) {
-        const slider = document.getElementById('step-slider');
-        if (!slider || slider.classList.contains('hidden')) return;
-        if (targetStep < 1 || targetStep > 4) return;
-        if (targetStep !== this.currentStep + 1) return;
-
-        const fromStep = this.currentStep;
-        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-        if (!reduce && targetStep === 3 && fromStep === 2) {
-            this._runStep2To3Crossfade();
-        }
-        const nextContent = document.querySelector(`.step-slide[data-step="${targetStep}"] .canvas-content`);
-
-        if (!reduce && nextContent) {
-            nextContent.classList.remove('step-content--revealed');
-        }
-
-        this._suppressNextContentReveal = true;
-        this.currentStep = targetStep;
-        this.maxFlowStepReached = Math.max(this.maxFlowStepReached || 1, targetStep);
-
-        if (!reduce) {
-            slider.classList.add('step-slider--flow-animate');
-        }
-
-        this.applyStepComposition();
-        this.updateCanvasPositions();
-        this.updateSliderVisibility();
-        this.updateActiveSlideClasses();
-        this._suppressNextContentReveal = false;
-        this.updateCanvasBlur();
-        this.syncNavStepsFromFlow();
-        this.updateStep2Draggers();
-
-        const stepNumEl = document.getElementById('step-top-left-number');
-        const stepTitleEl = document.getElementById('step-top-left-title');
-        if (stepNumEl && stepTitleEl) {
-            stepNumEl.textContent = String(this.currentStep);
-            const titles = {
-                1: 'Select Image',
-                2: 'Design Prompt',
-                3: 'Choose Design',
-                4: 'Get it ready'
-            };
-            stepTitleEl.textContent = titles[this.currentStep] || '';
-        }
-
-        queueMicrotask(() => this.updateSliderColor());
-
-        if (reduce) {
-            document.querySelectorAll('.step-slide .canvas-content').forEach((el) => {
-                el.classList.add('step-content--revealed');
-            });
-            return;
-        }
-
-        window.clearTimeout(this._flowAnimateTimer);
-        this._flowAnimateTimer = window.setTimeout(() => {
-            slider.classList.remove('step-slider--flow-animate');
-        }, 940);
-
-        if (!reduce && nextContent) {
-            window.clearTimeout(this._revealFallbackTimer);
-            this._revealFallbackTimer = window.setTimeout(() => {
-                nextContent.classList.add('step-content--revealed');
-            }, 480);
-        }
-    }
-    
     updateStep2Image(imageSrc) {
         // Update the Step 2 image display with the selected image from Step 1
         const step2Image = document.getElementById('step-2-selected-image');
@@ -2546,6 +2553,7 @@ class Scene3D {
                 step2Image.style.display = 'block';
                 console.log('Step 2 image updated:', imageSrc);
             } else {
+                step2Image.removeAttribute('src');
                 step2Image.style.display = 'none';
             }
         }
@@ -2580,12 +2588,7 @@ class Scene3D {
                 this.updateStep3Images(this.selectedDesignOption);
                 this.updateStep2Draggers();
                 this.syncNavStepsFromFlow();
-                queueMicrotask(() => {
-                    const s = document.getElementById('step-slider');
-                    if (s && !s.classList.contains('hidden') && this.currentStep === 2) {
-                        this.choreographAdvanceToStep(3);
-                    }
-                });
+                queueMicrotask(() => this.updateDragHandleHint());
             });
         });
 
@@ -2606,6 +2609,7 @@ class Scene3D {
         } else {
             slider.classList.remove('design-selected');
         }
+        this.updateDragHandleHint();
     }
     
     _clearStep3GenerationTimers() {
