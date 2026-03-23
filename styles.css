@@ -12,12 +12,20 @@
     --redo-drag-label-fill: rgba(18, 18, 18, 0.94);
     --redo-drag-label-fill-on-dark: rgba(130, 130, 130, 0.96);
     --redo-drag-hint-copy: rgba(0, 0, 0, 0.78);
+    /* Forward dragger: ring width + color track default .progress-line; same grey until forward is armed */
+    /* Dragger ring + vertical track (all forward/back handles use this width) */
+    --redo-progress-line-width: 2px;
+    --redo-forward-dragger-border-idle: var(--color-disabled);
+    /* Armed (black fill): ring matches fill so idle grey ring does not linger */
+    --redo-forward-dragger-border-armed: var(--color-black);
     /* Monochrome UI — black, white, greys only (no accent hues) */
     /* OLED-friendly deep base (large fills), vs pure #000 for hairline UI strokes */
     --color-obsidian: #0a0a0a;
     --color-surface-low: #f5f5f5;
     --color-border-stroke: #e0e0e0;
     --color-surface-muted: #ebebeb;
+    /* Step 4 column: dark grey (readable vs step 3 light #ebebeb), not near-black obsidian */
+    --color-step-4-panel: #4f4f56;
     --glass-light-bg: rgba(255, 255, 255, 0.62);
     --glass-light-border: rgba(255, 255, 255, 0.38);
     --glass-dark-bg: rgba(0, 0, 0, 0.72);
@@ -42,6 +50,19 @@
     --color-step-idle-border: #cccccc;
     --color-step-completed-bg: #d0d0d0;
     --color-step-completed-border: #555555;
+    /* Bottom nav — 3 states: completed | current (focus) | upcoming (inactive) */
+    --nav-step-completed-circle-bg: #d6d6d6;
+    --nav-step-completed-circle-border: rgba(0, 0, 0, 0.12);
+    --nav-step-completed-tick: #1f1f1f;
+    --nav-step-completed-label: #6e6e6e;
+    --nav-step-completed-pretitle: #8c8c8c;
+    --nav-step-upcoming-circle-bg: #f0f0f0;
+    --nav-step-upcoming-circle-border: rgba(0, 0, 0, 0.14);
+    --nav-step-upcoming-number: #7a7a7a;
+    --nav-step-upcoming-label: rgba(0, 0, 0, 0.58);
+    --nav-step-upcoming-pretitle: rgba(0, 0, 0, 0.52);
+    --nav-step-upcoming-opacity: 0.92;
+    --nav-step-upcoming-locked-opacity: 0.78;
     --color-focus-ring: rgba(0, 0, 0, 0.12);
     /* Flat panels (non-card) */
     --panel-border: rgba(0, 0, 0, 0.12);
@@ -797,76 +818,99 @@ body[data-active-flow-step='3'] .nav-steps {
 .nav-step--locked {
     pointer-events: none;
     cursor: not-allowed;
+}
+
+/* ─── 1. COMPLETED (done; not current): light grey circle, ✓ in circle, medium grey copy ─── */
+.nav-step--completed:not(.active) {
     opacity: 1;
-}
-
-.nav-step--locked .step-circle {
-    border-color: #4a4a4a;
-    background: #9a9a9a;
-}
-
-.nav-step--locked .step-number {
-    color: #0a0a0a;
-}
-
-.nav-step--locked .step-label,
-.nav-step--locked .step-pretitle {
-    color: #2a2a2a;
-}
-
-/* Steps 2–4: quieter until that step is active (step 1 stays full strength) */
-.nav-step[data-flow-step='2']:not(.active),
-.nav-step[data-flow-step='3']:not(.active),
-.nav-step[data-flow-step='4']:not(.active) {
-    opacity: 0.58;
-    filter: saturate(0.72);
-}
-
-.nav-step.nav-step--locked[data-flow-step='2'],
-.nav-step.nav-step--locked[data-flow-step='3'],
-.nav-step.nav-step--locked[data-flow-step='4'] {
-    opacity: 0.44;
-    filter: saturate(0.55);
-}
-
-.nav-step.nav-step--locked[data-flow-step='2'] .step-circle,
-.nav-step.nav-step--locked[data-flow-step='3'] .step-circle,
-.nav-step.nav-step--locked[data-flow-step='4'] .step-circle {
-    background: #c8c8c8;
-    border-color: rgba(0, 0, 0, 0.1);
-}
-
-.nav-step.nav-step--locked[data-flow-step='2'] .step-number,
-.nav-step.nav-step--locked[data-flow-step='3'] .step-number,
-.nav-step.nav-step--locked[data-flow-step='4'] .step-number {
-    color: rgba(10, 10, 10, 0.38);
-    font-weight: 400;
-}
-
-.nav-step.nav-step--locked[data-flow-step='2'] .step-label,
-.nav-step.nav-step--locked[data-flow-step='2'] .step-pretitle,
-.nav-step.nav-step--locked[data-flow-step='3'] .step-label,
-.nav-step.nav-step--locked[data-flow-step='3'] .step-pretitle,
-.nav-step.nav-step--locked[data-flow-step='4'] .step-label,
-.nav-step.nav-step--locked[data-flow-step='4'] .step-pretitle {
-    color: rgba(0, 0, 0, 0.4);
+    filter: none;
 }
 
 .nav-step--completed:not(.active) .step-circle {
-    background: var(--color-step-completed-bg);
-    border-color: var(--color-step-completed-border);
+    position: relative;
+    background: var(--nav-step-completed-circle-bg);
+    border: 1px solid var(--nav-step-completed-circle-border);
 }
 
 .nav-step--completed:not(.active) .step-number {
-    color: var(--color-ui-strong);
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.nav-step--completed:not(.active) .step-circle::after {
+    content: '\2713';
+    /* ~30% smaller than prior clamp(24px, 4.85vw, 31px) */
+    font-size: clamp(17px, 3.4vw, 22px);
+    font-weight: 600;
+    color: var(--nav-step-completed-tick);
+    line-height: 1;
+    font-family: var(--font-mono);
 }
 
 .nav-step--completed:not(.active) .step-label {
-    color: var(--color-text-secondary);
+    color: var(--nav-step-completed-label);
+    font-weight: 400;
 }
 
 .nav-step--completed:not(.active) .step-pretitle {
-    color: var(--color-text-muted);
+    color: var(--nav-step-completed-pretitle);
+}
+
+/* ─── 2. CURRENT (focus): black circle, white number, strongest label ─── */
+.nav-step.active {
+    opacity: 1;
+    filter: none;
+}
+
+.nav-step.active .step-circle::after {
+    content: none;
+}
+
+.nav-step.active .step-label {
+    color: var(--color-black);
+    font-weight: 600;
+}
+
+.nav-step.active .step-pretitle {
+    color: var(--color-text);
+    font-weight: 600;
+}
+
+/* ─── 3. UPCOMING (not done, not current): faint circle + type, reduced strength ─── */
+.nav-step:not(.active):not(.nav-step--completed) {
+    opacity: var(--nav-step-upcoming-opacity);
+    filter: saturate(0.88);
+}
+
+.nav-step--locked:not(.active):not(.nav-step--completed) {
+    opacity: var(--nav-step-upcoming-locked-opacity);
+    filter: saturate(0.72);
+}
+
+.nav-step:not(.active):not(.nav-step--completed) .step-circle {
+    background: var(--nav-step-upcoming-circle-bg);
+    border: 1px solid var(--nav-step-upcoming-circle-border);
+}
+
+.nav-step:not(.active):not(.nav-step--completed) .step-number {
+    color: var(--nav-step-upcoming-number);
+    font-weight: 400;
+}
+
+.nav-step:not(.active):not(.nav-step--completed) .step-label {
+    color: var(--nav-step-upcoming-label);
+    font-weight: 400;
+}
+
+.nav-step:not(.active):not(.nav-step--completed) .step-pretitle {
+    color: var(--nav-step-upcoming-pretitle);
 }
 
 .step-pretitle {
@@ -879,14 +923,6 @@ body[data-active-flow-step='3'] .nav-steps {
     line-height: 1.2;
     user-select: none;
     margin-bottom: 0.1rem;
-}
-
-.nav-step:not(.active):not(.nav-step--locked):not(.nav-step--completed) .step-pretitle {
-    color: var(--color-text-muted);
-}
-
-.nav-step.active .step-pretitle {
-    color: var(--color-text);
 }
 
 .step-circle {
@@ -906,20 +942,6 @@ body[data-active-flow-step='3'] .nav-steps {
     border: 1px solid var(--color-step-idle-border);
     box-shadow: none;
     opacity: 1;
-}
-
-/* Unlocked, not active, not yet completed: light neutral */
-.nav-step:not(.active):not(.nav-step--locked):not(.nav-step--completed) .step-circle {
-    background: var(--color-step-idle);
-    border-color: var(--color-step-idle-border);
-}
-
-.nav-step:not(.active):not(.nav-step--locked):not(.nav-step--completed) .step-number {
-    color: var(--color-text);
-}
-
-.nav-step:not(.active):not(.nav-step--locked):not(.nav-step--completed) .step-label {
-    color: var(--color-text-secondary);
 }
 
 .nav-step.active .step-circle {
@@ -972,6 +994,7 @@ body[data-active-flow-step='3'] .nav-steps {
 
 .nav-step.active .step-number {
     color: var(--color-white);
+    font-weight: 500;
 }
 
 /* Help / about — bottom-right FAB + modal
@@ -1264,11 +1287,6 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     max-width: 7.5rem;
 }
 
-.nav-step.active .step-label {
-    color: var(--color-text);
-    font-weight: 500;
-}
-
 /* Step 1 entry CTA: glow + scale on the circle only (“STEP” / label stay static) */
 @keyframes nav-step-1-cta-breathe {
     0%,
@@ -1453,13 +1471,13 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 /* Right slider (at right edge of canvas) */
 .slider-right {
     right: 0;
-    width: 2px;
+    width: var(--redo-progress-line-width);
 }
 
 /* Left slider (at left edge of canvas) */
 .slider-left {
     left: 0;
-    width: 2px;
+    width: var(--redo-progress-line-width);
 }
 
 /* Progress line — muted until flow is ready, then solid black */
@@ -1467,7 +1485,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     position: absolute;
     top: 0;
     left: 0;
-    width: 2px;
+    width: var(--redo-progress-line-width);
     height: 100%;
     background: var(--color-disabled) !important;
     transition: background var(--duration-ui) var(--ease-in-out-smooth);
@@ -1479,8 +1497,19 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     display: none;
 }
 
-/* Ready for next step: full contrast */
+/* Ready for next step: full contrast (back / shared tracks; forward line scoped below) */
 .step-slider.image-selected .canvas-slider .progress-line {
+    background: var(--color-obsidian) !important;
+}
+
+/* Forward vertical track: same grey as default line + knob ring until this step’s forward dragger is armed */
+#step-slider.image-selected .step-slide .slider-right .progress-line {
+    background: var(--color-disabled) !important;
+}
+
+#step-slider[data-active-flow-step='1'].image-selected .step-slide[data-step='1'] .slider-right .progress-line,
+#step-slider[data-active-flow-step='2'].design-selected .step-slide[data-step='2'] .slider-right .progress-line,
+#step-slider[data-active-flow-step='3'].image-selected.step-3-output-ready .step-slide[data-step='3'] .slider-right .progress-line {
     background: var(--color-obsidian) !important;
 }
 
@@ -1492,6 +1521,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
         box-shadow:
             0 0 0 0 transparent,
             0 4px 16px rgba(0, 0, 0, 0.08);
+        border-width: var(--redo-progress-line-width);
         border-color: var(--color-black);
     }
     45% {
@@ -1499,6 +1529,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
         box-shadow:
             0 0 0 4px rgba(0, 0, 0, 0.07),
             0 10px 32px rgba(0, 0, 0, 0.18);
+        border-width: var(--redo-progress-line-width);
         border-color: rgba(0, 0, 0, 0.42);
     }
     70% {
@@ -1506,6 +1537,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
         box-shadow:
             0 0 0 2px rgba(0, 0, 0, 0.1),
             0 6px 22px rgba(0, 0, 0, 0.12);
+        border-width: var(--redo-progress-line-width);
         border-color: rgba(0, 0, 0, 0.28);
     }
 }
@@ -1517,21 +1549,24 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
         box-shadow:
             0 0 0 0 transparent,
             0 3px 12px rgba(0, 0, 0, 0.22);
-        border-color: rgba(255, 255, 255, 0.16);
+        border-width: var(--redo-progress-line-width);
+        border-color: var(--redo-forward-dragger-border-armed);
     }
     45% {
         transform: scale(1.05);
         box-shadow:
-            0 0 0 3px rgba(255, 255, 255, 0.06),
-            0 8px 22px rgba(0, 0, 0, 0.28);
-        border-color: rgba(255, 255, 255, 0.32);
+            0 0 0 3px rgba(0, 0, 0, 0.12),
+            0 8px 22px rgba(0, 0, 0, 0.32);
+        border-width: var(--redo-progress-line-width);
+        border-color: var(--redo-forward-dragger-border-armed);
     }
     70% {
         transform: scale(1.02);
         box-shadow:
-            0 0 0 1px rgba(255, 255, 255, 0.08),
-            0 5px 16px rgba(0, 0, 0, 0.22);
-        border-color: rgba(255, 255, 255, 0.24);
+            0 0 0 1px rgba(0, 0, 0, 0.18),
+            0 5px 16px rgba(0, 0, 0, 0.26);
+        border-width: var(--redo-progress-line-width);
+        border-color: var(--redo-forward-dragger-border-armed);
     }
 }
 
@@ -1542,7 +1577,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     animation: drag-handle-next-hint-inverse 1.65s ease-in-out infinite;
 }
 
-#step-slider.step-slider--drag-hint-next.step-slider.image-selected[data-active-flow-step='3']
+#step-slider.step-slider--drag-hint-next.step-slider.image-selected.step-3-output-ready[data-active-flow-step='3']
     .step-slide[data-step='3']
     .slider-right
     .progress-circle {
@@ -1564,7 +1599,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     .step-slide[data-step='2']
     .slider-right
     .progress-circle:hover,
-#step-slider.step-slider--drag-hint-next.step-slider.image-selected[data-active-flow-step='3']
+#step-slider.step-slider--drag-hint-next.step-slider.image-selected.step-3-output-ready[data-active-flow-step='3']
     .step-slide[data-step='3']
     .slider-right
     .progress-circle:hover {
@@ -1576,15 +1611,15 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
         .step-slide[data-step='1']
         .slider-right
         .progress-circle,
-    #step-slider.step-slider--drag-hint-next.step-slider.image-selected[data-active-flow-step='3']
+    #step-slider.step-slider--drag-hint-next.step-slider.image-selected.step-3-output-ready[data-active-flow-step='3']
         .step-slide[data-step='3']
         .slider-right
         .progress-circle {
         animation: none;
         transform: none;
-        box-shadow:
-            0 0 0 1px rgba(255, 255, 255, 0.14),
-            0 0 20px rgba(0, 0, 0, 0.22);
+        border-width: var(--redo-progress-line-width);
+        border-color: var(--redo-forward-dragger-border-armed);
+        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2), 0 0 20px rgba(0, 0, 0, 0.22);
     }
 
     #step-slider.step-slider--drag-hint-next#step-slider.design-selected[data-active-flow-step='2']
@@ -1593,9 +1628,9 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
         .progress-circle {
         animation: none;
         transform: none;
-        box-shadow:
-            0 0 0 1px rgba(255, 255, 255, 0.14),
-            0 0 20px rgba(0, 0, 0, 0.22);
+        border-width: var(--redo-progress-line-width);
+        border-color: var(--redo-forward-dragger-border-armed);
+        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2), 0 0 20px rgba(0, 0, 0, 0.22);
     }
 
 }
@@ -1620,10 +1655,10 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     }
 }
 
-/* DRAG ring: show when flow allows (step 2 right waits for design-selected) */
+/* DRAG ring: show when flow allows (step 2: design-selected; step 3: outputs generated) */
 #step-slider.image-selected .step-slide[data-step='1'] .slider-right .drag-label,
 #step-slider.design-selected .step-slide[data-step='2'] .slider-right .drag-label,
-#step-slider.image-selected .step-slide[data-step='3'] .slider-right .drag-label {
+#step-slider.image-selected.step-3-output-ready .step-slide[data-step='3'] .slider-right .drag-label {
     opacity: 1;
     pointer-events: auto;
     cursor: grab;
@@ -1635,15 +1670,21 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     animation: none !important;
 }
 
+#step-slider.image-selected:not(.step-3-output-ready) .step-slide[data-step='3'] .slider-right .drag-label {
+    opacity: 0;
+    pointer-events: none;
+    animation: none !important;
+}
+
 #step-slider.image-selected .step-slide[data-step='1'] .slider-right .drag-label:not(.drag-label--shake),
 #step-slider.design-selected .step-slide[data-step='2'] .slider-right .drag-label:not(.drag-label--shake),
-#step-slider.image-selected .step-slide[data-step='3'] .slider-right .drag-label:not(.drag-label--shake) {
+#step-slider.image-selected.step-3-output-ready .step-slide[data-step='3'] .slider-right .drag-label:not(.drag-label--shake) {
     animation: redo-drag-label-bounce 1.65s ease-in-out infinite;
 }
 
 #step-slider.image-selected .step-slide[data-step='1'] .slider-right .progress-circle:hover .drag-label:not(.drag-label--shake),
 #step-slider.design-selected .step-slide[data-step='2'] .slider-right .progress-circle:hover .drag-label:not(.drag-label--shake),
-#step-slider.image-selected .step-slide[data-step='3'] .slider-right .progress-circle:hover .drag-label:not(.drag-label--shake) {
+#step-slider.image-selected.step-3-output-ready .step-slide[data-step='3'] .slider-right .progress-circle:hover .drag-label:not(.drag-label--shake) {
     animation-play-state: paused;
 }
 
@@ -1687,7 +1728,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     max-height: 56px;
     flex: 0 0 56px;
     background: var(--color-white);
-    border: 1px solid var(--color-border-stroke);
+    border: var(--redo-progress-line-width) solid var(--color-border-stroke);
     border-radius: 50%;
     box-sizing: border-box;
     box-shadow: none;
@@ -1698,6 +1739,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     transform: none;
     transition:
         border-color var(--duration-interact) var(--ease-standard),
+        border-width var(--duration-interact) var(--ease-standard),
         background var(--duration-interact) var(--ease-standard),
         transform var(--duration-interact) var(--ease-standard);
     z-index: 1001;
@@ -1709,11 +1751,11 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     overflow: visible;
 }
 
-/* Forward drag: idle = medium grey + dark arrow; black when this step’s “next” is armed (Step 1 pre-image overrides below) */
+/* Forward drag: idle = white + ring matching progress line; black when armed (Step 1 / Step 2 pre-ready below) */
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle {
-    background: #adadad;
-    border-color: rgba(0, 0, 0, 0.14);
-    box-shadow: none;
+    background: var(--color-white);
+    border: var(--redo-progress-line-width) solid var(--redo-forward-dragger-border-idle);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     animation: none;
@@ -1731,28 +1773,30 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 /* Armed by flow + active step (data-active-flow-step mirrors currentStep in JS — same logic as Step 1) */
 #step-slider[data-active-flow-step='1'].image-selected .step-slide[data-step='1'] .slider-right .progress-circle,
 #step-slider[data-active-flow-step='2'].design-selected .step-slide[data-step='2'] .slider-right .progress-circle,
-#step-slider[data-active-flow-step='3'].image-selected.design-selected .step-slide[data-step='3'] .slider-right .progress-circle {
+#step-slider[data-active-flow-step='3'].image-selected.step-3-output-ready .step-slide[data-step='3'] .slider-right .progress-circle {
     background: var(--color-black);
-    border-color: rgba(255, 255, 255, 0.22);
+    border: var(--redo-progress-line-width) solid var(--redo-forward-dragger-border-armed);
+    box-shadow: 0 3px 14px rgba(0, 0, 0, 0.24);
 }
 
 #step-slider[data-active-flow-step='1'].image-selected .step-slide[data-step='1'] .slider-right .progress-circle .arrow-right,
 #step-slider[data-active-flow-step='2'].design-selected .step-slide[data-step='2'] .slider-right .progress-circle .arrow-right,
-#step-slider[data-active-flow-step='3'].image-selected.design-selected .step-slide[data-step='3'] .slider-right .progress-circle .arrow-right {
+#step-slider[data-active-flow-step='3'].image-selected.step-3-output-ready .step-slide[data-step='3'] .slider-right .progress-circle .arrow-right {
     filter: grayscale(1) contrast(1.02) invert(1) brightness(1.05);
     opacity: 1;
 }
 
 #step-slider[data-active-flow-step='1'].image-selected .step-slide[data-step='1'] .slider-right .progress-circle .drag-letter,
 #step-slider[data-active-flow-step='2'].design-selected .step-slide[data-step='2'] .slider-right .progress-circle .drag-letter,
-#step-slider[data-active-flow-step='3'].image-selected.design-selected .step-slide[data-step='3'] .slider-right .progress-circle .drag-letter {
+#step-slider[data-active-flow-step='3'].image-selected.step-3-output-ready .step-slide[data-step='3'] .slider-right .progress-circle .drag-letter {
     fill: rgba(154, 154, 154, 0.98);
 }
 
-/* Previous (back): black border only (other back styles unchanged) */
+/* Previous (back): white fill, black arrow, black ring (same width as vertical line) */
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle {
-    background: #e6e6e6;
-    border: 1px solid var(--color-black);
+    background: var(--color-white);
+    border: var(--redo-progress-line-width) solid var(--color-black);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     animation: none;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
@@ -1764,24 +1808,87 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle .drag-letter {
-    fill: rgba(48, 48, 48, 0.94);
+    fill: var(--redo-drag-label-fill);
 }
 
-/* Step 1 before image: soft light forward handle */
+/* Step 1 before image: white + grey ring (same token as muted .progress-line) */
 #step-slider:not(.hidden):not(.image-selected) .step-slide[data-step='1'] .slider-right .progress-circle {
-    background: rgba(255, 255, 255, 0.72);
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: var(--color-white);
+    border: var(--redo-progress-line-width) solid var(--redo-forward-dragger-border-idle);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     animation: none;
-    backdrop-filter: blur(8px) saturate(110%);
-    -webkit-backdrop-filter: blur(8px) saturate(110%);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
 }
 
 #step-slider:not(.hidden):not(.image-selected) .step-slide[data-step='1'] .slider-right .progress-circle .arrow-right {
-    filter: grayscale(1) contrast(1.1);
-    opacity: 0.55;
+    filter: grayscale(1) contrast(1.12);
+    opacity: 1;
 }
 
 #step-slider:not(.hidden):not(.image-selected) .step-slide[data-step='1'] .slider-right .progress-circle .drag-letter {
+    fill: var(--redo-drag-label-fill);
+}
+
+/* Step 3 before outputs finish generating: same idle forward look as Step 1 / Step 2 pre-ready */
+#step-slider:not(.hidden).image-selected:not(.step-3-output-ready)[data-active-flow-step='3'] .step-slide[data-step='3'] .slider-right .progress-circle {
+    background: var(--color-white);
+    border: var(--redo-progress-line-width) solid var(--redo-forward-dragger-border-idle);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    animation: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+#step-slider:not(.hidden).image-selected:not(.step-3-output-ready)[data-active-flow-step='3'] .step-slide[data-step='3'] .slider-right .progress-circle .arrow-right {
+    filter: grayscale(1) contrast(1.12);
+    opacity: 1;
+}
+
+#step-slider:not(.hidden).image-selected:not(.step-3-output-ready)[data-active-flow-step='3'] .step-slide[data-step='3'] .slider-right .progress-circle .drag-letter {
+    fill: var(--redo-drag-label-fill);
+}
+
+#step-slider:not(.hidden).image-selected:not(.step-3-output-ready)[data-active-flow-step='3'] .step-slide[data-step='3'] .slider-right .progress-circle:hover {
+    background: linear-gradient(165deg, #ffffff 0%, #ececec 50%, #f4f4f4 100%);
+    border-width: var(--redo-progress-line-width);
+    border-color: var(--redo-forward-dragger-border-idle);
+    box-shadow: 0 2px 14px rgba(0, 0, 0, 0.1);
+}
+
+#step-slider:not(.hidden).image-selected:not(.step-3-output-ready)[data-active-flow-step='3'] .step-slide[data-step='3'] .slider-right .progress-circle:active {
+    background: linear-gradient(165deg, #e6e6e6 0%, #f0f0f0 100%);
+    border-width: var(--redo-progress-line-width);
+    border-color: var(--redo-forward-dragger-border-idle);
+}
+
+#step-slider:not(.hidden).image-selected:not(.step-3-output-ready)[data-active-flow-step='3'] .step-slide[data-step='3'] .slider-right .progress-circle:hover .arrow-right,
+#step-slider:not(.hidden).image-selected:not(.step-3-output-ready)[data-active-flow-step='3'] .step-slide[data-step='3'] .slider-right .progress-circle:active .arrow-right {
+    filter: grayscale(1) contrast(1.12);
+    opacity: 1;
+}
+
+#step-slider:not(.hidden).image-selected:not(.step-3-output-ready)[data-active-flow-step='3'] .step-slide[data-step='3'] .slider-right .progress-circle:hover .drag-letter,
+#step-slider:not(.hidden).image-selected:not(.step-3-output-ready)[data-active-flow-step='3'] .step-slide[data-step='3'] .slider-right .progress-circle:active .drag-letter {
+    fill: var(--redo-drag-label-fill);
+}
+
+/* Step 2 before design: white + same grey ring/track as Step 1 pre-ready */
+#step-slider:not(.hidden).image-selected:not(.design-selected) .step-slide[data-step='2'] .slider-right .progress-circle {
+    background: var(--color-white);
+    border: var(--redo-progress-line-width) solid var(--redo-forward-dragger-border-idle);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    animation: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+#step-slider:not(.hidden).image-selected:not(.design-selected) .step-slide[data-step='2'] .slider-right .progress-circle .arrow-right {
+    filter: grayscale(1) contrast(1.12);
+    opacity: 1;
+}
+
+#step-slider:not(.hidden).image-selected:not(.design-selected) .step-slide[data-step='2'] .slider-right .progress-circle .drag-letter {
     fill: var(--redo-drag-label-fill);
 }
 
@@ -1847,6 +1954,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 .canvas-slider .progress-circle:hover {
     transform: scale(1.02);
     background: linear-gradient(165deg, #ffffff 0%, #ececec 50%, #f4f4f4 100%);
+    border-width: var(--redo-progress-line-width);
     border-color: rgba(0, 0, 0, 0.2);
 }
 
@@ -1856,10 +1964,11 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     background: linear-gradient(165deg, #e6e6e6 0%, #f0f0f0 100%);
 }
 
-/* Forward idle hover / active — darker grey, still dark arrow */
+/* Forward idle hover / active — light surface, ring tracks line color */
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle:hover {
-    background: #9e9e9e;
-    border-color: rgba(0, 0, 0, 0.16);
+    background: linear-gradient(165deg, #ffffff 0%, #f0f0f0 50%, #ebebeb 100%);
+    border-width: var(--redo-progress-line-width);
+    border-color: var(--redo-forward-dragger-border-idle);
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle:hover .arrow-right {
@@ -1872,8 +1981,9 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle:active {
-    background: #949494;
-    border-color: rgba(0, 0, 0, 0.18);
+    background: linear-gradient(165deg, #ececec 0%, #f2f2f2 100%);
+    border-width: var(--redo-progress-line-width);
+    border-color: var(--redo-forward-dragger-border-idle);
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle:active .arrow-right {
@@ -1888,46 +1998,49 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 /* Forward armed hover / active — stay black; DRAG stays grey */
 #step-slider[data-active-flow-step='1'].image-selected .step-slide[data-step='1'] .slider-right .progress-circle:hover,
 #step-slider[data-active-flow-step='2'].design-selected .step-slide[data-step='2'] .slider-right .progress-circle:hover,
-#step-slider[data-active-flow-step='3'].image-selected.design-selected .step-slide[data-step='3'] .slider-right .progress-circle:hover {
+#step-slider[data-active-flow-step='3'].image-selected.step-3-output-ready .step-slide[data-step='3'] .slider-right .progress-circle:hover {
     background: #0a0a0a;
+    border-width: var(--redo-progress-line-width);
     border-color: rgba(255, 255, 255, 0.3);
 }
 
 #step-slider[data-active-flow-step='1'].image-selected .step-slide[data-step='1'] .slider-right .progress-circle:hover .arrow-right,
 #step-slider[data-active-flow-step='2'].design-selected .step-slide[data-step='2'] .slider-right .progress-circle:hover .arrow-right,
-#step-slider[data-active-flow-step='3'].image-selected.design-selected .step-slide[data-step='3'] .slider-right .progress-circle:hover .arrow-right {
+#step-slider[data-active-flow-step='3'].image-selected.step-3-output-ready .step-slide[data-step='3'] .slider-right .progress-circle:hover .arrow-right {
     filter: grayscale(1) contrast(1.02) invert(1) brightness(1.05);
     opacity: 1;
 }
 
 #step-slider[data-active-flow-step='1'].image-selected .step-slide[data-step='1'] .slider-right .progress-circle:hover .drag-letter,
 #step-slider[data-active-flow-step='2'].design-selected .step-slide[data-step='2'] .slider-right .progress-circle:hover .drag-letter,
-#step-slider[data-active-flow-step='3'].image-selected.design-selected .step-slide[data-step='3'] .slider-right .progress-circle:hover .drag-letter {
+#step-slider[data-active-flow-step='3'].image-selected.step-3-output-ready .step-slide[data-step='3'] .slider-right .progress-circle:hover .drag-letter {
     fill: rgba(154, 154, 154, 0.98);
 }
 
 #step-slider[data-active-flow-step='1'].image-selected .step-slide[data-step='1'] .slider-right .progress-circle:active,
 #step-slider[data-active-flow-step='2'].design-selected .step-slide[data-step='2'] .slider-right .progress-circle:active,
-#step-slider[data-active-flow-step='3'].image-selected.design-selected .step-slide[data-step='3'] .slider-right .progress-circle:active {
+#step-slider[data-active-flow-step='3'].image-selected.step-3-output-ready .step-slide[data-step='3'] .slider-right .progress-circle:active {
     background: #000000;
-    border-color: rgba(255, 255, 255, 0.22);
+    border-width: var(--redo-progress-line-width);
+    border-color: var(--redo-forward-dragger-border-armed);
 }
 
 #step-slider[data-active-flow-step='1'].image-selected .step-slide[data-step='1'] .slider-right .progress-circle:active .arrow-right,
 #step-slider[data-active-flow-step='2'].design-selected .step-slide[data-step='2'] .slider-right .progress-circle:active .arrow-right,
-#step-slider[data-active-flow-step='3'].image-selected.design-selected .step-slide[data-step='3'] .slider-right .progress-circle:active .arrow-right {
+#step-slider[data-active-flow-step='3'].image-selected.step-3-output-ready .step-slide[data-step='3'] .slider-right .progress-circle:active .arrow-right {
     filter: grayscale(1) contrast(1.02) invert(1) brightness(1.05);
     opacity: 1;
 }
 
 #step-slider[data-active-flow-step='1'].image-selected .step-slide[data-step='1'] .slider-right .progress-circle:active .drag-letter,
 #step-slider[data-active-flow-step='2'].design-selected .step-slide[data-step='2'] .slider-right .progress-circle:active .drag-letter,
-#step-slider[data-active-flow-step='3'].image-selected.design-selected .step-slide[data-step='3'] .slider-right .progress-circle:active .drag-letter {
+#step-slider[data-active-flow-step='3'].image-selected.step-3-output-ready .step-slide[data-step='3'] .slider-right .progress-circle:active .drag-letter {
     fill: rgba(154, 154, 154, 0.98);
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle:hover {
-    background: #dedede;
+    background: linear-gradient(165deg, #ffffff 0%, #f0f0f0 50%, #ebebeb 100%);
+    border-width: var(--redo-progress-line-width);
     border-color: var(--color-black);
 }
 
@@ -1937,7 +2050,8 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle:active {
-    background: #d4d4d4;
+    background: linear-gradient(165deg, #ececec 0%, #f2f2f2 100%);
+    border-width: var(--redo-progress-line-width);
     border-color: var(--color-black);
 }
 
@@ -1948,22 +2062,48 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 
 #step-slider:not(.hidden):not(.image-selected) .step-slide[data-step='1'] .slider-right .progress-circle:hover {
     background: linear-gradient(165deg, #ffffff 0%, #ececec 50%, #f4f4f4 100%);
-    border-color: rgba(0, 0, 0, 0.2);
+    border-width: var(--redo-progress-line-width);
+    border-color: var(--redo-forward-dragger-border-idle);
 }
 
 #step-slider:not(.hidden):not(.image-selected) .step-slide[data-step='1'] .slider-right .progress-circle:active {
     background: linear-gradient(165deg, #e6e6e6 0%, #f0f0f0 100%);
-    border-color: rgba(0, 0, 0, 0.18);
+    border-width: var(--redo-progress-line-width);
+    border-color: var(--redo-forward-dragger-border-idle);
 }
 
 #step-slider:not(.hidden):not(.image-selected) .step-slide[data-step='1'] .slider-right .progress-circle:hover .arrow-right,
 #step-slider:not(.hidden):not(.image-selected) .step-slide[data-step='1'] .slider-right .progress-circle:active .arrow-right {
-    filter: grayscale(1) contrast(1.1);
-    opacity: 0.55;
+    filter: grayscale(1) contrast(1.12);
+    opacity: 1;
 }
 
 #step-slider:not(.hidden):not(.image-selected) .step-slide[data-step='1'] .slider-right .progress-circle:hover .drag-letter,
 #step-slider:not(.hidden):not(.image-selected) .step-slide[data-step='1'] .slider-right .progress-circle:active .drag-letter {
+    fill: var(--redo-drag-label-fill);
+}
+
+#step-slider:not(.hidden).image-selected:not(.design-selected) .step-slide[data-step='2'] .slider-right .progress-circle:hover {
+    background: linear-gradient(165deg, #ffffff 0%, #ececec 50%, #f4f4f4 100%);
+    border-width: var(--redo-progress-line-width);
+    border-color: var(--redo-forward-dragger-border-idle);
+    box-shadow: 0 2px 14px rgba(0, 0, 0, 0.1);
+}
+
+#step-slider:not(.hidden).image-selected:not(.design-selected) .step-slide[data-step='2'] .slider-right .progress-circle:active {
+    background: linear-gradient(165deg, #e6e6e6 0%, #f0f0f0 100%);
+    border-width: var(--redo-progress-line-width);
+    border-color: var(--redo-forward-dragger-border-idle);
+}
+
+#step-slider:not(.hidden).image-selected:not(.design-selected) .step-slide[data-step='2'] .slider-right .progress-circle:hover .arrow-right,
+#step-slider:not(.hidden).image-selected:not(.design-selected) .step-slide[data-step='2'] .slider-right .progress-circle:active .arrow-right {
+    filter: grayscale(1) contrast(1.12);
+    opacity: 1;
+}
+
+#step-slider:not(.hidden).image-selected:not(.design-selected) .step-slide[data-step='2'] .slider-right .progress-circle:hover .drag-letter,
+#step-slider:not(.hidden).image-selected:not(.design-selected) .step-slide[data-step='2'] .slider-right .progress-circle:active .drag-letter {
     fill: var(--redo-drag-label-fill);
 }
 
@@ -2269,7 +2409,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 .step-slide[data-step="4"] {
     width: calc(100vw - var(--boundary-3-4, 100vw));
     left: var(--boundary-3-4, 100vw);
-    background: var(--color-obsidian);
+    background: var(--color-step-4-panel);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     color: #fff;
@@ -2642,7 +2782,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 
     .step-slider.image-selected .step-slide[data-step="1"] .slider-right .drag-label:not(.drag-label--shake),
     #step-slider.design-selected .step-slide[data-step="2"] .slider-right .drag-label:not(.drag-label--shake),
-    #step-slider.image-selected .step-slide[data-step="3"] .slider-right .drag-label:not(.drag-label--shake) {
+    #step-slider.image-selected.step-3-output-ready .step-slide[data-step="3"] .slider-right .drag-label:not(.drag-label--shake) {
         animation: none;
         transform: translate(-50%, -50%);
     }
@@ -2797,11 +2937,24 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     box-sizing: border-box;
 }
 
+/* Step 4 content - top-aligned: default .canvas-content uses align-items:center + overflow:hidden, which clips tall scroll columns */
+.canvas-content.step-4-content {
+    align-items: stretch;
+    justify-content: flex-start;
+    overflow-x: hidden;
+    overflow-y: hidden;
+}
+
 /* Step 4 content - needs relative positioning for absolute header */
 .step-4-content {
     position: relative;
     width: 100%;
     height: 100%;
+    min-height: 0;
+    box-sizing: border-box;
+    padding-top: max(20px, env(safe-area-inset-top, 0px));
+    padding-left: max(0px, env(safe-area-inset-left, 0px));
+    padding-right: max(0px, env(safe-area-inset-right, 0px));
 }
 
 /* Step 3 Content Styles — true vertical center via flex spacers; bottom padding clears fixed nav; no scrollbar (step 4 only scrolls) */
@@ -2876,7 +3029,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     -webkit-backdrop-filter: none;
 }
 
-.step-4-guide h1 {
+.step-4-guide h1:not(.step-4-output-title) {
     font-size: 30px;
     font-weight: 700;
     letter-spacing: -0.03em;
@@ -2953,6 +3106,167 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     white-space: pre;
 }
 
+/* Step 4 — three panels (3D / diagram / copy-ready text) */
+.step-4-guide.step-4-output-layout {
+    max-width: min(960px, 92vw);
+    width: 100%;
+    margin: 0 auto clamp(40px, 6vh, 72px);
+    padding: clamp(20px, 3vw, 32px) clamp(16px, 3vw, 28px) 40px;
+    max-height: none;
+    overflow: visible;
+}
+
+.step-4-output-header {
+    margin-bottom: 28px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.step-4-output-title {
+    font-size: clamp(22px, 2.4vw, 28px);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin: 0 0 8px;
+    color: rgba(255, 255, 255, 0.96);
+}
+
+.step-4-output-sub {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.58);
+}
+
+.step-4-panels {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(28px, 4vh, 40px);
+}
+
+.step-4-guide.step-4-output-layout h2.step-4-section-title {
+    position: static;
+    background: none;
+    margin: 0 0 12px;
+    padding: 0;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.step-4-viewport {
+    position: relative;
+    width: 100%;
+    min-height: min(320px, 42vh);
+    max-height: min(420px, 48vh);
+    border-radius: 8px;
+    /* Light stage inside dark Step 4 column — hairline edge so the white field reads on obsidian */
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: #ffffff;
+    overflow: hidden;
+}
+
+.step-4-viewport canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.step-4-diagram-frame {
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    overflow: hidden;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.step-4-diagram-img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: min(480px, 50vh);
+    object-fit: contain;
+}
+
+.step-4-text-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 16px;
+    margin-bottom: 12px;
+}
+
+.step-4-text-head .step-4-section-title {
+    margin-bottom: 0;
+}
+
+.step-4-text-actions {
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.step-4-action-btn {
+    font-family: var(--font-site);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.88);
+    cursor: pointer;
+    transition:
+        background var(--duration-interact) var(--ease-standard),
+        border-color var(--duration-interact) var(--ease-standard);
+}
+
+.step-4-action-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.32);
+}
+
+.step-4-action-btn--primary {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.35);
+}
+
+.step-4-code-shell {
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(0, 0, 0, 0.45);
+    overflow: hidden;
+}
+
+.step-4-instructions-pre {
+    margin: 0;
+    padding: 16px 18px 20px;
+    max-height: min(420px, 52vh);
+    overflow: auto;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.55;
+    color: rgba(235, 235, 235, 0.92);
+    white-space: pre-wrap;
+    word-break: break-word;
+    tab-size: 4;
+}
+
+.step-4-code-shell::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.step-4-code-shell::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 8px;
+}
+
 /* Step 3 Options Container */
 .step-3-options-container {
     --step3-tile: 320px;
@@ -2984,8 +3298,9 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    padding: 12px 16px 24px;
-    gap: 22px;
+    /* Match .step-3-options-container padding so skeleton tiles line up with .step-3-option-img */
+    padding: 12px 20px 20px;
+    gap: 24px;
     box-sizing: border-box;
     background: rgba(235, 235, 235, 0.72);
     backdrop-filter: blur(12px) saturate(118%);
@@ -3023,18 +3338,20 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     color: var(--color-text);
 }
 
+/* Fully hide real pixels while generating so early decodes (e.g. one fast JPG) don’t leak through the overlay */
 .step-3-options-container.step-3-generation--busy .step-3-option-img {
-    opacity: 0.22;
-    filter: grayscale(0.35);
+    opacity: 0;
+    filter: none;
     transition:
-        opacity 0.35s var(--ease-standard),
-        filter 0.35s var(--ease-standard);
+        opacity 0.5s var(--ease-standard),
+        filter 0.5s var(--ease-standard);
 }
 
 .step-3-generation-skeleton {
     display: flex;
     flex-direction: column;
     align-items: center;
+    /* Same as .step-3-options-container default gap (not .step-3-selection-visual — removed during gen) */
     gap: 24px;
     width: 100%;
     pointer-events: none;
@@ -3057,9 +3374,15 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 
+/* Match .step-3-option-img: square tile + same frame so loader occupies identical layout */
 .step-3-skel--thumb {
-    width: 320px;
-    height: 200px;
+    width: var(--step3-tile);
+    height: var(--step3-tile);
+    max-width: 100%;
+    box-sizing: border-box;
+    border: 1px solid var(--panel-border);
+    border-radius: 2px;
+    box-shadow: var(--photo-emboss-shadow);
 }
 
 @keyframes step3SkeletonShimmer {
@@ -3760,7 +4083,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     }
 
     .step-slide[data-step='4'] {
-        background: rgba(26, 26, 26, 0.96);
+        background: rgba(79, 79, 86, 0.97);
     }
 }
 

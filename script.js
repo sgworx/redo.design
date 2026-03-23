@@ -112,6 +112,164 @@ function buildModelUrls() {
 
 const R2_MODEL_URLS = buildModelUrls();
 
+/**
+ * Step 4 — maps Step 3 selected output (data-option-index 0–2) to R2 GLB + local diagram + instructions text.
+ * op1_1 → 1.glb; middle → text8.glb; op3_3 → text15.glb (host these on the same R2 bucket as hero GLBs).
+ * If the mapped GLB fails to load, the viewer falls back to text1.glb (STEP4_FALLBACK_GLB).
+ */
+const STEP4_OUTPUT_SPECS = [
+    { glb: '1.glb', diagram: 'Assets/diagramOp1_1.png', instructionsTxt: 'Assets/step4_instructions_op1.txt' },
+    { glb: 'text8.glb', diagram: 'Assets/diagramOp2_2.png', instructionsTxt: 'Assets/step4_instructions_op2.txt' },
+    { glb: 'text15.glb', diagram: 'Assets/diagramOp3_3.png', instructionsTxt: 'Assets/step4_instructions_op3.txt' }
+];
+
+/** R2 default when the mapped output GLB is missing or fails to load (same bucket as MODEL_ASSETS_BASE). */
+const STEP4_FALLBACK_GLB = 'text1.glb';
+
+function step4ResolveGlbUrl(filename) {
+    const base = `${MODEL_ASSETS_BASE}${filename}`;
+    if (GLB_USE_CACHE_BUST && !base.includes('?')) return `${base}?v=${Date.now()}`;
+    return base;
+}
+
+function step4GlbUrlSameAsset(a, b) {
+    const strip = (u) => {
+        try {
+            const path = new URL(u, typeof window !== 'undefined' ? window.location.href : 'https://redo.design/').pathname;
+            const file = path.split('/').pop() || '';
+            return file.split('?')[0];
+        } catch {
+            return String(u).split('?')[0].split('/').pop() || '';
+        }
+    };
+    return strip(a) === strip(b);
+}
+
+function step4NormalizeAndGround(model) {
+    const box = new THREE.Box3().setFromObject(model);
+    const size = box.getSize(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z, 1e-6);
+    const target = 1.65;
+    model.scale.multiplyScalar(target / maxDim);
+    box.setFromObject(model);
+    const center = box.getCenter(new THREE.Vector3());
+    model.position.sub(center);
+    box.setFromObject(model);
+    const minY = box.min.y;
+    model.position.y -= minY;
+}
+
+/** Lightweight single-model viewer for Step 4 (separate from hero arc scene). */
+class Step4ModelViewer {
+    constructor(canvas) {
+        this.canvas = canvas;
+        this.scene = new THREE.Scene();
+        this.scene.background = new THREE.Color(0xffffff);
+        this.camera = new THREE.PerspectiveCamera(42, 1, 0.06, 80);
+        this.camera.position.set(0.35, 0.55, 2.25);
+        this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        this.controls = new THREE.OrbitControls(this.camera, canvas);
+        this.controls.enableDamping = true;
+        this.controls.dampingFactor = 0.06;
+        this.controls.target.set(0, 0.38, 0);
+        this.root = new THREE.Group();
+        this.scene.add(this.root);
+        /* Studio-style fill on white ground so dark GLBs read clearly */
+        const hemi = new THREE.HemisphereLight(0xffffff, 0xf0f0f0, 0.92);
+        const dir = new THREE.DirectionalLight(0xffffff, 0.55);
+        dir.position.set(2.2, 4.5, 3.2);
+        this.scene.add(hemi, dir);
+        this._raf = 0;
+        this._loadToken = 0;
+        this._resizeObs = null;
+    }
+
+    init() {
+        this._resize();
+        this._resizeObs = new ResizeObserver(() => this._resize());
+        const vp = this.canvas.closest('.step-4-viewport');
+        if (vp) this._resizeObs.observe(vp);
+        window.addEventListener('resize', () => this._resize());
+        this._loop();
+    }
+
+    _resize() {
+        const vp = this.canvas.closest('.step-4-viewport');
+        const w = Math.max(1, vp ? vp.clientWidth : this.canvas.clientWidth || 320);
+        const h = Math.max(1, vp ? vp.clientHeight : 280);
+        this.camera.aspect = w / h;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(w, h, false);
+    }
+
+    _loop = () => {
+        this._raf = requestAnimationFrame(this._loop);
+        this.controls.update();
+        this.renderer.render(this.scene, this.camera);
+    };
+
+    clearModel() {
+        while (this.root.children.length) {
+            const o = this.root.children[0];
+            this.root.remove(o);
+            o.traverse((c) => {
+                if (c.isMesh) {
+                    c.geometry?.dispose?.();
+                    const mats = Array.isArray(c.material) ? c.material : [c.material];
+                    mats.forEach((m) => {
+                        if (m && typeof m.dispose === 'function') m.dispose();
+                    });
+                }
+            });
+        }
+    }
+
+    loadGlb(url) {
+        const token = (this._loadToken += 1);
+        this.clearModel();
+        const fallbackUrl = step4ResolveGlbUrl(STEP4_FALLBACK_GLB);
+        const loader = new THREE.GLTFLoader();
+        if (typeof loader.setCrossOrigin === 'function') {
+            loader.setCrossOrigin('anonymous');
+        }
+        const onSuccess = (gltf) => {
+            if (token !== this._loadToken) return;
+            const model = gltf.scene;
+            this.root.add(model);
+            step4NormalizeAndGround(model);
+            this.controls.target.set(0, 0.38, 0);
+            this.camera.position.set(0.35, 0.55, 2.25);
+            this.controls.update();
+        };
+        const tryLoad = (loadUrl, isFallbackAttempt) => {
+            loader.load(
+                loadUrl,
+                onSuccess,
+                undefined,
+                (err) => {
+                    if (token !== this._loadToken) return;
+                    console.warn('[Step 4] GLB failed:', loadUrl, err);
+                    if (
+                        !isFallbackAttempt &&
+                        !step4GlbUrlSameAsset(loadUrl, fallbackUrl)
+                    ) {
+                        tryLoad(fallbackUrl, true);
+                    }
+                }
+            );
+        };
+        tryLoad(url, false);
+    }
+
+    dispose() {
+        cancelAnimationFrame(this._raf);
+        this._resizeObs?.disconnect();
+        this.clearModel();
+        this.renderer.dispose();
+    }
+}
+
 /** Resolve repo static paths against document.baseURI (set via <base> in index.html). */
 function redoAssetPath(relativePath) {
     const p = String(relativePath || '').replace(/^\/+/, '');
@@ -590,6 +748,9 @@ class Scene3D {
         this.imageSelected = false; // track if image is selected (required for dragging)
         this.currentStep = 1; // current active step (1-4)
         this.selectedDesignOption = null; // track which design option was selected in Step 2 (1, 2, or 3)
+        this._forwardDraggerLogKey = '';
+        /** Step 3 forward dragger stays idle (white/grey) until generation finishes — mirrors Step 2 + design-selected */
+        this._step3OutputsReady = false;
         this._step3GenRunId = 0;
         this._step3GenCompleteTimer = null;
         this._step3SeqTimer = null;
@@ -624,6 +785,10 @@ class Scene3D {
         this._boundSkipIntro = null;
         this._step2InteractionsBound = false;
         this._step3InteractionsBound = false;
+        this._step4Viewer = null;
+        this._step4PanelBound = false;
+        this._step4LastText = '';
+        this._step4LastFilename = 'redo-instructions.txt';
 
         this.init();
         if (this.renderer && this.camera && this.controls) {
@@ -1719,6 +1884,7 @@ class Scene3D {
         this.setupStepSlider();
         this.setupStep2Interactions();
         this.setupStep3Interactions();
+        this.setupStep4Panel();
         this.setupMaterialUpload();
         initRedoBlueprintReveal();
         initRedoStepContentReveal();
@@ -1878,6 +2044,10 @@ class Scene3D {
 
         if (prevStep === 2 && step === 3) {
             queueMicrotask(() => this._runStep2To3Crossfade());
+        }
+
+        if (step === 4) {
+            queueMicrotask(() => this.refreshStep4Outputs());
         }
     }
 
@@ -2490,6 +2660,10 @@ class Scene3D {
         this.updateActiveSlideClasses();
         this.syncNavStepsFromFlow();
         this.updateDragHandleHint();
+
+        if (this.currentStep === 4) {
+            queueMicrotask(() => this.refreshStep4Outputs());
+        }
     }
 
     updateActiveSlideClasses() {
@@ -2521,16 +2695,33 @@ class Scene3D {
             return;
         }
 
+        const step3Ready = slider.classList.contains('step-3-output-ready');
         const wantsHint =
             !this.isUserSliding &&
             ((this.imageSelected && this.currentStep === 1) ||
                 (this.selectedDesignOption != null && this.currentStep === 2) ||
-                (this.selectedDesignOption != null && this.currentStep === 3));
+                (this.imageSelected && this.currentStep === 3 && step3Ready));
 
         if (wantsHint) {
             slider.classList.add('step-slider--drag-hint-next');
         } else {
             slider.classList.remove('step-slider--drag-hint-next');
+        }
+
+        const flowAttr = slider.dataset.activeFlowStep ?? '';
+        const hasImageCls = slider.classList.contains('image-selected');
+        const hasDesignCls = slider.classList.contains('design-selected');
+        const hasHintCls = slider.classList.contains('step-slider--drag-hint-next');
+        const forwardArmedVisual =
+            (flowAttr === '1' && hasImageCls) ||
+            (flowAttr === '2' && hasDesignCls) ||
+            (flowAttr === '3' && hasImageCls && step3Ready);
+        const logKey = `${this.currentStep}|${flowAttr}|${hasImageCls}|${hasDesignCls}|${step3Ready}|${hasHintCls}|${forwardArmedVisual}|${this.isUserSliding}`;
+        if (logKey !== this._forwardDraggerLogKey) {
+            this._forwardDraggerLogKey = logKey;
+            console.log(
+                `Forward dragger: step=${this.currentStep} data-active-flow-step=${flowAttr} image-selected=${hasImageCls} design-selected=${hasDesignCls} step-3-output-ready=${step3Ready} drag-hint-next=${hasHintCls} forward-armed-visual=${forwardArmedVisual} userSliding=${this.isUserSliding}`
+            );
         }
     }
 
@@ -2762,6 +2953,17 @@ class Scene3D {
         this.updateDragHandleHint();
     }
 
+    syncStep3OutputReadyClass() {
+        const slider = document.getElementById('step-slider');
+        if (!slider) return;
+        if (this._step3OutputsReady) {
+            slider.classList.add('step-3-output-ready');
+        } else {
+            slider.classList.remove('step-3-output-ready');
+        }
+        this.updateDragHandleHint();
+    }
+
     _abortStep2Analysis() {
         this._step2AnalysisRunId += 1;
         if (this._step2SeqTimer != null) {
@@ -2821,6 +3023,8 @@ class Scene3D {
     _abortStep3GenerationUi() {
         this._step3GenRunId += 1;
         this._clearStep3GenerationTimers();
+        this._step3OutputsReady = false;
+        this.syncStep3OutputReadyClass();
         const container = document.getElementById('step-3-options');
         if (container) {
             container.classList.remove('step-3-generation--busy', 'step-3-generation--text-only');
@@ -2836,6 +3040,9 @@ class Scene3D {
         const overlay = document.getElementById('step-3-generation-overlay');
         const statusEl = document.getElementById('step-3-generation-status');
         if (!container || !overlay || !statusEl || !optionNumber) return;
+
+        this._step3OutputsReady = false;
+        this.syncStep3OutputReadyClass();
 
         this._clearStep3GenerationTimers();
         if (this._step3SeqTimer != null) {
@@ -2891,10 +3098,17 @@ class Scene3D {
         const overlay = document.getElementById('step-3-generation-overlay');
         const statusEl = document.getElementById('step-3-generation-status');
         if (container) {
+            container.querySelectorAll('.step-3-option-img').forEach((img) => {
+                img.classList.remove(REDO_BLUEPRINT_PENDING);
+                img.classList.add(REDO_BLUEPRINT_REVEALED);
+                window._redoBlueprintIO?.unobserve(img);
+            });
             container.classList.remove('step-3-generation--busy', 'step-3-generation--text-only');
         }
         if (overlay) overlay.setAttribute('aria-hidden', 'true');
         if (statusEl) statusEl.textContent = '';
+        this._step3OutputsReady = true;
+        this.syncStep3OutputReadyClass();
     }
 
     updateStep3Images(optionNumber) {
@@ -2925,6 +3139,9 @@ class Scene3D {
             runId = this._step3GenRunId;
         }
         this._clearStep3GenerationTimers();
+
+        this._step3OutputsReady = false;
+        this.syncStep3OutputReadyClass();
 
         const container = document.getElementById('step-3-options');
         const overlay = document.getElementById('step-3-generation-overlay');
@@ -3045,8 +3262,102 @@ class Scene3D {
                 option.classList.add('selected');
                 container.classList.add('step-3-selection-visual');
                 option.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                if (this.currentStep === 4) {
+                    queueMicrotask(() => this.refreshStep4Outputs());
+                }
             });
         });
+    }
+
+    getStep3OutputIndex() {
+        const sel = document.querySelector('#step-3-options .step-3-option.selected');
+        if (!sel) return 1;
+        const idx = parseInt(sel.getAttribute('data-option-index'), 10);
+        if (Number.isNaN(idx) || idx < 0 || idx > 2) return 1;
+        return idx;
+    }
+
+    _ensureStep4Viewer() {
+        if (this._step4Viewer) return;
+        const canvas = document.getElementById('step-4-model-canvas');
+        if (!canvas || typeof THREE === 'undefined') return;
+        this._step4Viewer = new Step4ModelViewer(canvas);
+        this._step4Viewer.init();
+    }
+
+    setupStep4Panel() {
+        if (this._step4PanelBound) return;
+        this._step4PanelBound = true;
+
+        const copyBtn = document.getElementById('step-4-copy-btn');
+        const dlBtn = document.getElementById('step-4-download-btn');
+        const body = document.getElementById('step-4-instructions-body');
+
+        copyBtn?.addEventListener('click', async () => {
+            const t = body ? body.textContent : '';
+            if (!t) return;
+            try {
+                await navigator.clipboard.writeText(t);
+                const prev = copyBtn.textContent;
+                copyBtn.textContent = 'Copied';
+                window.setTimeout(() => {
+                    copyBtn.textContent = prev;
+                }, 1600);
+            } catch (e) {
+                console.warn('Clipboard failed', e);
+            }
+        });
+
+        dlBtn?.addEventListener('click', () => {
+            const t = this._step4LastText || (body ? body.textContent : '');
+            if (!t) return;
+            const blob = new Blob([t], { type: 'text/plain;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = this._step4LastFilename || 'redo-instructions.txt';
+            a.click();
+            URL.revokeObjectURL(a.href);
+        });
+    }
+
+    refreshStep4Outputs() {
+        if (this.currentStep !== 4) return;
+
+        const idx = this.getStep3OutputIndex();
+        const spec = STEP4_OUTPUT_SPECS[idx] || STEP4_OUTPUT_SPECS[1];
+        const glbUrl = step4ResolveGlbUrl(spec.glb);
+        const diagramUrl = redoAssetPath(spec.diagram);
+        const txtUrl = redoAssetPath(spec.instructionsTxt);
+
+        this._step4LastFilename = `redo-build-instructions-output-${idx + 1}.txt`;
+
+        const imgEl = document.getElementById('step-4-diagram-img');
+        if (imgEl) {
+            imgEl.src = diagramUrl;
+            imgEl.alt = `Construction diagram — output ${idx + 1}`;
+        }
+
+        const body = document.getElementById('step-4-instructions-body');
+        const placeholder =
+            'Loading instructions…\n\nIf this never resolves, add the .txt file next to your diagram assets or check the network tab.';
+        if (body) body.textContent = placeholder;
+
+        fetch(txtUrl)
+            .then((r) => (r.ok ? r.text() : Promise.reject(new Error(String(r.status)))))
+            .then((text) => {
+                this._step4LastText = text;
+                if (body) body.textContent = text;
+            })
+            .catch(() => {
+                const fb = `Could not load ${spec.instructionsTxt}. Add the file under Assets/ or fix the path.`;
+                this._step4LastText = fb;
+                if (body) body.textContent = fb;
+            });
+
+        this._ensureStep4Viewer();
+        if (this._step4Viewer) {
+            this._step4Viewer.loadGlb(glbUrl);
+        }
     }
     
     slideToNextStep() {

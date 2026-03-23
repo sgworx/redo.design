@@ -1,0 +1,11 @@
+=== Design output 1 — construction notes ===
+
+Replace this file with your generated build copy for option 1 (op1_1).
+This placeholder is bundled so Step 4 download and copy work out of the box.
+
+Suggested sections:
+- Overview and dimensions
+- Materials and tools
+- Module list and assembly order
+- Cutting / scoring patterns (ASCII ok)
+- QC checklist

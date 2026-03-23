@@ -1,0 +1,4 @@
+=== Design output 2 — construction notes ===
+
+Replace this file with your generated build copy for option 2 (op2_2).
+Maps to diagram diagramOp2_2 and GLB between output 1 and output 3 on R2.

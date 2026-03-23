@@ -1,0 +1,4 @@
+=== Design output 3 — construction notes ===
+
+Replace this file with your generated build copy for option 3 (op3_3).
+Maps to text15.glb on R2 and diagram diagramOp3_3.
