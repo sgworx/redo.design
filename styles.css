@@ -567,14 +567,9 @@ textarea {
         overflow-y: auto;
     }
 
-    .step-3-thumbnail .step-3-option-img {
+    .step-3-option .step-3-option-img {
         width: clamp(220px, 40vw, 320px);
         height: clamp(220px, 40vw, 320px);
-    }
-
-    .step-3-main .step-3-option-img {
-        width: clamp(280px, 50vw, 416px);
-        height: clamp(280px, 50vw, 416px);
     }
 
     .step-4-guide {
@@ -625,14 +620,9 @@ textarea {
         overflow-y: auto;
     }
 
-    .step-3-thumbnail .step-3-option-img {
+    .step-3-option .step-3-option-img {
         width: clamp(200px, 36vw, 280px);
         height: clamp(200px, 36vw, 280px);
-    }
-
-    .step-3-main .step-3-option-img {
-        width: clamp(250px, 44vw, 360px);
-        height: clamp(250px, 44vw, 360px);
     }
 
     .step-4-guide {
@@ -702,14 +692,9 @@ textarea {
         overflow-y: auto;
     }
 
-    .step-3-thumbnail .step-3-option-img {
+    .step-3-option .step-3-option-img {
         width: clamp(200px, 32vw, 280px);
         height: clamp(200px, 32vw, 280px);
-    }
-
-    .step-3-main .step-3-option-img {
-        width: clamp(250px, 38vw, 360px);
-        height: clamp(250px, 38vw, 360px);
     }
 
     .step-4-guide {
@@ -1720,7 +1705,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     overflow: visible;
 }
 
-/* All canvas drag handles match step 1 “after upload”: black disc, light border pulse, inverted arrows */
+/* Forward drag: black disc, light border pulse, inverted arrows */
 #step-slider:not(.hidden) .step-slide .canvas-slider .progress-circle {
     background: var(--color-black);
     border-color: rgba(255, 255, 255, 0.26);
@@ -1736,6 +1721,22 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 
 #step-slider:not(.hidden) .step-slide .canvas-slider .progress-circle .drag-letter {
     fill: var(--redo-drag-label-fill-on-dark);
+}
+
+/* Backward drag: grey secondary (forward stays primary black) */
+#step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle {
+    background: #d6d6d6;
+    border-color: rgba(0, 0, 0, 0.14);
+    animation: none;
+}
+
+#step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle .arrow-left {
+    filter: grayscale(1) contrast(1.12);
+    opacity: 0.72;
+}
+
+#step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle .drag-letter {
+    fill: var(--redo-drag-label-fill);
 }
 
 /* Step 1 before image: keep the original light forward handle */
@@ -1833,6 +1834,16 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 #step-slider:not(.hidden) .step-slide .canvas-slider .progress-circle:active {
     background: linear-gradient(165deg, #050505 0%, #101010 100%);
     border-color: rgba(255, 255, 255, 0.22);
+}
+
+#step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle:hover {
+    background: linear-gradient(165deg, #e4e4e4 0%, #d8d8d8 52%, #cfcfcf 100%);
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+#step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle:active {
+    background: linear-gradient(165deg, #c4c4c4 0%, #d0d0d0 100%);
+    border-color: rgba(0, 0, 0, 0.16);
 }
 
 #step-slider:not(.hidden):not(.image-selected) .step-slide[data-step='1'] .slider-right .progress-circle:hover {
@@ -2923,11 +2934,6 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     height: 200px;
 }
 
-.step-3-skel--main {
-    width: min(416px, 92vw);
-    height: 280px;
-}
-
 @keyframes step3SkeletonShimmer {
     0% {
         background-position: 100% 0;
@@ -2964,7 +2970,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     }
 }
 
-/* Step 3 Option Images */
+/* Step 3 Option Images — equal tiles; chosen option scales up in place */
 .step-3-option {
     position: relative;
     display: flex;
@@ -2974,7 +2980,6 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     cursor: pointer;
     border-radius: 4px;
     transition:
-        transform var(--duration-interact) var(--ease-standard),
         box-shadow var(--duration-interact) var(--ease-standard),
         filter var(--duration-interact) var(--ease-standard),
         backdrop-filter var(--duration-interact) var(--ease-standard);
@@ -2988,20 +2993,31 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     border: 1px solid var(--panel-border);
     border-radius: 2px;
     box-shadow: var(--photo-emboss-shadow);
-}
-
-/* Top and bottom thumbnails - smaller */
-.step-3-thumbnail .step-3-option-img {
-    width: 320px; /* 20% smaller */
+    width: 320px;
     height: 320px;
     max-height: none;
+    transition: transform var(--duration-interact) var(--ease-standard);
+    transform-origin: center center;
 }
 
-/* Main/center image - larger */
-.step-3-main .step-3-option-img {
-    width: 416px; /* 20% smaller */
-    height: 416px;
-    max-height: none;
+.step-3-options-container.step-3-selection-visual .step-3-option.selected {
+    z-index: 2;
+}
+
+.step-3-options-container.step-3-selection-visual .step-3-option.selected .step-3-option-img {
+    transform: scale(1.22);
+}
+
+.step-3-options-container:not(.step-3-selection-visual) .step-3-option:hover .step-3-option-img {
+    transform: scale(1.03);
+}
+
+.step-3-options-container.step-3-selection-visual .step-3-option:not(.selected):hover .step-3-option-img {
+    transform: scale(1.04);
+}
+
+.step-3-options-container.step-3-selection-visual .step-3-option.selected:hover .step-3-option-img {
+    transform: scale(1.26);
 }
 
 /* Arrow indicator on main image */
@@ -3050,24 +3066,47 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     content: none;
 }
 
-/* Ensure Step 3 images are visible */
-.step-3-option-img {
-    min-height: 200px; /* Ensure images have minimum height */
-}
-
 .step-3-option-img[src=""] {
     display: none; /* Hide images with empty src */
 }
 
 .step-3-option:hover {
-    transform: scale(1.02);
     box-shadow: var(--card-glass-glow);
     backdrop-filter: blur(12px) saturate(115%);
     -webkit-backdrop-filter: blur(12px) saturate(115%);
 }
 
-.step-3-option:active {
+.step-3-options-container:not(.step-3-selection-visual) .step-3-option:active .step-3-option-img {
     transform: scale(0.98);
+}
+
+.step-3-options-container.step-3-selection-visual .step-3-option:not(.selected):active .step-3-option-img {
+    transform: scale(0.98);
+}
+
+.step-3-options-container.step-3-selection-visual .step-3-option.selected:active .step-3-option-img {
+    transform: scale(1.18);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .step-3-option-img {
+        transition: none;
+    }
+
+    .step-3-options-container.step-3-selection-visual .step-3-option.selected .step-3-option-img {
+        transform: none;
+        outline: 2px solid rgba(0, 0, 0, 0.2);
+        outline-offset: 4px;
+    }
+
+    .step-3-options-container:not(.step-3-selection-visual) .step-3-option:hover .step-3-option-img,
+    .step-3-options-container.step-3-selection-visual .step-3-option:not(.selected):hover .step-3-option-img,
+    .step-3-options-container.step-3-selection-visual .step-3-option.selected:hover .step-3-option-img,
+    .step-3-options-container:not(.step-3-selection-visual) .step-3-option:active .step-3-option-img,
+    .step-3-options-container.step-3-selection-visual .step-3-option:not(.selected):active .step-3-option-img,
+    .step-3-options-container.step-3-selection-visual .step-3-option.selected:active .step-3-option-img {
+        transform: none;
+    }
 }
 
 .step-content h2 {
@@ -3332,6 +3371,27 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     animation: grabber-border-pulse 1.65s ease-in-out infinite;
 }
 
+/* After a design is chosen: primary CTA — black ring, arrow points right (toward Step 3) */
+#step-slider.design-selected .step-slide .step-2-arrow-button {
+    animation: none;
+    border-width: 2px;
+    border-color: var(--color-black);
+}
+
+#step-slider.design-selected .step-slide .step-2-arrow-button:hover {
+    border-color: var(--color-black);
+    background: linear-gradient(160deg, #fafafa 0%, #f0f0f0 55%, #f6f6f6 100%);
+}
+
+#step-slider.design-selected .step-slide .step-2-arrow-button:active {
+    border-color: var(--color-black);
+}
+
+#step-slider.design-selected .step-slide .step-2-arrow-button .arrow-right-small {
+    transform: rotate(0deg);
+    opacity: 0.88;
+}
+
 .step-2-arrow-button:hover {
     background: linear-gradient(160deg, #ffffff 0%, #ececec 55%, #f2f2f2 100%);
     border-color: rgba(0, 0, 0, 0.22);
@@ -3352,6 +3412,8 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     transform: rotate(90deg);
     opacity: 0.75;
     filter: grayscale(1) contrast(1.1);
+    transition: transform var(--duration-interact) var(--ease-standard),
+        opacity var(--duration-interact) var(--ease-standard);
 }
 
 .arrow-right-small::after {

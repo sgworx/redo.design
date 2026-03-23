@@ -2790,6 +2790,8 @@ class Scene3D {
             return;
         }
 
+        this._resetStep3PreviewSelection();
+
         let runId;
         if (expectedRunId != null) {
             runId = expectedRunId;
@@ -2883,16 +2885,32 @@ class Scene3D {
             });
         }
         
-        // Auto-scroll to center image
         const optionsContainer = document.getElementById('step-3-options');
-        const mainOption = document.querySelector('.step-3-main');
-        if (optionsContainer && mainOption) {
+        const selectedOption = optionsContainer?.querySelector('.step-3-option.selected');
+        if (optionsContainer && selectedOption) {
             setTimeout(() => {
-                mainOption.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                selectedOption.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }, 300);
         }
     }
-    
+
+    _resetStep3PreviewSelection() {
+        const container = document.getElementById('step-3-options');
+        if (!container) return;
+        container.classList.remove('step-3-selection-visual');
+        const options = container.querySelectorAll('.step-3-option');
+        const arrow = document.getElementById('step-3-finalize-arrow');
+        options.forEach((o) => o.classList.remove('selected'));
+        const preferred =
+            container.querySelector('.step-3-option[data-option-index="1"]') || options[1] || options[0];
+        if (preferred) {
+            preferred.classList.add('selected');
+            if (arrow && !preferred.contains(arrow)) {
+                preferred.appendChild(arrow);
+            }
+        }
+    }
+
     setupStep3Interactions() {
         if (this._step3InteractionsBound) return;
         this._step3InteractionsBound = true;
@@ -2918,26 +2936,19 @@ class Scene3D {
             });
         }
         
-        // Handle thumbnail clicks to switch main image (optional enhancement)
-        const thumbnails = document.querySelectorAll('.step-3-thumbnail');
-        const mainOption = document.querySelector('.step-3-main');
-        
-        thumbnails.forEach(thumbnail => {
-            thumbnail.addEventListener('click', () => {
-                const thumbnailImg = thumbnail.querySelector('.step-3-option-img');
-                const mainImg = mainOption ? mainOption.querySelector('.step-3-option-img') : null;
-                
-                if (thumbnailImg && mainImg) {
-                    // Swap images
-                    const tempSrc = mainImg.src;
-                    mainImg.src = thumbnailImg.src;
-                    thumbnailImg.src = tempSrc;
-                    
-                    // Scroll to main image
-                    if (mainOption) {
-                        mainOption.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
+        const container = document.getElementById('step-3-options');
+        const options = container?.querySelectorAll('.step-3-option');
+
+        options?.forEach((option) => {
+            option.addEventListener('click', (e) => {
+                if (e.target.closest('.step-3-arrow-indicator')) return;
+                options.forEach((o) => o.classList.remove('selected'));
+                option.classList.add('selected');
+                container.classList.add('step-3-selection-visual');
+                if (finalizeArrow) {
+                    option.appendChild(finalizeArrow);
                 }
+                option.scrollIntoView({ behavior: 'smooth', block: 'center' });
             });
         });
     }
