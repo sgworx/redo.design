@@ -1445,9 +1445,9 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     overflow: visible;
 }
 
-/* Remove the duplicate handle from left sliders (keep right handle only) */
+/* Left = previous; right = next — only current step’s sliders are shown in JS, so no double handles on one line */
 .slider-left .progress-circle {
-    display: none;
+    display: flex;
 }
 
 /* Right slider (at right edge of canvas) */
@@ -1717,7 +1717,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     overflow: visible;
 }
 
-/* Forward drag: idle grey on the divider; black only on hover / active (Step 1 pre-image overrides below) */
+/* Forward drag: idle = medium grey + dark arrow; black when this step’s “next” is armed (Step 1 pre-image overrides below) */
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle {
     background: #adadad;
     border-color: rgba(0, 0, 0, 0.14);
@@ -1729,29 +1729,50 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle .arrow-right {
     filter: grayscale(1) contrast(1.12);
-    opacity: 0.9;
+    opacity: 1;
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle .drag-letter {
-    fill: rgba(28, 28, 28, 0.82);
+    fill: rgba(28, 28, 28, 0.88);
 }
 
-/* Backward drag: lighter, more transparent — recedes vs forward */
+/* Armed by flow: Step 1 = image chosen; Step 2 = design chosen; Step 3 = in flow with image */
+#step-slider.image-selected .step-slide[data-step='1'].is-current-step .slider-right .progress-circle,
+#step-slider.design-selected .step-slide[data-step='2'].is-current-step .slider-right .progress-circle,
+#step-slider.image-selected .step-slide[data-step='3'].is-current-step .slider-right .progress-circle {
+    background: var(--color-black);
+    border-color: rgba(255, 255, 255, 0.22);
+}
+
+#step-slider.image-selected .step-slide[data-step='1'].is-current-step .slider-right .progress-circle .arrow-right,
+#step-slider.design-selected .step-slide[data-step='2'].is-current-step .slider-right .progress-circle .arrow-right,
+#step-slider.image-selected .step-slide[data-step='3'].is-current-step .slider-right .progress-circle .arrow-right {
+    filter: grayscale(1) contrast(1.02) invert(1) brightness(1.05);
+    opacity: 1;
+}
+
+#step-slider.image-selected .step-slide[data-step='1'].is-current-step .slider-right .progress-circle .drag-letter,
+#step-slider.design-selected .step-slide[data-step='2'].is-current-step .slider-right .progress-circle .drag-letter,
+#step-slider.image-selected .step-slide[data-step='3'].is-current-step .slider-right .progress-circle .drag-letter {
+    fill: rgba(154, 154, 154, 0.98);
+}
+
+/* Previous (back): fully opaque light grey, dark grey arrow — no translucency / blur */
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle {
-    background: rgba(245, 245, 245, 0.42);
-    border-color: rgba(0, 0, 0, 0.09);
+    background: #e6e6e6;
+    border: 1px solid rgba(0, 0, 0, 0.12);
     animation: none;
-    backdrop-filter: blur(10px) saturate(112%);
-    -webkit-backdrop-filter: blur(10px) saturate(112%);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle .arrow-left {
-    filter: grayscale(1) contrast(1.08);
-    opacity: 0.48;
+    filter: grayscale(1) contrast(1.14);
+    opacity: 1;
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle .drag-letter {
-    fill: rgba(38, 38, 38, 0.72);
+    fill: rgba(48, 48, 48, 0.94);
 }
 
 /* Step 1 before image: soft light forward handle */
@@ -1843,46 +1864,94 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     background: linear-gradient(165deg, #e6e6e6 0%, #f0f0f0 100%);
 }
 
+/* Forward idle hover / active — darker grey, still dark arrow */
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle:hover {
-    background: var(--color-black);
-    border-color: rgba(255, 255, 255, 0.32);
+    background: #9e9e9e;
+    border-color: rgba(0, 0, 0, 0.16);
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle:hover .arrow-right {
-    filter: grayscale(1) contrast(1.02) invert(1) brightness(1.02);
+    filter: grayscale(1) contrast(1.12);
     opacity: 1;
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle:hover .drag-letter {
-    fill: rgba(200, 200, 200, 0.95);
+    fill: rgba(22, 22, 22, 0.92);
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle:active {
-    background: #0a0a0a;
-    border-color: rgba(255, 255, 255, 0.22);
+    background: #949494;
+    border-color: rgba(0, 0, 0, 0.18);
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle:active .arrow-right {
-    filter: grayscale(1) contrast(1.02) invert(1) brightness(1.02);
+    filter: grayscale(1) contrast(1.12);
     opacity: 1;
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle:active .drag-letter {
-    fill: rgba(210, 210, 210, 0.96);
+    fill: rgba(22, 22, 22, 0.92);
+}
+
+/* Forward armed hover / active — stay black; DRAG stays grey */
+#step-slider.image-selected .step-slide[data-step='1'].is-current-step .slider-right .progress-circle:hover,
+#step-slider.design-selected .step-slide[data-step='2'].is-current-step .slider-right .progress-circle:hover,
+#step-slider.image-selected .step-slide[data-step='3'].is-current-step .slider-right .progress-circle:hover {
+    background: #0a0a0a;
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+#step-slider.image-selected .step-slide[data-step='1'].is-current-step .slider-right .progress-circle:hover .arrow-right,
+#step-slider.design-selected .step-slide[data-step='2'].is-current-step .slider-right .progress-circle:hover .arrow-right,
+#step-slider.image-selected .step-slide[data-step='3'].is-current-step .slider-right .progress-circle:hover .arrow-right {
+    filter: grayscale(1) contrast(1.02) invert(1) brightness(1.05);
+    opacity: 1;
+}
+
+#step-slider.image-selected .step-slide[data-step='1'].is-current-step .slider-right .progress-circle:hover .drag-letter,
+#step-slider.design-selected .step-slide[data-step='2'].is-current-step .slider-right .progress-circle:hover .drag-letter,
+#step-slider.image-selected .step-slide[data-step='3'].is-current-step .slider-right .progress-circle:hover .drag-letter {
+    fill: rgba(154, 154, 154, 0.98);
+}
+
+#step-slider.image-selected .step-slide[data-step='1'].is-current-step .slider-right .progress-circle:active,
+#step-slider.design-selected .step-slide[data-step='2'].is-current-step .slider-right .progress-circle:active,
+#step-slider.image-selected .step-slide[data-step='3'].is-current-step .slider-right .progress-circle:active {
+    background: #000000;
+    border-color: rgba(255, 255, 255, 0.22);
+}
+
+#step-slider.image-selected .step-slide[data-step='1'].is-current-step .slider-right .progress-circle:active .arrow-right,
+#step-slider.design-selected .step-slide[data-step='2'].is-current-step .slider-right .progress-circle:active .arrow-right,
+#step-slider.image-selected .step-slide[data-step='3'].is-current-step .slider-right .progress-circle:active .arrow-right {
+    filter: grayscale(1) contrast(1.02) invert(1) brightness(1.05);
+    opacity: 1;
+}
+
+#step-slider.image-selected .step-slide[data-step='1'].is-current-step .slider-right .progress-circle:active .drag-letter,
+#step-slider.design-selected .step-slide[data-step='2'].is-current-step .slider-right .progress-circle:active .drag-letter,
+#step-slider.image-selected .step-slide[data-step='3'].is-current-step .slider-right .progress-circle:active .drag-letter {
+    fill: rgba(154, 154, 154, 0.98);
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle:hover {
-    background: rgba(252, 252, 252, 0.58);
-    border-color: rgba(0, 0, 0, 0.12);
+    background: #dedede;
+    border-color: rgba(0, 0, 0, 0.14);
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle:hover .arrow-left {
-    opacity: 0.62;
+    filter: grayscale(1) contrast(1.14);
+    opacity: 1;
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle:active {
-    background: rgba(255, 255, 255, 0.5);
-    border-color: rgba(0, 0, 0, 0.1);
+    background: #d4d4d4;
+    border-color: rgba(0, 0, 0, 0.12);
+}
+
+#step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle:active .arrow-left {
+    filter: grayscale(1) contrast(1.14);
+    opacity: 1;
 }
 
 #step-slider:not(.hidden):not(.image-selected) .step-slide[data-step='1'] .slider-right .progress-circle:hover {
