@@ -8,9 +8,11 @@
     --font-site: "Helvetica Neue", Helvetica, Arial, sans-serif;
     /* Legacy token kept so existing rules stay valid; same family everywhere */
     --font-mono: var(--font-site);
-    /* DRAG arc + hint copy: one palette, shared bounce timing (1.65s) */
+    /* DRAG arc on forward handle: stable darker grey (no state-based fill shifts) */
     --redo-drag-label-fill: rgba(18, 18, 18, 0.94);
     --redo-drag-label-fill-on-dark: rgba(130, 130, 130, 0.96);
+    /* Single tone on white + black forward knob (~5:1 on #000, readable on #fff) */
+    --redo-drag-label-hint-grey: rgba(122, 122, 122, 0.98);
     --redo-drag-hint-copy: rgba(0, 0, 0, 0.78);
     /* Forward dragger: ring width + color track default .progress-line; same grey until forward is armed */
     /* Dragger ring + vertical track (all forward/back handles use this width) */
@@ -54,15 +56,16 @@
     --nav-step-completed-circle-bg: #d6d6d6;
     --nav-step-completed-circle-border: rgba(0, 0, 0, 0.12);
     --nav-step-completed-tick: #1f1f1f;
-    --nav-step-completed-label: #6e6e6e;
-    --nav-step-completed-pretitle: #8c8c8c;
+    --nav-step-completed-label: #4a4a4a;
+    --nav-step-completed-pretitle: #666666;
     --nav-step-upcoming-circle-bg: #f0f0f0;
     --nav-step-upcoming-circle-border: rgba(0, 0, 0, 0.14);
-    --nav-step-upcoming-number: #7a7a7a;
-    --nav-step-upcoming-label: rgba(0, 0, 0, 0.58);
-    --nav-step-upcoming-pretitle: rgba(0, 0, 0, 0.52);
-    --nav-step-upcoming-opacity: 0.92;
-    --nav-step-upcoming-locked-opacity: 0.78;
+    --nav-step-upcoming-number: #5c5c5c;
+    --nav-step-upcoming-label: rgba(0, 0, 0, 0.72);
+    --nav-step-upcoming-pretitle: rgba(0, 0, 0, 0.66);
+    /* Previous (completed) + next (upcoming) read closer to full strength */
+    --nav-step-upcoming-opacity: 1;
+    --nav-step-upcoming-locked-opacity: 0.94;
     --color-focus-ring: rgba(0, 0, 0, 0.12);
     /* Flat panels (non-card) */
     --panel-border: rgba(0, 0, 0, 0.12);
@@ -582,6 +585,10 @@ textarea {
         --step-3-bottom-safe: clamp(196px, 30vh, 264px);
     }
 
+    .canvas-content.step-4-content {
+        --step-4-bottom-safe: clamp(220px, 34vh, 300px);
+    }
+
     .step-3-options-container {
         margin-top: 0;
         max-width: clamp(360px, 70vw, 600px);
@@ -594,6 +601,12 @@ textarea {
         padding-right: clamp(10px, 2vw, 40px);
         max-height: calc(100vh - 200px);
         overflow-y: auto;
+    }
+
+    .step-4-guide.step-4-output-layout {
+        margin-left: auto;
+        margin-right: auto;
+        max-height: none;
     }
 }
 
@@ -645,6 +658,12 @@ textarea {
         padding-right: clamp(10px, 2vw, 30px);
         max-height: calc(100vh - 220px);
         overflow-y: auto;
+    }
+
+    .step-4-guide.step-4-output-layout {
+        margin-left: auto;
+        margin-right: auto;
+        max-height: none;
     }
 }
 
@@ -715,6 +734,12 @@ textarea {
         max-height: calc(100vh - 220px);
         overflow-y: auto;
         padding-right: clamp(10px, 2vw, 30px);
+    }
+
+    .step-4-guide.step-4-output-layout {
+        margin-left: auto;
+        margin-right: auto;
+        max-height: none;
     }
 }
 
@@ -794,9 +819,10 @@ textarea {
         transform 0.38s var(--ease-out-smooth);
 }
 
-/* Steps 2 & 3: center the nav row in the viewport (over the active canvas column); 1 & 4 keep default left anchor */
+/* Steps 2–4: center nav over the main column so labels align with centered step content */
 body[data-active-flow-step='2'] .nav-steps,
-body[data-active-flow-step='3'] .nav-steps {
+body[data-active-flow-step='3'] .nav-steps,
+body[data-active-flow-step='4'] .nav-steps {
     left: 50%;
     right: auto;
     transform: translateX(-50%);
@@ -886,12 +912,12 @@ body[data-active-flow-step='3'] .nav-steps {
 /* ─── 3. UPCOMING (not done, not current): faint circle + type, reduced strength ─── */
 .nav-step:not(.active):not(.nav-step--completed) {
     opacity: var(--nav-step-upcoming-opacity);
-    filter: saturate(0.88);
+    filter: saturate(0.96);
 }
 
 .nav-step--locked:not(.active):not(.nav-step--completed) {
     opacity: var(--nav-step-upcoming-locked-opacity);
-    filter: saturate(0.72);
+    filter: saturate(0.88);
 }
 
 .nav-step:not(.active):not(.nav-step--completed) .step-circle {
@@ -1509,7 +1535,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 
 #step-slider[data-active-flow-step='1'].image-selected .step-slide[data-step='1'] .slider-right .progress-line,
 #step-slider[data-active-flow-step='2'].design-selected .step-slide[data-step='2'] .slider-right .progress-line,
-#step-slider[data-active-flow-step='3'].image-selected.step-3-output-ready .step-slide[data-step='3'] .slider-right .progress-line {
+#step-slider[data-active-flow-step='3'].image-selected.step-3-output-ready.step-3-output-chosen .step-slide[data-step='3'] .slider-right .progress-line {
     background: var(--color-obsidian) !important;
 }
 
@@ -1577,7 +1603,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     animation: drag-handle-next-hint-inverse 1.65s ease-in-out infinite;
 }
 
-#step-slider.step-slider--drag-hint-next.step-slider.image-selected.step-3-output-ready[data-active-flow-step='3']
+#step-slider.step-slider--drag-hint-next.step-slider.image-selected.step-3-output-ready.step-3-output-chosen[data-active-flow-step='3']
     .step-slide[data-step='3']
     .slider-right
     .progress-circle {
@@ -1599,7 +1625,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     .step-slide[data-step='2']
     .slider-right
     .progress-circle:hover,
-#step-slider.step-slider--drag-hint-next.step-slider.image-selected.step-3-output-ready[data-active-flow-step='3']
+#step-slider.step-slider--drag-hint-next.step-slider.image-selected.step-3-output-ready.step-3-output-chosen[data-active-flow-step='3']
     .step-slide[data-step='3']
     .slider-right
     .progress-circle:hover {
@@ -1611,7 +1637,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
         .step-slide[data-step='1']
         .slider-right
         .progress-circle,
-    #step-slider.step-slider--drag-hint-next.step-slider.image-selected.step-3-output-ready[data-active-flow-step='3']
+    #step-slider.step-slider--drag-hint-next.step-slider.image-selected.step-3-output-ready.step-3-output-chosen[data-active-flow-step='3']
         .step-slide[data-step='3']
         .slider-right
         .progress-circle {
@@ -1635,30 +1661,10 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 
 }
 
-/* Same vertical bounce rhythm as upload hint (1.65s); whole SVG moves so textPath stays valid */
-@keyframes redo-drag-label-bounce {
-    0%,
-    100% {
-        transform: translate(-50%, -50%) translateY(0);
-    }
-    30% {
-        transform: translate(-50%, -50%) translateY(-8px);
-    }
-    50% {
-        transform: translate(-50%, -50%) translateY(-2px);
-    }
-    65% {
-        transform: translate(-50%, -50%) translateY(-5px);
-    }
-    80% {
-        transform: translate(-50%, -50%) translateY(-1px);
-    }
-}
-
 /* DRAG ring: show when flow allows (step 2: design-selected; step 3: outputs generated) */
 #step-slider.image-selected .step-slide[data-step='1'] .slider-right .drag-label,
 #step-slider.design-selected .step-slide[data-step='2'] .slider-right .drag-label,
-#step-slider.image-selected.step-3-output-ready .step-slide[data-step='3'] .slider-right .drag-label {
+#step-slider.image-selected.step-3-output-ready.step-3-output-chosen .step-slide[data-step='3'] .slider-right .drag-label {
     opacity: 1;
     pointer-events: auto;
     cursor: grab;
@@ -1670,22 +1676,18 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     animation: none !important;
 }
 
-#step-slider.image-selected:not(.step-3-output-ready) .step-slide[data-step='3'] .slider-right .drag-label {
+#step-slider.image-selected:not(.step-3-output-ready) .step-slide[data-step='3'] .slider-right .drag-label,
+#step-slider.image-selected.step-3-output-ready:not(.step-3-output-chosen) .step-slide[data-step='3'] .slider-right .drag-label {
     opacity: 0;
     pointer-events: none;
     animation: none !important;
 }
 
+/* DRAG SVG: no independent bounce — it scales with .progress-circle (hint + hover) */
 #step-slider.image-selected .step-slide[data-step='1'] .slider-right .drag-label:not(.drag-label--shake),
 #step-slider.design-selected .step-slide[data-step='2'] .slider-right .drag-label:not(.drag-label--shake),
-#step-slider.image-selected.step-3-output-ready .step-slide[data-step='3'] .slider-right .drag-label:not(.drag-label--shake) {
-    animation: redo-drag-label-bounce 1.65s ease-in-out infinite;
-}
-
-#step-slider.image-selected .step-slide[data-step='1'] .slider-right .progress-circle:hover .drag-label:not(.drag-label--shake),
-#step-slider.design-selected .step-slide[data-step='2'] .slider-right .progress-circle:hover .drag-label:not(.drag-label--shake),
-#step-slider.image-selected.step-3-output-ready .step-slide[data-step='3'] .slider-right .progress-circle:hover .drag-label:not(.drag-label--shake) {
-    animation-play-state: paused;
+#step-slider.image-selected.step-3-output-ready.step-3-output-chosen .step-slide[data-step='3'] .slider-right .drag-label:not(.drag-label--shake) {
+    animation: none;
 }
 
 @keyframes grabber-border-pulse {
@@ -1731,7 +1733,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     border: var(--redo-progress-line-width) solid var(--color-border-stroke);
     border-radius: 50%;
     box-sizing: border-box;
-    box-shadow: none;
+    box-shadow: 0 2px 14px rgba(0, 0, 0, 0.14);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     top: 50%;
@@ -1741,7 +1743,8 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
         border-color var(--duration-interact) var(--ease-standard),
         border-width var(--duration-interact) var(--ease-standard),
         background var(--duration-interact) var(--ease-standard),
-        transform var(--duration-interact) var(--ease-standard);
+        transform var(--duration-interact) var(--ease-standard),
+        box-shadow var(--duration-interact) var(--ease-standard);
     z-index: 1001;
     cursor: grab;
     display: flex;
@@ -1755,55 +1758,45 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle {
     background: var(--color-white);
     border: var(--redo-progress-line-width) solid var(--redo-forward-dragger-border-idle);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 3px 16px rgba(0, 0, 0, 0.14);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     animation: none;
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle .arrow-right {
-    filter: grayscale(1) contrast(1.12);
+    filter: grayscale(1) contrast(1.22) brightness(1.02);
     opacity: 1;
-}
-
-#step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle .drag-letter {
-    fill: rgba(28, 28, 28, 0.88);
 }
 
 /* Armed by flow + active step (data-active-flow-step mirrors currentStep in JS — same logic as Step 1) */
 #step-slider[data-active-flow-step='1'].image-selected .step-slide[data-step='1'] .slider-right .progress-circle,
 #step-slider[data-active-flow-step='2'].design-selected .step-slide[data-step='2'] .slider-right .progress-circle,
-#step-slider[data-active-flow-step='3'].image-selected.step-3-output-ready .step-slide[data-step='3'] .slider-right .progress-circle {
+#step-slider[data-active-flow-step='3'].image-selected.step-3-output-ready.step-3-output-chosen .step-slide[data-step='3'] .slider-right .progress-circle {
     background: var(--color-black);
     border: var(--redo-progress-line-width) solid var(--redo-forward-dragger-border-armed);
-    box-shadow: 0 3px 14px rgba(0, 0, 0, 0.24);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.32);
 }
 
 #step-slider[data-active-flow-step='1'].image-selected .step-slide[data-step='1'] .slider-right .progress-circle .arrow-right,
 #step-slider[data-active-flow-step='2'].design-selected .step-slide[data-step='2'] .slider-right .progress-circle .arrow-right,
-#step-slider[data-active-flow-step='3'].image-selected.step-3-output-ready .step-slide[data-step='3'] .slider-right .progress-circle .arrow-right {
-    filter: grayscale(1) contrast(1.02) invert(1) brightness(1.05);
+#step-slider[data-active-flow-step='3'].image-selected.step-3-output-ready.step-3-output-chosen .step-slide[data-step='3'] .slider-right .progress-circle .arrow-right {
+    filter: grayscale(1) contrast(1.08) invert(1) brightness(1.14);
     opacity: 1;
-}
-
-#step-slider[data-active-flow-step='1'].image-selected .step-slide[data-step='1'] .slider-right .progress-circle .drag-letter,
-#step-slider[data-active-flow-step='2'].design-selected .step-slide[data-step='2'] .slider-right .progress-circle .drag-letter,
-#step-slider[data-active-flow-step='3'].image-selected.step-3-output-ready .step-slide[data-step='3'] .slider-right .progress-circle .drag-letter {
-    fill: rgba(154, 154, 154, 0.98);
 }
 
 /* Previous (back): white fill, black arrow, black ring (same width as vertical line) */
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle {
     background: var(--color-white);
     border: var(--redo-progress-line-width) solid var(--color-black);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 3px 16px rgba(0, 0, 0, 0.14);
     animation: none;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle .arrow-left {
-    filter: grayscale(1) contrast(1.14);
+    filter: grayscale(1) contrast(1.22) brightness(1.02);
     opacity: 1;
 }
 
@@ -1815,81 +1808,70 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 #step-slider:not(.hidden):not(.image-selected) .step-slide[data-step='1'] .slider-right .progress-circle {
     background: var(--color-white);
     border: var(--redo-progress-line-width) solid var(--redo-forward-dragger-border-idle);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 3px 16px rgba(0, 0, 0, 0.14);
     animation: none;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
 }
 
 #step-slider:not(.hidden):not(.image-selected) .step-slide[data-step='1'] .slider-right .progress-circle .arrow-right {
-    filter: grayscale(1) contrast(1.12);
+    filter: grayscale(1) contrast(1.22) brightness(1.02);
     opacity: 1;
 }
 
-#step-slider:not(.hidden):not(.image-selected) .step-slide[data-step='1'] .slider-right .progress-circle .drag-letter {
-    fill: var(--redo-drag-label-fill);
-}
-
-/* Step 3 before outputs finish generating: same idle forward look as Step 1 / Step 2 pre-ready */
-#step-slider:not(.hidden).image-selected:not(.step-3-output-ready)[data-active-flow-step='3'] .step-slide[data-step='3'] .slider-right .progress-circle {
+/* Step 3: idle forward until previews finish OR until user picks an output (then armed rules apply) */
+#step-slider:not(.hidden).image-selected:not(.step-3-output-ready)[data-active-flow-step='3'] .step-slide[data-step='3'] .slider-right .progress-circle,
+#step-slider:not(.hidden).image-selected.step-3-output-ready:not(.step-3-output-chosen)[data-active-flow-step='3'] .step-slide[data-step='3'] .slider-right .progress-circle {
     background: var(--color-white);
     border: var(--redo-progress-line-width) solid var(--redo-forward-dragger-border-idle);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 3px 16px rgba(0, 0, 0, 0.14);
     animation: none;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
 }
 
-#step-slider:not(.hidden).image-selected:not(.step-3-output-ready)[data-active-flow-step='3'] .step-slide[data-step='3'] .slider-right .progress-circle .arrow-right {
-    filter: grayscale(1) contrast(1.12);
+#step-slider:not(.hidden).image-selected:not(.step-3-output-ready)[data-active-flow-step='3'] .step-slide[data-step='3'] .slider-right .progress-circle .arrow-right,
+#step-slider:not(.hidden).image-selected.step-3-output-ready:not(.step-3-output-chosen)[data-active-flow-step='3'] .step-slide[data-step='3'] .slider-right .progress-circle .arrow-right {
+    filter: grayscale(1) contrast(1.22) brightness(1.02);
     opacity: 1;
 }
 
-#step-slider:not(.hidden).image-selected:not(.step-3-output-ready)[data-active-flow-step='3'] .step-slide[data-step='3'] .slider-right .progress-circle .drag-letter {
-    fill: var(--redo-drag-label-fill);
-}
-
-#step-slider:not(.hidden).image-selected:not(.step-3-output-ready)[data-active-flow-step='3'] .step-slide[data-step='3'] .slider-right .progress-circle:hover {
+#step-slider:not(.hidden).image-selected:not(.step-3-output-ready)[data-active-flow-step='3'] .step-slide[data-step='3'] .slider-right .progress-circle:hover,
+#step-slider:not(.hidden).image-selected.step-3-output-ready:not(.step-3-output-chosen)[data-active-flow-step='3'] .step-slide[data-step='3'] .slider-right .progress-circle:hover {
     background: linear-gradient(165deg, #ffffff 0%, #ececec 50%, #f4f4f4 100%);
     border-width: var(--redo-progress-line-width);
     border-color: var(--redo-forward-dragger-border-idle);
     box-shadow: 0 2px 14px rgba(0, 0, 0, 0.1);
 }
 
-#step-slider:not(.hidden).image-selected:not(.step-3-output-ready)[data-active-flow-step='3'] .step-slide[data-step='3'] .slider-right .progress-circle:active {
+#step-slider:not(.hidden).image-selected:not(.step-3-output-ready)[data-active-flow-step='3'] .step-slide[data-step='3'] .slider-right .progress-circle:active,
+#step-slider:not(.hidden).image-selected.step-3-output-ready:not(.step-3-output-chosen)[data-active-flow-step='3'] .step-slide[data-step='3'] .slider-right .progress-circle:active {
     background: linear-gradient(165deg, #e6e6e6 0%, #f0f0f0 100%);
     border-width: var(--redo-progress-line-width);
     border-color: var(--redo-forward-dragger-border-idle);
 }
 
 #step-slider:not(.hidden).image-selected:not(.step-3-output-ready)[data-active-flow-step='3'] .step-slide[data-step='3'] .slider-right .progress-circle:hover .arrow-right,
-#step-slider:not(.hidden).image-selected:not(.step-3-output-ready)[data-active-flow-step='3'] .step-slide[data-step='3'] .slider-right .progress-circle:active .arrow-right {
-    filter: grayscale(1) contrast(1.12);
+#step-slider:not(.hidden).image-selected:not(.step-3-output-ready)[data-active-flow-step='3'] .step-slide[data-step='3'] .slider-right .progress-circle:active .arrow-right,
+#step-slider:not(.hidden).image-selected.step-3-output-ready:not(.step-3-output-chosen)[data-active-flow-step='3'] .step-slide[data-step='3'] .slider-right .progress-circle:hover .arrow-right,
+#step-slider:not(.hidden).image-selected.step-3-output-ready:not(.step-3-output-chosen)[data-active-flow-step='3'] .step-slide[data-step='3'] .slider-right .progress-circle:active .arrow-right {
+    filter: grayscale(1) contrast(1.22) brightness(1.02);
     opacity: 1;
-}
-
-#step-slider:not(.hidden).image-selected:not(.step-3-output-ready)[data-active-flow-step='3'] .step-slide[data-step='3'] .slider-right .progress-circle:hover .drag-letter,
-#step-slider:not(.hidden).image-selected:not(.step-3-output-ready)[data-active-flow-step='3'] .step-slide[data-step='3'] .slider-right .progress-circle:active .drag-letter {
-    fill: var(--redo-drag-label-fill);
 }
 
 /* Step 2 before design: white + same grey ring/track as Step 1 pre-ready */
 #step-slider:not(.hidden).image-selected:not(.design-selected) .step-slide[data-step='2'] .slider-right .progress-circle {
     background: var(--color-white);
     border: var(--redo-progress-line-width) solid var(--redo-forward-dragger-border-idle);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 3px 16px rgba(0, 0, 0, 0.14);
     animation: none;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
 }
 
 #step-slider:not(.hidden).image-selected:not(.design-selected) .step-slide[data-step='2'] .slider-right .progress-circle .arrow-right {
-    filter: grayscale(1) contrast(1.12);
+    filter: grayscale(1) contrast(1.22) brightness(1.02);
     opacity: 1;
-}
-
-#step-slider:not(.hidden).image-selected:not(.design-selected) .step-slide[data-step='2'] .slider-right .progress-circle .drag-letter {
-    fill: var(--redo-drag-label-fill);
 }
 
 .drag-label {
@@ -1972,12 +1954,8 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle:hover .arrow-right {
-    filter: grayscale(1) contrast(1.12);
+    filter: grayscale(1) contrast(1.22) brightness(1.02);
     opacity: 1;
-}
-
-#step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle:hover .drag-letter {
-    fill: rgba(22, 22, 22, 0.92);
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle:active {
@@ -1987,39 +1965,29 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle:active .arrow-right {
-    filter: grayscale(1) contrast(1.12);
+    filter: grayscale(1) contrast(1.22) brightness(1.02);
     opacity: 1;
-}
-
-#step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle:active .drag-letter {
-    fill: rgba(22, 22, 22, 0.92);
 }
 
 /* Forward armed hover / active — stay black; DRAG stays grey */
 #step-slider[data-active-flow-step='1'].image-selected .step-slide[data-step='1'] .slider-right .progress-circle:hover,
 #step-slider[data-active-flow-step='2'].design-selected .step-slide[data-step='2'] .slider-right .progress-circle:hover,
-#step-slider[data-active-flow-step='3'].image-selected.step-3-output-ready .step-slide[data-step='3'] .slider-right .progress-circle:hover {
+#step-slider[data-active-flow-step='3'].image-selected.step-3-output-ready.step-3-output-chosen .step-slide[data-step='3'] .slider-right .progress-circle:hover {
     background: #0a0a0a;
     border-width: var(--redo-progress-line-width);
-    border-color: rgba(255, 255, 255, 0.3);
+    border-color: var(--redo-forward-dragger-border-armed);
 }
 
 #step-slider[data-active-flow-step='1'].image-selected .step-slide[data-step='1'] .slider-right .progress-circle:hover .arrow-right,
 #step-slider[data-active-flow-step='2'].design-selected .step-slide[data-step='2'] .slider-right .progress-circle:hover .arrow-right,
-#step-slider[data-active-flow-step='3'].image-selected.step-3-output-ready .step-slide[data-step='3'] .slider-right .progress-circle:hover .arrow-right {
-    filter: grayscale(1) contrast(1.02) invert(1) brightness(1.05);
+#step-slider[data-active-flow-step='3'].image-selected.step-3-output-ready.step-3-output-chosen .step-slide[data-step='3'] .slider-right .progress-circle:hover .arrow-right {
+    filter: grayscale(1) contrast(1.08) invert(1) brightness(1.14);
     opacity: 1;
-}
-
-#step-slider[data-active-flow-step='1'].image-selected .step-slide[data-step='1'] .slider-right .progress-circle:hover .drag-letter,
-#step-slider[data-active-flow-step='2'].design-selected .step-slide[data-step='2'] .slider-right .progress-circle:hover .drag-letter,
-#step-slider[data-active-flow-step='3'].image-selected.step-3-output-ready .step-slide[data-step='3'] .slider-right .progress-circle:hover .drag-letter {
-    fill: rgba(154, 154, 154, 0.98);
 }
 
 #step-slider[data-active-flow-step='1'].image-selected .step-slide[data-step='1'] .slider-right .progress-circle:active,
 #step-slider[data-active-flow-step='2'].design-selected .step-slide[data-step='2'] .slider-right .progress-circle:active,
-#step-slider[data-active-flow-step='3'].image-selected.step-3-output-ready .step-slide[data-step='3'] .slider-right .progress-circle:active {
+#step-slider[data-active-flow-step='3'].image-selected.step-3-output-ready.step-3-output-chosen .step-slide[data-step='3'] .slider-right .progress-circle:active {
     background: #000000;
     border-width: var(--redo-progress-line-width);
     border-color: var(--redo-forward-dragger-border-armed);
@@ -2027,15 +1995,9 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 
 #step-slider[data-active-flow-step='1'].image-selected .step-slide[data-step='1'] .slider-right .progress-circle:active .arrow-right,
 #step-slider[data-active-flow-step='2'].design-selected .step-slide[data-step='2'] .slider-right .progress-circle:active .arrow-right,
-#step-slider[data-active-flow-step='3'].image-selected.step-3-output-ready .step-slide[data-step='3'] .slider-right .progress-circle:active .arrow-right {
-    filter: grayscale(1) contrast(1.02) invert(1) brightness(1.05);
+#step-slider[data-active-flow-step='3'].image-selected.step-3-output-ready.step-3-output-chosen .step-slide[data-step='3'] .slider-right .progress-circle:active .arrow-right {
+    filter: grayscale(1) contrast(1.08) invert(1) brightness(1.14);
     opacity: 1;
-}
-
-#step-slider[data-active-flow-step='1'].image-selected .step-slide[data-step='1'] .slider-right .progress-circle:active .drag-letter,
-#step-slider[data-active-flow-step='2'].design-selected .step-slide[data-step='2'] .slider-right .progress-circle:active .drag-letter,
-#step-slider[data-active-flow-step='3'].image-selected.step-3-output-ready .step-slide[data-step='3'] .slider-right .progress-circle:active .drag-letter {
-    fill: rgba(154, 154, 154, 0.98);
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle:hover {
@@ -2045,7 +2007,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle:hover .arrow-left {
-    filter: grayscale(1) contrast(1.14);
+    filter: grayscale(1) contrast(1.22) brightness(1.02);
     opacity: 1;
 }
 
@@ -2056,7 +2018,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle:active .arrow-left {
-    filter: grayscale(1) contrast(1.14);
+    filter: grayscale(1) contrast(1.22) brightness(1.02);
     opacity: 1;
 }
 
@@ -2074,13 +2036,8 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 
 #step-slider:not(.hidden):not(.image-selected) .step-slide[data-step='1'] .slider-right .progress-circle:hover .arrow-right,
 #step-slider:not(.hidden):not(.image-selected) .step-slide[data-step='1'] .slider-right .progress-circle:active .arrow-right {
-    filter: grayscale(1) contrast(1.12);
+    filter: grayscale(1) contrast(1.22) brightness(1.02);
     opacity: 1;
-}
-
-#step-slider:not(.hidden):not(.image-selected) .step-slide[data-step='1'] .slider-right .progress-circle:hover .drag-letter,
-#step-slider:not(.hidden):not(.image-selected) .step-slide[data-step='1'] .slider-right .progress-circle:active .drag-letter {
-    fill: var(--redo-drag-label-fill);
 }
 
 #step-slider:not(.hidden).image-selected:not(.design-selected) .step-slide[data-step='2'] .slider-right .progress-circle:hover {
@@ -2098,13 +2055,14 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 
 #step-slider:not(.hidden).image-selected:not(.design-selected) .step-slide[data-step='2'] .slider-right .progress-circle:hover .arrow-right,
 #step-slider:not(.hidden).image-selected:not(.design-selected) .step-slide[data-step='2'] .slider-right .progress-circle:active .arrow-right {
-    filter: grayscale(1) contrast(1.12);
+    filter: grayscale(1) contrast(1.22) brightness(1.02);
     opacity: 1;
 }
 
-#step-slider:not(.hidden).image-selected:not(.design-selected) .step-slide[data-step='2'] .slider-right .progress-circle:hover .drag-letter,
-#step-slider:not(.hidden).image-selected:not(.design-selected) .step-slide[data-step='2'] .slider-right .progress-circle:active .drag-letter {
-    fill: var(--redo-drag-label-fill);
+/* Forward handle DRAG text: one grey everywhere; scales only with parent .progress-circle transform */
+#step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle .drag-letter {
+    fill: var(--redo-drag-label-hint-grey);
+    transition: none;
 }
 
 /* DRAG label follows circle: keep grab while pointer is over label during handle drag */
@@ -2128,7 +2086,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 	transition: none !important;
 }
 
-/* Arrow indicators — neutral, outline-like weight */
+/* Arrow indicators — full opacity; contrast boost so glyphs read on white + on lane edges */
 .arrow-right,
 .arrow-left {
     width: 26px;
@@ -2140,8 +2098,8 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     display: block;
     transform-origin: center;
     margin: 0;
-    opacity: 0.72;
-    filter: grayscale(1) contrast(1.15);
+    opacity: 1;
+    filter: grayscale(1) contrast(1.22) brightness(1.02);
 }
 
 .arrow-right {
@@ -2409,7 +2367,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 .step-slide[data-step="4"] {
     width: calc(100vw - var(--boundary-3-4, 100vw));
     left: var(--boundary-3-4, 100vw);
-    background: var(--color-step-4-panel);
+    background: #0a0a0a;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     color: #fff;
@@ -2782,7 +2740,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 
     .step-slider.image-selected .step-slide[data-step="1"] .slider-right .drag-label:not(.drag-label--shake),
     #step-slider.design-selected .step-slide[data-step="2"] .slider-right .drag-label:not(.drag-label--shake),
-    #step-slider.image-selected.step-3-output-ready .step-slide[data-step="3"] .slider-right .drag-label:not(.drag-label--shake) {
+    #step-slider.image-selected.step-3-output-ready.step-3-output-chosen .step-slide[data-step="3"] .slider-right .drag-label:not(.drag-label--shake) {
         animation: none;
         transform: translate(-50%, -50%);
     }
@@ -2937,24 +2895,30 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     box-sizing: border-box;
 }
 
-/* Step 4 content - top-aligned: default .canvas-content uses align-items:center + overflow:hidden, which clips tall scroll columns */
+/* Step 4: center block in column; bottom padding clears fixed nav + step labels */
 .canvas-content.step-4-content {
-    align-items: stretch;
-    justify-content: flex-start;
-    overflow-x: hidden;
-    overflow-y: hidden;
-}
-
-/* Step 4 content - needs relative positioning for absolute header */
-.step-4-content {
+    --step-4-bottom-safe: clamp(200px, 30vh, 280px);
     position: relative;
     width: 100%;
     height: 100%;
     min-height: 0;
     box-sizing: border-box;
-    padding-top: max(20px, env(safe-area-inset-top, 0px));
-    padding-left: max(0px, env(safe-area-inset-left, 0px));
-    padding-right: max(0px, env(safe-area-inset-right, 0px));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-top: max(16px, env(safe-area-inset-top, 0px));
+    padding-left: max(clamp(12px, 3vw, 28px), env(safe-area-inset-left, 0px));
+    padding-right: max(clamp(12px, 3vw, 28px), env(safe-area-inset-right, 0px));
+    padding-bottom: calc(var(--step-4-bottom-safe) + env(safe-area-inset-bottom, 0px));
+}
+
+/* Inner scroll root (same element carries .step-4-content) */
+.step-4-content {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.28) transparent;
 }
 
 /* Step 3 Content Styles — true vertical center via flex spacers; bottom padding clears fixed nav; no scrollbar (step 4 only scrolls) */
@@ -2989,16 +2953,6 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     pointer-events: none;
 }
 
-.step-4-content {
-    overflow-y: auto;
-    overflow-x: hidden;
-}
-
-.step-4-content {
-    scrollbar-width: thin;
-    scrollbar-color: #bdbdbd transparent;
-}
-
 .step-4-content::-webkit-scrollbar {
     width: 8px;
 }
@@ -3008,7 +2962,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 }
 
 .step-4-content::-webkit-scrollbar-thumb {
-    background-color: #bdbdbd;
+    background-color: rgba(255, 255, 255, 0.28);
     border-radius: 8px;
 }
 
@@ -3108,18 +3062,103 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 
 /* Step 4 — three panels (3D / diagram / copy-ready text) */
 .step-4-guide.step-4-output-layout {
+    flex: 0 1 auto;
     max-width: min(960px, 92vw);
     width: 100%;
-    margin: 0 auto clamp(40px, 6vh, 72px);
-    padding: clamp(20px, 3vw, 32px) clamp(16px, 3vw, 28px) 40px;
+    margin: auto;
+    padding: clamp(20px, 3vw, 32px) clamp(16px, 3vw, 28px) clamp(20px, 3vh, 36px);
     max-height: none;
     overflow: visible;
 }
 
 .step-4-output-header {
-    margin-bottom: 28px;
+    margin-bottom: 20px;
     padding-bottom: 18px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+}
+
+/* Step 4: horizontal tab strip (3D vs diagram vs instructions — same Step 3 build) */
+.step-4-output-scroller {
+    margin: 0 0 24px;
+    position: relative;
+    width: 100%;
+    /* Edge fade hints more content off-screen on narrow widths */
+    mask-image: linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 12px), transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 12px), transparent);
+}
+
+.step-4-output-scroller__strip {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: center;
+    gap: clamp(12px, 3vw, 28px);
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 2px 2px 0;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+    -webkit-overflow-scrolling: touch;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.step-4-output-scroller__strip::-webkit-scrollbar {
+    height: 6px;
+}
+
+.step-4-output-scroller__strip::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.step-4-output-scroller__strip::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.22);
+    border-radius: 6px;
+}
+
+/* Plain text tabs — active = underline (no pill chrome) */
+.step-4-output-tab {
+    flex: 0 1 auto;
+    scroll-snap-align: start;
+    margin: 0;
+    font-family: var(--font-site);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 10px 0 12px;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    border-radius: 0;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.48);
+    cursor: pointer;
+    line-height: 1.25;
+    white-space: nowrap;
+    text-align: left;
+    display: inline-block;
+    min-height: 0;
+    box-sizing: border-box;
+    transition:
+        color var(--duration-interact) var(--ease-standard),
+        border-color var(--duration-interact) var(--ease-standard);
+}
+
+.step-4-output-tab:hover {
+    color: rgba(255, 255, 255, 0.82);
+}
+
+.step-4-output-tab:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.45);
+    outline-offset: 4px;
+}
+
+.step-4-output-tab.step-4-output-tab--active {
+    color: rgba(255, 255, 255, 0.98);
+    border-bottom-color: rgba(255, 255, 255, 0.92);
 }
 
 .step-4-output-title {
@@ -3140,7 +3179,27 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 .step-4-panels {
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: clamp(28px, 4vh, 40px);
+    width: 100%;
+}
+
+.step-4-panels .step-4-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: min(560px, 100%);
+}
+
+/* Only one deliverable view at a time (tab state also toggles [hidden] in JS) */
+.step-4-panels .step-4-section[data-step4-view][hidden] {
+    display: none !important;
+}
+
+/* Instructions tab: allow full-width text column inside centered shell */
+.step-4-panels .step-4-section--text {
+    max-width: min(640px, 100%);
 }
 
 .step-4-guide.step-4-output-layout h2.step-4-section-title {
@@ -3148,19 +3207,23 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     background: none;
     margin: 0 0 12px;
     padding: 0;
+    width: 100%;
     font-size: 13px;
     font-weight: 600;
     letter-spacing: 0.14em;
     text-transform: uppercase;
+    text-align: center;
     color: rgba(255, 255, 255, 0.55);
 }
 
+/* 3D + diagram: square frame, square corners (no radius) */
 .step-4-viewport {
     position: relative;
     width: 100%;
-    min-height: min(320px, 42vh);
-    max-height: min(420px, 48vh);
-    border-radius: 8px;
+    max-width: min(520px, 100%);
+    aspect-ratio: 1 / 1;
+    max-height: none;
+    border-radius: 0;
     /* Light stage inside dark Step 4 column — hairline edge so the white field reads on obsidian */
     border: 1px solid rgba(0, 0, 0, 0.1);
     background: #ffffff;
@@ -3171,14 +3234,18 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     display: block;
     width: 100%;
     height: 100%;
+    border-radius: 0;
 }
 
 .step-4-diagram-frame {
-    border-radius: 8px;
+    border-radius: 0;
     border: 1px solid rgba(255, 255, 255, 0.12);
     background: rgba(255, 255, 255, 0.04);
     overflow: hidden;
-    min-height: 200px;
+    width: 100%;
+    max-width: min(520px, 100%);
+    aspect-ratio: 1 / 1;
+    min-height: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3187,18 +3254,21 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 .step-4-diagram-img {
     display: block;
     width: 100%;
-    height: auto;
-    max-height: min(480px, 50vh);
+    height: 100%;
+    max-height: none;
     object-fit: contain;
+    border-radius: 0;
 }
 
 .step-4-text-head {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     gap: 12px 16px;
     margin-bottom: 12px;
+    width: 100%;
+    max-width: min(640px, 100%);
 }
 
 .step-4-text-head .step-4-section-title {
@@ -3237,17 +3307,21 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 }
 
 .step-4-code-shell {
-    border-radius: 10px;
+    border-radius: 0;
     border: 1px solid rgba(255, 255, 255, 0.12);
     background: rgba(0, 0, 0, 0.45);
-    overflow: hidden;
+    overflow: visible;
+    width: 100%;
+    max-width: min(640px, 100%);
+    margin: 0 auto;
+    box-sizing: border-box;
 }
 
 .step-4-instructions-pre {
     margin: 0;
     padding: 16px 18px 20px;
-    max-height: min(420px, 52vh);
-    overflow: auto;
+    max-height: none;
+    overflow: visible;
     font-family: var(--font-mono);
     font-size: 13px;
     line-height: 1.55;
@@ -3791,6 +3865,61 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     background: var(--color-surface-low);
 }
 
+/* Options panel: heading doubles as expand/collapse control (vv chevrons = expand when collapsed) */
+button.step-2-tab-heading.step-2-options-tab__toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    margin: 0;
+    box-sizing: border-box;
+    cursor: pointer;
+    text-align: left;
+    border: none;
+    border-bottom: 1px solid var(--panel-border);
+    font: inherit;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    background: var(--color-surface-low);
+    transition: background-color var(--duration-interact) var(--ease-standard);
+}
+
+.step-2-options-tab__chevrons {
+    flex-shrink: 0;
+    color: rgba(0, 0, 0, 0.42);
+    transform: rotate(180deg);
+    transition: transform 0.22s var(--ease-standard);
+}
+
+.step-2-options-tab--collapsed .step-2-options-tab__toggle .step-2-options-tab__chevrons {
+    transform: rotate(0deg);
+}
+
+.step-2-options-tab__title-text {
+    flex: 1;
+    min-width: 0;
+}
+
+button.step-2-tab-heading.step-2-options-tab__toggle:hover {
+    background: #ebebeb;
+}
+
+button.step-2-tab-heading.step-2-options-tab__toggle:hover .step-2-options-tab__chevrons {
+    color: rgba(0, 0, 0, 0.55);
+}
+
+button.step-2-tab-heading.step-2-options-tab__toggle:focus-visible {
+    outline: 2px solid var(--color-black);
+    outline-offset: -2px;
+    position: relative;
+    z-index: 1;
+}
+
 /* Step 2 Input Section - fixed size */
 .step-2-input-section {
     width: 100%;
@@ -3835,9 +3964,10 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     content: none;
 }
 
+/* Choose-design control: 75% of prior 40px (25% smaller than nav-matched size) */
 .step-2-arrow-button {
-    width: 48px;
-    height: 48px;
+    width: 30px;
+    height: 30px;
     background: var(--color-white);
     border: 1px solid var(--color-border-stroke);
     border-radius: 50%;
@@ -3852,18 +3982,23 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 }
 
 .step-2-prompt-tab .step-2-arrow-button {
-    margin: 6px 10px 6px 8px;
+    margin: 3px 8px 3px 6px;
     border: 1px solid var(--color-border-stroke);
+}
+
+.step-2-arrow-button .arrow-right-small {
+    width: 14px;
+    height: 14px;
 }
 
 .step-slide.is-current-step .step-2-arrow-button {
     animation: grabber-border-pulse 1.65s ease-in-out infinite;
 }
 
-/* After a design is chosen: primary CTA — black ring, arrow points right (toward Step 3) */
+/* After a design is chosen: match completed nav ring weight (1px); down-arrow → checkmark */
 #step-slider.design-selected .step-slide .step-2-arrow-button {
     animation: none;
-    border-width: 2px;
+    border-width: 1px;
     border-color: var(--color-black);
 }
 
@@ -3876,9 +4011,61 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     border-color: var(--color-black);
 }
 
-#step-slider.design-selected .step-slide .step-2-arrow-button .arrow-right-small {
-    transform: rotate(0deg);
-    opacity: 0.88;
+.step-2-cta-icons {
+    position: relative;
+    width: clamp(14px, 2.25vw, 17px);
+    height: clamp(14px, 2.25vw, 17px);
+    display: grid;
+    place-items: center;
+}
+
+.step-2-cta-icons > * {
+    grid-area: 1 / 1;
+}
+
+.step-2-cta-icons__arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    opacity: 1;
+    transform: scale(1);
+    transition:
+        opacity 0.22s var(--ease-standard),
+        transform 0.22s var(--ease-standard);
+}
+
+/* Same ✓ character / mono / color as nav; glyph scaled with 30px button */
+.step-2-cta-icons__tick {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: clamp(11px, 2.2vw, 14px);
+    line-height: 1;
+    color: var(--nav-step-completed-tick);
+    opacity: 0;
+    transform: scale(0.72);
+    transition:
+        opacity 0.22s var(--ease-standard),
+        transform 0.22s var(--ease-standard);
+}
+
+.step-2-cta-icons__tick::before {
+    content: '\2713';
+}
+
+#step-slider.design-selected .step-slide .step-2-arrow-button .step-2-cta-icons__arrow {
+    opacity: 0;
+    transform: scale(0.82);
+    pointer-events: none;
+}
+
+#step-slider.design-selected .step-slide .step-2-arrow-button .step-2-cta-icons__tick {
+    opacity: 1;
+    transform: scale(1);
 }
 
 .step-2-arrow-button:hover {
@@ -3916,6 +4103,11 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     flex-direction: column;
     gap: 0;
     flex-shrink: 0;
+}
+
+/* Must beat rule above (same 2-class specificity was losing in cascade) */
+.step-2-options-tab.step-2-options-tab--collapsed .step-2-options {
+    display: none;
 }
 
 .step-2-option {
@@ -4083,7 +4275,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     }
 
     .step-slide[data-step='4'] {
-        background: rgba(79, 79, 86, 0.97);
+        background: rgba(10, 10, 10, 0.98);
     }
 }
 

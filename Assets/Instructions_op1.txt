@@ -1,0 +1,340 @@
+# Angular Lounge Chair Construction Guide
+## Step-by-Step Assembly Instructions
+
+### Overview:
+A modern angular lounge chair featuring triangular supports and a continuous curved seat-back panel for ergonomic comfort.
+
+Finished Dimensions:
+- Width: 20 inches (508mm)
+- Depth: 36 inches (914mm)  
+- Height: 32 inches (813mm)
+- Seat height: 12 inches (305mm)
+- Backrest angle: 110 degrees
+
+### Materials Required:
+- Cardboard sheets (24" × 36" / 610mm × 914mm double-wall corrugated)
+- Measuring tape/ruler
+- Pencil
+- Straight edge (minimum 40 inches/1016mm)
+- Utility knife or scissors
+- Scoring tool
+- White glue (PVA)
+- Bone folder
+- 80-grit sandpaper
+
+### Component Overview:
+Total: 4 Modules
+- Module 1: Triangular Side Supports
+- Module 2: Continuous Seat-Back Panel  
+- Module 3: Base Stabilizer Beam
+- Module 4: Internal Cross Braces
+
+----------------------------------------------------------------------------------------------------------------------------------------
+
+## MAIN STRUCTURAL SUPPORT SYSTEM
+The triangular supports form the primary load-bearing structure of the chair.
+
+### Side Support Assembly
+These components transfer all weight loads to the floor through geometric stability.
+
+**Module 1: Triangular Side Supports**
+
+* Left Side Triangle
+
+###### - Specifications:
+- Size: 20 inches (508mm) wide × 18 inches (457mm) tall
+- Shape: Right triangle cut from rectangular cardboard sheet
+- Cutting instructions:
+```
+  Rectangle:         Cut line:          Result:
+  +--------+         +--------+         
+  |        |         |      /|          |\
+  |        |18"      |    /  |18"       | \18"
+  |        |         |  /    |          |  \
+  |        |         |/      |          |___\
+  +--------+         +--------+         +----+
+      20"               20"               20"
+                    (Discard)         (Keep this)
+```
+  1. Cut rectangle 20" × 18" from double-wall cardboard
+  2. Mark diagonal from top-right to bottom-left corner
+  3. Cut along marked line with utility knife
+  4. Sand cut edge smooth with 80-grit sandpaper
+- Position: Left side of chair, vertical edge facing rear
+- Structural function: Primary load support for left side
+
+##### - Assembly Instructions:
+1. **Orientation Setup:**
+   - Place triangle with 90° angle at floor level
+   - Ensure vertical edge is perfectly upright
+   - Hypotenuse edge faces inward
+   
+2. **Edge Preparation:**
+   - Sand all cut edges to remove burrs
+   - Wipe clean with dry cloth
+
+3. **Positioning:**
+   - Mark floor position with pencil
+   - Triangle should be 20" from front edge
+
+##### - Elevational Views:
+- Front view: Point of triangle facing forward
+- Side view: Full triangular profile visible
+- Top view: Single line showing thickness
+- Rear view: Vertical rectangle edge
+
+* Right Side Triangle
+
+###### - Specifications:
+- Size: 20 inches (508mm) wide × 18 inches (457mm) tall
+- Shape: Mirror image of left triangle
+- Cutting instructions:
+```
+  Rectangle:         Cut line:          Result:
+  +--------+         +--------+         
+  |        |         |\      |           /|
+  |        |18"      |  \    |18"    18"/  |
+  |        |         |    \  |         /   |
+  |        |         |      \|        /____|
+  +--------+         +--------+       +----+
+      20"               20"             20"
+                    (Keep this)     (Discard)
+```
+  1. Cut rectangle 20" × 18" from double-wall cardboard
+  2. Mark diagonal from top-left to bottom-right corner
+  3. Cut along marked line
+  4. Sand edges smooth
+- Position: Right side, 18" from left triangle (inside measurement)
+- Structural function: Primary load support for right side
+
+##### - Assembly Instructions:
+1. **Mirror Positioning:**
+   - Place as mirror image of left triangle
+   - Maintain 18" spacing between triangles
+   - Verify both are perfectly parallel
+   
+2. **Alignment Check:**
+   - Use straight edge across both tops
+   - Ensure identical height and angle
+
+3. **Temporary Support:**
+   - Use cardboard spacers to maintain position
+   - Do not glue yet
+
+##### - Elevational Views:
+- Front view: Mirror of left triangle
+- Side view: Opposite angle to left
+- Top view: Parallel line to left
+- Rear view: Matching vertical edge
+
+----------------------------------------------------------------------------------------------------------------------------------------
+
+**Module 2: Continuous Seat-Back Panel**
+
+* Main Surface Panel
+
+###### - Specifications:
+- Size: 18 inches (457mm) wide × 36 inches (914mm) tall
+- Shape: Rectangular panel with multiple score lines for folding
+- Cutting instructions:
+```
+  Base Panel:              Score Lines:           Fold Profile:
+  +-----------+           +-A-B-C-D-E-+               _E
+  |           |           | : : : : : |              / D
+  |           |           | : : : : : |             /  C
+  |           |36"        | : : : : : |36"        |   B
+  |           |           | : : : : : |           |  /
+  |           |           | : : : : : |           |_A
+  +-----------+           +-----------+           
+       18"                     18"                
+  
+  Score positions from bottom:
+  A: 6" - Front edge curve
+  B: 12" - Seat base
+  C: 18" - Seat-back transition
+  D: 26" - Lower back
+  E: 32" - Upper back
+```
+  1. Cut 18" × 36" panel from cardboard
+  2. Mark score lines at specified intervals
+  3. Score deeply without cutting through
+  4. Test-fold each score line gently
+- Position: Bridges between triangular supports
+- Structural function: Primary sitting surface and back support
+
+##### - Assembly Instructions:
+1. **Pre-forming Curves:**
+   - Fold score A: 15° forward
+   - Fold score B: Flat (seat base)
+   - Fold score C: 110° angle
+   - Fold score D: 5° curve
+   - Fold score E: 10° final angle
+   
+2. **Dry Fit Test:**
+   - Place panel on triangles
+   - Check all contact points
+   - Mark glue locations
+
+3. **Glue Application:**
+   - Apply PVA glue to triangle edges
+   - Position panel carefully
+   - Press firmly for 30 seconds
+
+4. **Curing Process:**
+   - Weight down contact areas
+   - Allow 2 hours cure time
+   - Do not sit during curing
+
+##### - Elevational Views:
+- Front view: Curved seat profile
+- Side view: S-curve from seat to back
+- Top view: Rectangular outline
+- Rear view: Continuous surface
+
+----------------------------------------------------------------------------------------------------------------------------------------
+
+**Module 3: Base Stabilizer Beam**
+
+* Horizontal Connector Beam
+
+###### - Specifications:
+- Size: 18 inches (457mm) wide × 4 inches (102mm) tall
+- Shape: Folded triangular beam with end notches
+- Cutting instructions:
+```
+  Flat Pattern:        Fold Lines:         Final Shape:
+  +----------+        +--+--+--+          ___/\___
+  |          |        |  |  |  |         |___  ___|
+  |          |4"      |  |  |  |4"       |   \/   |
+  |          |        |  |  |  |              18"
+  +----------+        +--+--+--+         
+      18"             (fold on lines)    
+```
+  1. Cut 18" × 12" rectangle
+  2. Score three parallel lines at 4" intervals
+  3. Cut 1" × 2" notches at ends
+  4. Fold into triangular tube
+- Position: Between triangle bases at floor level
+- Structural function: Prevents lateral spreading
+
+##### - Assembly Instructions:
+1. **Beam Formation:**
+   - Fold along all score lines
+   - Create triangular cross-section
+   - Glue overlapping edge
+   
+2. **Notch Alignment:**
+   - Fit notches over triangle bases
+   - Ensure level positioning
+   - Check for square alignment
+
+3. **Final Attachment:**
+   - Apply glue at all contact points
+   - Hold position for 60 seconds
+   - Allow full cure before load
+
+##### - Elevational Views:
+- Front view: Horizontal bar
+- Side view: Triangular cross-section
+- Top view: Straight connector line
+- Rear view: Hidden behind triangles
+
+----------------------------------------------------------------------------------------------------------------------------------------
+
+**Module 4: Internal Cross Braces**
+
+* Under-Seat Supports (3 pieces)
+
+###### - Specifications:
+- Size: 16 inches (406mm) wide × 6 inches (152mm) tall
+- Shape: Rectangular panels with angled ends
+- Cutting instructions:
+```
+  Base Rectangle:    Cut Angles:        Add Notches:
+  +--------+        /--------\         /--+----+--\
+  |        |       /          \       /   |    |   \
+  |        |6"    |            |6"   |    |    |    |6"
+  |        |       \          /       \   |    |   /
+  +--------+        \--------/         \--+----+--/
+      16"              16"                 16"
+```
+  1. Cut three 16" × 6" rectangles
+  2. Angle-cut ends at 15°
+  3. Cut 1" × 2" fitting notches
+  4. Sand all edges smooth
+- Position: Under seat at strategic load points
+- Structural function: Distributes weight across width
+
+##### - Assembly Instructions:
+1. **Location Marking:**
+   - Brace 1: 4" from front edge
+   - Brace 2: At seat-back fold
+   - Brace 3: Center of backrest
+   
+2. **Installation Process:**
+   - Apply glue to top edge only
+   - Press against seat underside
+   - Hold 30 seconds each
+
+3. **Alignment Verification:**
+   - Check perpendicular to seat
+   - Ensure even spacing
+   - Verify full contact
+
+##### - Elevational Views:
+- Front view: Not visible
+- Side view: Vertical rectangles under seat
+- Top view: Three parallel lines
+- Rear view: Partially visible at back
+
+----------------------------------------------------------------------------------------------------------------------------------------
+
+## ASSEMBLY SEQUENCE
+
+### Foundation Phase:
+Module 1: Assemble both triangular side supports
+Module 3: Install base stabilizer beam
+
+### Support Structure Phase:
+Module 4: Attach all internal cross braces
+
+### Primary Surface Phase:
+Module 2: Form and attach continuous seat-back panel
+
+### Vertical Elements Phase:
+(Integrated into Module 2 - backrest portion)
+
+### Finishing Phase:
+Edge sealing and final reinforcements
+
+----------------------------------------------------------------------------------------------------------------------------------------
+
+## QUALITY CONTROL
+
+### Assembly Verification Checklist:
+- [ ] Triangular supports: Parallel and perpendicular to floor
+- [ ] Base beam: Level and fully engaged in notches
+- [ ] Seat panel: Smooth curves without kinks
+- [ ] Cross braces: All firmly attached and aligned
+- [ ] Glue joints: No gaps or excess squeeze-out
+
+### Load Testing Protocol:
+1. Initial test: 25 lbs (11kg) distributed weight
+2. Progressive test: 50 lbs (23kg) for 1 hour
+3. Design capacity: 175 lbs (80kg) static load
+
+### Finishing Steps:
+- Sand all exposed edges
+- Apply clear tape to high-wear edges
+- Check all joints after 24-hour cure
+
+----------------------------------------------------------------------------------------------------------------------------------------
+
+## FINAL SPECIFICATIONS:
+- Overall dimensions: 20"W × 36"D × 32"H (508 × 914 × 813mm)
+- Primary surface dimensions: 18"W × 30"D seat area
+- Functional heights: 12" seat height, 32" back height
+- Estimated weight capacity: 175 lbs (80kg)
+- Total modules: 4
+- Assembly time: 3-4 hours plus curing
+- Skill level: Intermediate

@@ -116,6 +116,7 @@ const R2_MODEL_URLS = buildModelUrls();
  * Step 4 — maps Step 3 selected output (data-option-index 0–2) to R2 GLB + local diagram + instructions text.
  * op1_1 → 1.glb; middle → text8.glb; op3_3 → text15.glb (host these on the same R2 bucket as hero GLBs).
  * If the mapped GLB fails to load, the viewer falls back to text1.glb (STEP4_FALLBACK_GLB).
+ * Tabs on Step 4 switch which panel is visible (3D vs diagram vs instructions), not which design bundle is loaded.
  */
 const STEP4_OUTPUT_SPECS = [
     { glb: '1.glb', diagram: 'Assets/diagramOp1_1.png', instructionsTxt: 'Assets/step4_instructions_op1.txt' },
@@ -1890,6 +1891,7 @@ class Scene3D {
         initRedoStepContentReveal();
         initDragLabelMagnetic();
         this.syncNavStepsFromFlow();
+        this.syncStep3OutputChosenClass();
     }
 
     canUnlockFlowStep(step) {
@@ -1940,6 +1942,7 @@ class Scene3D {
             options.forEach((opt, i) => {
                 if (opt === selOpt) this.selectedDesignOption = i + 1;
             });
+            this.setStep2OptionsTabCollapsed(true);
         }
     }
 
@@ -2033,7 +2036,7 @@ class Scene3D {
         queueMicrotask(() => {
             this.updateSliderColor();
             this.syncNavStepsFromFlow();
-            this.updateDragHandleHint();
+            this.syncStep3OutputChosenClass();
         });
 
         queueMicrotask(() => {
@@ -2048,6 +2051,10 @@ class Scene3D {
 
         if (step === 4) {
             queueMicrotask(() => this.refreshStep4Outputs());
+        }
+
+        if (step === 2 && prevStep !== 2) {
+            queueMicrotask(() => this.syncStep2OptionsTabOpenStateForEntry());
         }
     }
 
@@ -2207,8 +2214,9 @@ class Scene3D {
     }
 
     updateCanvasBlur() {
-        const maxBlur = 6; // px
-        const minBlur = 2; // px - keep non-active steps slightly blurred
+        /* Softer falloff so previous/next columns read clearly (was 2–6px) */
+        const maxBlur = 3.25;
+        const minBlur = 0.35;
         const widths = {
             1: this.boundaries['1-2'],
             2: this.boundaries['2-3'] - this.boundaries['1-2'],
@@ -2651,6 +2659,10 @@ class Scene3D {
             if (prevStep === 2 && newStep === 3) {
                 queueMicrotask(() => this._runStep2To3Crossfade());
             }
+
+            if (newStep === 2 && prevStep !== 2) {
+                queueMicrotask(() => this.syncStep2OptionsTabOpenStateForEntry());
+            }
         }
 
         if (!this.isUserSliding) {
@@ -2696,11 +2708,12 @@ class Scene3D {
         }
 
         const step3Ready = slider.classList.contains('step-3-output-ready');
+        const step3Chosen = slider.classList.contains('step-3-output-chosen');
         const wantsHint =
             !this.isUserSliding &&
             ((this.imageSelected && this.currentStep === 1) ||
                 (this.selectedDesignOption != null && this.currentStep === 2) ||
-                (this.imageSelected && this.currentStep === 3 && step3Ready));
+                (this.imageSelected && this.currentStep === 3 && step3Ready && step3Chosen));
 
         if (wantsHint) {
             slider.classList.add('step-slider--drag-hint-next');
@@ -2715,12 +2728,12 @@ class Scene3D {
         const forwardArmedVisual =
             (flowAttr === '1' && hasImageCls) ||
             (flowAttr === '2' && hasDesignCls) ||
-            (flowAttr === '3' && hasImageCls && step3Ready);
-        const logKey = `${this.currentStep}|${flowAttr}|${hasImageCls}|${hasDesignCls}|${step3Ready}|${hasHintCls}|${forwardArmedVisual}|${this.isUserSliding}`;
+            (flowAttr === '3' && hasImageCls && step3Ready && step3Chosen);
+        const logKey = `${this.currentStep}|${flowAttr}|${hasImageCls}|${hasDesignCls}|${step3Ready}|${step3Chosen}|${hasHintCls}|${forwardArmedVisual}|${this.isUserSliding}`;
         if (logKey !== this._forwardDraggerLogKey) {
             this._forwardDraggerLogKey = logKey;
             console.log(
-                `Forward dragger: step=${this.currentStep} data-active-flow-step=${flowAttr} image-selected=${hasImageCls} design-selected=${hasDesignCls} step-3-output-ready=${step3Ready} drag-hint-next=${hasHintCls} forward-armed-visual=${forwardArmedVisual} userSliding=${this.isUserSliding}`
+                `Forward dragger: step=${this.currentStep} data-active-flow-step=${flowAttr} image-selected=${hasImageCls} design-selected=${hasDesignCls} step-3-output-ready=${step3Ready} step-3-output-chosen=${step3Chosen} drag-hint-next=${hasHintCls} forward-armed-visual=${forwardArmedVisual} userSliding=${this.isUserSliding}`
             );
         }
     }
@@ -2920,7 +2933,17 @@ class Scene3D {
             this.updateStep2Draggers();
             this.syncNavStepsFromFlow();
             queueMicrotask(() => this.updateDragHandleHint());
+            this.setStep2OptionsTabCollapsed(true);
         };
+
+        const optionsTab = document.getElementById('step-2-options-tab');
+        const optionsToggle = document.getElementById('step-2-options-toggle');
+        optionsToggle?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!optionsTab) return;
+            const collapsed = optionsTab.classList.toggle('step-2-options-tab--collapsed');
+            optionsToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+        });
 
         options.forEach((option, index) => {
             option.setAttribute('aria-selected', 'false');
@@ -2942,6 +2965,20 @@ class Scene3D {
         }
     }
 
+    setStep2OptionsTabCollapsed(collapsed) {
+        const tab = document.getElementById('step-2-options-tab');
+        const toggle = document.getElementById('step-2-options-toggle');
+        if (!tab || !toggle) return;
+        tab.classList.toggle('step-2-options-tab--collapsed', collapsed);
+        toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+    }
+
+    syncStep2OptionsTabOpenStateForEntry() {
+        if (this.currentStep !== 2) return;
+        /* Open when no design picked yet; collapsed only after user selects (or restored from DOM). */
+        this.setStep2OptionsTabCollapsed(!!this.selectedDesignOption);
+    }
+
     updateStep2Draggers() {
         const slider = document.getElementById('step-slider');
         if (!slider) return;
@@ -2949,6 +2986,13 @@ class Scene3D {
             slider.classList.add('design-selected');
         } else {
             slider.classList.remove('design-selected');
+        }
+        const arrowBtn = document.getElementById('design-arrow-btn');
+        if (arrowBtn) {
+            arrowBtn.setAttribute(
+                'aria-label',
+                this.selectedDesignOption ? 'Design selected' : 'Select a design from Options below'
+            );
         }
         this.updateDragHandleHint();
     }
@@ -2961,6 +3005,15 @@ class Scene3D {
         } else {
             slider.classList.remove('step-3-output-ready');
         }
+        this.syncStep3OutputChosenClass();
+    }
+
+    /** Step 3 forward dragger arms only after user picks a tile (not when previews merely finish loading). */
+    syncStep3OutputChosenClass() {
+        const slider = document.getElementById('step-slider');
+        if (!slider) return;
+        const chosen = !!document.querySelector('#step-3-options .step-3-option.selected');
+        slider.classList.toggle('step-3-output-chosen', chosen);
         this.updateDragHandleHint();
     }
 
@@ -3240,13 +3293,8 @@ class Scene3D {
         const container = document.getElementById('step-3-options');
         if (!container) return;
         container.classList.remove('step-3-selection-visual');
-        const options = container.querySelectorAll('.step-3-option');
-        options.forEach((o) => o.classList.remove('selected'));
-        const preferred =
-            container.querySelector('.step-3-option[data-option-index="1"]') || options[1] || options[0];
-        if (preferred) {
-            preferred.classList.add('selected');
-        }
+        container.querySelectorAll('.step-3-option').forEach((o) => o.classList.remove('selected'));
+        this.syncStep3OutputChosenClass();
     }
 
     setupStep3Interactions() {
@@ -3261,6 +3309,7 @@ class Scene3D {
                 options.forEach((o) => o.classList.remove('selected'));
                 option.classList.add('selected');
                 container.classList.add('step-3-selection-visual');
+                this.syncStep3OutputChosenClass();
                 option.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 if (this.currentStep === 4) {
                     queueMicrotask(() => this.refreshStep4Outputs());
@@ -3271,9 +3320,9 @@ class Scene3D {
 
     getStep3OutputIndex() {
         const sel = document.querySelector('#step-3-options .step-3-option.selected');
-        if (!sel) return 1;
+        if (!sel) return null;
         const idx = parseInt(sel.getAttribute('data-option-index'), 10);
-        if (Number.isNaN(idx) || idx < 0 || idx > 2) return 1;
+        if (Number.isNaN(idx) || idx < 0 || idx > 2) return null;
         return idx;
     }
 
@@ -3288,6 +3337,15 @@ class Scene3D {
     setupStep4Panel() {
         if (this._step4PanelBound) return;
         this._step4PanelBound = true;
+
+        const scroller = document.getElementById('step-4-output-scroller');
+        scroller?.addEventListener('click', (e) => {
+            const pill = e.target && e.target.closest('.step-4-output-tab[data-step4-view]');
+            if (!pill || !scroller.contains(pill)) return;
+            const view = pill.getAttribute('data-step4-view');
+            if (!view) return;
+            this.setStep4View(view);
+        });
 
         const copyBtn = document.getElementById('step-4-copy-btn');
         const dlBtn = document.getElementById('step-4-download-btn');
@@ -3320,11 +3378,59 @@ class Scene3D {
         });
     }
 
+    /** @param {'3d'|'diagram'|'instructions'} view */
+    setStep4View(view) {
+        const allowed = new Set(['3d', 'diagram', 'instructions']);
+        const v = allowed.has(view) ? view : '3d';
+        this._step4ActiveView = v;
+
+        const panels = document.getElementById('step-4-panels');
+        if (panels) panels.setAttribute('data-step4-view', v);
+
+        document.querySelectorAll('.step-4-output-tab[data-step4-view]').forEach((btn) => {
+            const on = btn.getAttribute('data-step4-view') === v;
+            btn.classList.toggle('step-4-output-tab--active', on);
+            btn.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+
+        document.querySelectorAll('.step-4-section[data-step4-view]').forEach((sec) => {
+            const match = sec.getAttribute('data-step4-view') === v;
+            if (match) {
+                sec.removeAttribute('hidden');
+                sec.setAttribute('aria-hidden', 'false');
+            } else {
+                sec.setAttribute('hidden', '');
+                sec.setAttribute('aria-hidden', 'true');
+            }
+        });
+
+        const root = document.getElementById('step-4-output-scroller');
+        requestAnimationFrame(() => {
+            const activeBtn = root?.querySelector(`.step-4-output-tab[data-step4-view="${v}"]`);
+            const instant = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+            activeBtn?.scrollIntoView?.({
+                behavior: instant ? 'auto' : 'smooth',
+                inline: 'center',
+                block: 'nearest'
+            });
+        });
+    }
+
+    /** Keeps tab UI aligned after refresh (preserves current view). */
+    _syncStep4ViewTabs() {
+        const v = this._step4ActiveView && ['3d', 'diagram', 'instructions'].includes(this._step4ActiveView)
+            ? this._step4ActiveView
+            : '3d';
+        this.setStep4View(v);
+    }
+
+    /** Loads GLB, diagram, and instructions for the Step 3–selected design; tabs only change which panel is visible. */
     refreshStep4Outputs() {
         if (this.currentStep !== 4) return;
 
         const idx = this.getStep3OutputIndex();
-        const spec = STEP4_OUTPUT_SPECS[idx] || STEP4_OUTPUT_SPECS[1];
+        const spec =
+            idx !== null && idx !== undefined ? STEP4_OUTPUT_SPECS[idx] || STEP4_OUTPUT_SPECS[1] : STEP4_OUTPUT_SPECS[1];
         const glbUrl = step4ResolveGlbUrl(spec.glb);
         const diagramUrl = redoAssetPath(spec.diagram);
         const txtUrl = redoAssetPath(spec.instructionsTxt);
@@ -3358,6 +3464,8 @@ class Scene3D {
         if (this._step4Viewer) {
             this._step4Viewer.loadGlb(glbUrl);
         }
+
+        this._syncStep4ViewTabs();
     }
     
     slideToNextStep() {

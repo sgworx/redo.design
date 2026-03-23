@@ -207,16 +207,56 @@
                                             aria-live="polite"
                                             data-empty-label="Select a design from Options below"
                                         ></div>
-                                        <button type="button" class="step-2-arrow-button" id="design-arrow-btn" aria-label="Continue to design preview">
-                                            <div class="arrow-right-small"></div>
+                                        <button
+                                            type="button"
+                                            class="step-2-arrow-button"
+                                            id="design-arrow-btn"
+                                            aria-label="Select a design from Options below"
+                                        >
+                                            <span class="step-2-cta-icons" aria-hidden="true">
+                                                <span class="step-2-cta-icons__arrow">
+                                                    <span class="arrow-right-small"></span>
+                                                </span>
+                                                <span class="step-2-cta-icons__tick" aria-hidden="true"></span>
+                                            </span>
                                         </button>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="step-2-options-tab">
-                                <p class="step-2-tab-heading">Options</p>
-                                <div class="step-2-options" role="listbox" aria-label="Suggested designs">
+                            <div class="step-2-options-tab" id="step-2-options-tab">
+                                <button
+                                    type="button"
+                                    class="step-2-tab-heading step-2-options-tab__toggle"
+                                    id="step-2-options-toggle"
+                                    aria-expanded="true"
+                                    aria-controls="step-2-options-list"
+                                >
+                                    <span class="step-2-options-tab__title-text">Options</span>
+                                    <svg
+                                        class="step-2-options-tab__chevrons"
+                                        width="14"
+                                        height="16"
+                                        viewBox="0 0 14 16"
+                                        aria-hidden="true"
+                                        focusable="false"
+                                    >
+                                        <path
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="1.35"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            d="M2.5 4.5L7 9l4.5-4.5M2.5 9.5L7 14l4.5-4.5"
+                                        />
+                                    </svg>
+                                </button>
+                                <div
+                                    class="step-2-options"
+                                    id="step-2-options-list"
+                                    role="listbox"
+                                    aria-label="Suggested designs"
+                                >
                                     <div class="step-2-option" role="option" tabindex="0" data-option="Low profile lounge chair ?">
                                         Low profile lounge chair ?
                                     </div>
@@ -286,7 +326,7 @@
                             <img src="" alt="Design option 1" class="step-3-option-img">
                         </div>
 
-                        <div class="step-3-option selected" data-option-index="1">
+                        <div class="step-3-option" data-option-index="1">
                             <img src="" alt="Design option 2" class="step-3-option-img">
                         </div>
 
@@ -330,22 +370,92 @@
                     <div class="step-4-guide step-4-output-layout" id="step-4-output-root">
                         <header class="step-4-output-header">
                             <h1 class="step-4-output-title">Get it ready</h1>
-                            <p class="step-4-output-sub">3D, construction diagram, and copy-ready instructions from your Step 3 choice.</p>
+                            <p class="step-4-output-sub">
+                                Tabs switch between the 3D model, assembly diagram, and step-by-step instructions for your
+                                Step&nbsp;3 design.
+                            </p>
                         </header>
-                        <div class="step-4-panels">
-                            <section class="step-4-section step-4-section--3d" aria-labelledby="step-4-3d-heading">
+                        <nav
+                            class="step-4-output-scroller"
+                            id="step-4-output-scroller"
+                            aria-label="View 3D, diagram, or instructions"
+                        >
+                            <div class="step-4-output-scroller__strip" role="tablist">
+                                <button
+                                    type="button"
+                                    class="step-4-output-tab step-4-output-tab--active"
+                                    data-step4-view="3d"
+                                    role="tab"
+                                    aria-selected="true"
+                                    aria-controls="step-4-panel-3d"
+                                    id="step-4-view-tab-3d"
+                                >
+                                    3D output
+                                </button>
+                                <button
+                                    type="button"
+                                    class="step-4-output-tab"
+                                    data-step4-view="diagram"
+                                    role="tab"
+                                    aria-selected="false"
+                                    aria-controls="step-4-panel-diagram"
+                                    id="step-4-view-tab-diagram"
+                                >
+                                    Assembly diagram
+                                </button>
+                                <button
+                                    type="button"
+                                    class="step-4-output-tab"
+                                    data-step4-view="instructions"
+                                    role="tab"
+                                    aria-selected="false"
+                                    aria-controls="step-4-panel-instructions"
+                                    id="step-4-view-tab-instructions"
+                                >
+                                    Step-by-step instructions
+                                </button>
+                            </div>
+                        </nav>
+                        <div
+                            class="step-4-panels"
+                            id="step-4-panels"
+                            data-step4-view="3d"
+                            role="region"
+                            aria-label="Build deliverables"
+                        >
+                            <section
+                                class="step-4-section step-4-section--3d"
+                                id="step-4-panel-3d"
+                                data-step4-view="3d"
+                                role="tabpanel"
+                                aria-labelledby="step-4-3d-heading"
+                            >
                                 <h2 id="step-4-3d-heading" class="step-4-section-title">3D</h2>
                                 <div class="step-4-viewport">
                                     <canvas id="step-4-model-canvas" width="640" height="360" aria-label="3D model preview"></canvas>
                                 </div>
                             </section>
-                            <section class="step-4-section step-4-section--diagram" aria-labelledby="step-4-diagram-heading">
+                            <section
+                                class="step-4-section step-4-section--diagram"
+                                id="step-4-panel-diagram"
+                                data-step4-view="diagram"
+                                role="tabpanel"
+                                aria-labelledby="step-4-diagram-heading"
+                                hidden
+                            >
                                 <h2 id="step-4-diagram-heading" class="step-4-section-title">Construction diagram</h2>
                                 <div class="step-4-diagram-frame">
                                     <img id="step-4-diagram-img" src="" alt="Construction diagram" class="step-4-diagram-img" />
                                 </div>
                             </section>
-                            <section class="step-4-section step-4-section--text" aria-labelledby="step-4-text-heading">
+                            <section
+                                class="step-4-section step-4-section--text"
+                                id="step-4-panel-instructions"
+                                data-step4-view="instructions"
+                                role="tabpanel"
+                                aria-labelledby="step-4-text-heading"
+                                hidden
+                            >
                                 <div class="step-4-text-head">
                                     <h2 id="step-4-text-heading" class="step-4-section-title">Build instructions</h2>
                                     <div class="step-4-text-actions">
