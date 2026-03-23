@@ -5,16 +5,29 @@
  * Expected same-origin assets (see index.html <head> comment + document.baseURI):
  *   ./script.js (this file), ./styles.css, Assets/* for UI and step-3 thumbnails.
  */
-/** Step 3 — progressive copy while design previews load (perceived “generation”) */
-const STEP3_GEN_MESSAGES = [
-    'Analyzing structure…',
-    'Generating folds…',
-    'Optimizing for weight…',
-    'Resolving intersections…',
-    'Preparing preview…'
+/** Step 2 — sequential copy before design options appear (tune pacing here) */
+const STEP2_ANALYSIS_MESSAGES = [
+    'Analyzing material',
+    'Detecting reference object',
+    'Estimating dimensions from scale',
+    'Assessing condition and usability',
+    'Mapping usable geometry',
+    'Preparing design options'
 ];
+const STEP2_ANALYSIS_LINE_MS = 720;
+
+/** Step 3 — sequential copy after leaving Step 2, before previews resolve */
+const STEP3_BUILD_MESSAGES = [
+    'Building selected design',
+    'Analyzing structural logic',
+    'Checking stability and assembly feasibility',
+    'Preparing fabrication steps',
+    'Generating final output'
+];
+const STEP3_BUILD_LINE_MS = 720;
+
+/** Minimum time Step 3 overlay stays up after image URLs are set (load + perceived polish) */
 const STEP3_GEN_MIN_MS = 2400;
-const STEP3_GEN_STATUS_INTERVAL_MS = 1700;
 
 const MODEL_ASSETS_BASE = 'https://assets.redo.design/';
 /** When true, append ?v=timestamp so GLBs never cache (dev iteration). False in production for faster repeat visits. */
@@ -575,9 +588,11 @@ class Scene3D {
         this.currentStep = 1; // current active step (1-4)
         this.selectedDesignOption = null; // track which design option was selected in Step 2 (1, 2, or 3)
         this._step3GenRunId = 0;
-        this._step3GenStatusTimer = null;
         this._step3GenCompleteTimer = null;
+        this._step3SeqTimer = null;
         this._crossfade23Timer = null;
+        this._step2AnalysisRunId = 0;
+        this._step2SeqTimer = null;
 
         // Boundary positions for canvas transitions (in vw)
         // Each boundary represents the position between two steps
@@ -664,6 +679,7 @@ class Scene3D {
             document.getElementById('home-intro')?.classList.add('home-intro--gone', 'home-intro--exiting');
             this._introRemoved = true;
             document.getElementById('loading-screen')?.classList.add('hidden');
+            document.body.classList.add('redo-chrome-visible');
             const notice = document.getElementById('model-load-notice');
             if (notice) {
                 notice.textContent =
@@ -874,6 +890,7 @@ class Scene3D {
         setTimeout(() => {
             if (overlay) overlay.classList.add('hidden');
             this.isLoading = false;
+            document.body.classList.add('redo-chrome-visible');
         }, delayMs);
     }
 
@@ -1804,6 +1821,13 @@ class Scene3D {
         this.currentSliderValue = step;
         this.targetSliderValue = step;
 
+        if (step !== 2) {
+            this._abortStep2Analysis();
+        }
+        if (step !== 3) {
+            this._abortStep3GenerationUi();
+        }
+
         this.applyStepComposition();
         this.updateCanvasPositions();
         this.updateSliderVisibility();
@@ -1812,8 +1836,16 @@ class Scene3D {
         this.updateCanvasBlur();
         this.applySliderVisuals(step, true);
 
+        if (step === 2 && prevStep === 1) {
+            queueMicrotask(() => this._runStep2AnalysisSequence());
+        }
+
         if (step === 3 && this.selectedDesignOption) {
-            this.updateStep3Images(this.selectedDesignOption);
+            if (prevStep === 2) {
+                queueMicrotask(() => this._startStep3EntryFlow(this.selectedDesignOption));
+            } else {
+                queueMicrotask(() => this._applyStep3ImagesAfterBuild(this.selectedDesignOption));
+            }
         }
 
         if (this.imageSelected) {
@@ -2364,12 +2396,7 @@ class Scene3D {
             
             // Update slider visibility
             this.updateSliderVisibility();
-            
-            // If Step 3 is now visible and we have a selected design option, update images
-            if (this.currentStep === 3 && this.selectedDesignOption) {
-                this.updateStep3Images(this.selectedDesignOption);
-            }
-            
+
             // Reset cursors
             allHandles.forEach(handle => {
                 handle.style.cursor = 'grab';
@@ -2417,25 +2444,24 @@ class Scene3D {
             this.currentStep = newStep;
             this.maxFlowStepReached = Math.max(this.maxFlowStepReached || 1, newStep);
 
-            // If Step 3 is now visible, ensure images are loaded
-            if (newStep === 3) {
-                // Use selected design option or default to option 1
-                const optionToLoad = this.selectedDesignOption || 1;
-                this.updateStep3Images(optionToLoad);
+            if (newStep !== 2) {
+                this._abortStep2Analysis();
             }
-            
-            // Update step indicator
-            const stepNumEl = document.getElementById('step-top-left-number');
-            const stepTitleEl = document.getElementById('step-top-left-title');
-            if (stepNumEl && stepTitleEl) {
-                stepNumEl.textContent = String(this.currentStep);
-                const titles = {
-                    1: 'Select Image',
-                    2: 'Design Prompt',
-                    3: 'Choose Design',
-                    4: 'Get it ready'
-                };
-                stepTitleEl.textContent = titles[this.currentStep] || '';
+            if (newStep !== 3) {
+                this._abortStep3GenerationUi();
+            }
+
+            if (newStep === 2 && prevStep === 1) {
+                queueMicrotask(() => this._runStep2AnalysisSequence());
+            }
+
+            if (newStep === 3) {
+                const optionToLoad = this.selectedDesignOption || 1;
+                if (prevStep === 2) {
+                    queueMicrotask(() => this._startStep3EntryFlow(optionToLoad));
+                } else {
+                    queueMicrotask(() => this._applyStep3ImagesAfterBuild(optionToLoad));
+                }
             }
 
             if (prevStep === 2 && newStep === 3) {
@@ -2482,7 +2508,8 @@ class Scene3D {
         const wantsHint =
             !this.isUserSliding &&
             ((this.imageSelected && this.currentStep === 1) ||
-                (this.selectedDesignOption != null && this.currentStep === 2));
+                (this.selectedDesignOption != null && this.currentStep === 2) ||
+                (this.selectedDesignOption != null && this.currentStep === 3));
 
         if (wantsHint) {
             slider.classList.add('step-slider--drag-hint-next');
@@ -2583,9 +2610,7 @@ class Scene3D {
                 // Store selected design option (1, 2, or 3)
                 this.selectedDesignOption = index + 1;
                 console.log(`Selected design option: ${this.selectedDesignOption}`);
-                
-                // Update Step 3 images when option is selected
-                this.updateStep3Images(this.selectedDesignOption);
+
                 this.updateStep2Draggers();
                 this.syncNavStepsFromFlow();
                 queueMicrotask(() => this.updateDragHandleHint());
@@ -2611,11 +2636,123 @@ class Scene3D {
         }
         this.updateDragHandleHint();
     }
-    
+
+    _abortStep2Analysis() {
+        this._step2AnalysisRunId += 1;
+        if (this._step2SeqTimer != null) {
+            clearTimeout(this._step2SeqTimer);
+            this._step2SeqTimer = null;
+        }
+        const content = document.querySelector('.step-2-content');
+        if (content) content.classList.remove('step-2--analysis-active');
+        const overlay = document.getElementById('step-2-analysis-overlay');
+        const statusEl = document.getElementById('step-2-analysis-status');
+        if (overlay) overlay.setAttribute('aria-hidden', 'true');
+        if (statusEl) statusEl.textContent = '';
+    }
+
+    _runStep2AnalysisSequence() {
+        const content = document.querySelector('.step-2-content');
+        const overlay = document.getElementById('step-2-analysis-overlay');
+        const statusEl = document.getElementById('step-2-analysis-status');
+        if (!content || !overlay || !statusEl) return;
+
+        if (this._step2SeqTimer != null) {
+            clearTimeout(this._step2SeqTimer);
+            this._step2SeqTimer = null;
+        }
+        this._step2AnalysisRunId += 1;
+        const runId = this._step2AnalysisRunId;
+
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const messages = reduce
+            ? [STEP2_ANALYSIS_MESSAGES[STEP2_ANALYSIS_MESSAGES.length - 1]]
+            : STEP2_ANALYSIS_MESSAGES;
+        const lineMs = reduce ? 400 : STEP2_ANALYSIS_LINE_MS;
+
+        content.classList.add('step-2--analysis-active');
+        overlay.setAttribute('aria-hidden', 'false');
+        statusEl.textContent = messages[0];
+
+        let i = 0;
+        const step = () => {
+            this._step2SeqTimer = window.setTimeout(() => {
+                if (runId !== this._step2AnalysisRunId) return;
+                i += 1;
+                if (i >= messages.length) {
+                    this._step2SeqTimer = null;
+                    content.classList.remove('step-2--analysis-active');
+                    overlay.setAttribute('aria-hidden', 'true');
+                    statusEl.textContent = '';
+                    return;
+                }
+                statusEl.textContent = messages[i];
+                step();
+            }, lineMs);
+        };
+        step();
+    }
+
+    _abortStep3GenerationUi() {
+        this._step3GenRunId += 1;
+        this._clearStep3GenerationTimers();
+        const container = document.getElementById('step-3-options');
+        if (container) {
+            container.classList.remove('step-3-generation--busy', 'step-3-generation--text-only');
+        }
+        const overlay = document.getElementById('step-3-generation-overlay');
+        const statusEl = document.getElementById('step-3-generation-status');
+        if (overlay) overlay.setAttribute('aria-hidden', 'true');
+        if (statusEl) statusEl.textContent = '';
+    }
+
+    _startStep3EntryFlow(optionNumber) {
+        const container = document.getElementById('step-3-options');
+        const overlay = document.getElementById('step-3-generation-overlay');
+        const statusEl = document.getElementById('step-3-generation-status');
+        if (!container || !overlay || !statusEl || !optionNumber) return;
+
+        this._clearStep3GenerationTimers();
+        if (this._step3SeqTimer != null) {
+            clearTimeout(this._step3SeqTimer);
+            this._step3SeqTimer = null;
+        }
+
+        this._step3GenRunId += 1;
+        const runId = this._step3GenRunId;
+
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const messages = reduce
+            ? [STEP3_BUILD_MESSAGES[STEP3_BUILD_MESSAGES.length - 1]]
+            : STEP3_BUILD_MESSAGES;
+        const lineMs = reduce ? 350 : STEP3_BUILD_LINE_MS;
+
+        container.classList.add('step-3-generation--busy', 'step-3-generation--text-only');
+        overlay.setAttribute('aria-hidden', 'false');
+        statusEl.textContent = messages[0];
+
+        let i = 0;
+        const advance = () => {
+            this._step3SeqTimer = window.setTimeout(() => {
+                if (runId !== this._step3GenRunId) return;
+                i += 1;
+                if (i >= messages.length) {
+                    this._step3SeqTimer = null;
+                    container.classList.remove('step-3-generation--text-only');
+                    this._applyStep3ImagesAfterBuild(optionNumber, runId);
+                    return;
+                }
+                statusEl.textContent = messages[i];
+                advance();
+            }, lineMs);
+        };
+        advance();
+    }
+
     _clearStep3GenerationTimers() {
-        if (this._step3GenStatusTimer != null) {
-            clearInterval(this._step3GenStatusTimer);
-            this._step3GenStatusTimer = null;
+        if (this._step3SeqTimer != null) {
+            clearTimeout(this._step3SeqTimer);
+            this._step3SeqTimer = null;
         }
         if (this._step3GenCompleteTimer != null) {
             clearTimeout(this._step3GenCompleteTimer);
@@ -2623,56 +2760,55 @@ class Scene3D {
         }
     }
 
-    _beginStep3GenerationFeedback() {
-        this._clearStep3GenerationTimers();
-        const container = document.getElementById('step-3-options');
-        const overlay = document.getElementById('step-3-generation-overlay');
-        const statusEl = document.getElementById('step-3-generation-status');
-        if (!container || !overlay || !statusEl) return;
-
-        container.classList.add('step-3-generation--busy');
-        overlay.setAttribute('aria-hidden', 'false');
-
-        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        let idx = 0;
-        statusEl.textContent = STEP3_GEN_MESSAGES[0];
-
-        const tick = () => {
-            idx = (idx + 1) % STEP3_GEN_MESSAGES.length;
-            statusEl.textContent = STEP3_GEN_MESSAGES[idx];
-        };
-
-        this._step3GenStatusTimer = window.setInterval(tick, reduce ? 2800 : STEP3_GEN_STATUS_INTERVAL_MS);
-    }
-
     _finishStep3GenerationFeedback() {
         this._clearStep3GenerationTimers();
         const container = document.getElementById('step-3-options');
         const overlay = document.getElementById('step-3-generation-overlay');
         const statusEl = document.getElementById('step-3-generation-status');
-        if (container) container.classList.remove('step-3-generation--busy');
+        if (container) {
+            container.classList.remove('step-3-generation--busy', 'step-3-generation--text-only');
+        }
         if (overlay) overlay.setAttribute('aria-hidden', 'true');
         if (statusEl) statusEl.textContent = '';
     }
 
     updateStep3Images(optionNumber) {
+        this._applyStep3ImagesAfterBuild(optionNumber);
+    }
+
+    _applyStep3ImagesAfterBuild(optionNumber, expectedRunId = null) {
         // optionNumber: 1, 2, or 3
         const imageSet = {
             1: [redoAssetPath('Assets/op1_1.png'), redoAssetPath('Assets/op1_2.png'), redoAssetPath('Assets/op1_3.png')],
             2: [redoAssetPath('Assets/op2_1.png'), redoAssetPath('Assets/op2_2.png'), redoAssetPath('Assets/op2_3.png')],
             3: [redoAssetPath('Assets/op3_1.png'), redoAssetPath('Assets/op3_2.jpg'), redoAssetPath('Assets/op3_3.png')]
         };
-        
+
         const images = imageSet[optionNumber];
         if (!images) {
             console.warn(`No image set found for option ${optionNumber}`);
             return;
         }
 
-        this._step3GenRunId += 1;
-        const runId = this._step3GenRunId;
+        let runId;
+        if (expectedRunId != null) {
+            runId = expectedRunId;
+        } else {
+            this._step3GenRunId += 1;
+            runId = this._step3GenRunId;
+        }
         this._clearStep3GenerationTimers();
-        this._beginStep3GenerationFeedback();
+
+        const container = document.getElementById('step-3-options');
+        const overlay = document.getElementById('step-3-generation-overlay');
+        const statusEl = document.getElementById('step-3-generation-status');
+        if (container) {
+            container.classList.add('step-3-generation--busy');
+            container.classList.remove('step-3-generation--text-only');
+        }
+        if (overlay) overlay.setAttribute('aria-hidden', 'false');
+        if (statusEl) statusEl.textContent = '';
+
         const loadStartedAt = performance.now();
         
         const optionElements = document.querySelectorAll('.step-3-option');
@@ -2941,19 +3077,6 @@ class Scene3D {
                 }
             });
         }
-        // Update top-left step indicator
-        const stepNumEl = document.getElementById('step-top-left-number');
-        const stepTitleEl = document.getElementById('step-top-left-title');
-        if (stepNumEl && stepTitleEl) {
-            stepNumEl.textContent = String(activeStep);
-            const titles = {
-                1: 'Select Image',
-                2: 'Design Prompt',
-                3: 'Choose Design',
-                4: 'Get it ready'
-            };
-            stepTitleEl.textContent = titles[activeStep] || '';
-        }
         // Update next step badge (always black with next step number)
         const nextBadge = document.getElementById('next-step-badge');
         if (nextBadge) {
@@ -3068,6 +3191,7 @@ window.addEventListener('load', () => {
     } catch (err) {
         console.error(err);
         document.getElementById('loading-screen')?.classList.add('hidden');
+        document.body.classList.add('redo-chrome-visible');
         const notice = document.getElementById('model-load-notice');
         if (notice) {
             notice.textContent =

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>About reDO · reDO</title>
+    <meta name="description" content="reDO is an AI-powered platform that transforms trash into usable design with step-by-step build instructions and assembly diagrams.">
+    <link rel="canonical" href="https://redo.design/info/">
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body class="info-page">
+    <header class="info-page__header">
+        <a href="../" class="info-page__back-sign">
+            <span class="info-page__back-arrow" aria-hidden="true">←</span>
+            Back to app
+        </a>
+    </header>
+    <main class="info-page__main" id="main">
+        <article class="info-page__article">
+            <h1 class="help-about-dialog__title">About reDO</h1>
+            <div class="help-about-dialog__content">
+                <p class="help-about-dialog__lede">
+                    Could one click turn your scrap into a detailed design?
+                </p>
+                <p class="help-about-dialog__body">
+                    reDO is an AI-powered platform that transforms trash into usable design—with step-by-step build
+                    instructions and assembly diagrams.
+                </p>
+                <p class="help-about-dialog__tagline">
+                    Fast, iterative, and direct: trash into form.
+                </p>
+                <p class="help-about-dialog__body">
+                    It’s designed for a generation that loves making things from the couch. All the designs in the
+                    video use waste cardboard and paper as their image input. Each output is a buildable architectural
+                    form generated in a single click, complete with assembly diagrams and logical construction
+                    sequencing. All designs were developed using a RAG workflow, grounded in fabrication-aware logic.
+                </p>
+                <section class="help-about-dialog__section" aria-labelledby="help-about-process-heading">
+                    <h2 id="help-about-process-heading" class="help-about-dialog__section-title">
+                        Process &amp; pipeline
+                    </h2>
+                    <p class="help-about-dialog__body help-about-dialog__body--tight">
+                        Below: ComfyUI + Griptape workflows and diagrams behind the scenes—from material readout to
+                        illustrated fabrication guides.
+                    </p>
+                    <div class="help-about-dialog__figures">
+                        <figure class="help-about-dialog__figure">
+                            <img
+                                src="../Assets/08_comfy-process-2.png"
+                                alt="ComfyUI graph: Griptape agent node with system prompt wiring to preview images of cardboard furniture designs."
+                                width="1200"
+                                height="675"
+                                loading="lazy"
+                                decoding="async"
+                            >
+                            <figcaption class="help-about-dialog__caption">
+                                Agent + preview pipeline—structured prompts to illustrated outputs.
+                            </figcaption>
+                        </figure>
+                        <figure class="help-about-dialog__figure">
+                            <img
+                                src="../Assets/04_diagram-1.png"
+                                alt="Diagram: image input through ComfyUI Pipeline 1 to intermediate images, then Pipeline 2 to 3D, text, and assembly diagrams."
+                                width="1200"
+                                height="400"
+                                loading="lazy"
+                                decoding="async"
+                            >
+                            <figcaption class="help-about-dialog__caption">
+                                High-level data flow: input image → pipelines → 3D, copy, and diagrams.
+                            </figcaption>
+                        </figure>
+                        <figure class="help-about-dialog__figure">
+                            <img
+                                src="../Assets/03_comfy-process-1.png"
+                                alt="ComfyUI: load image of cardboard boxes connected to Griptape text display with structured material and dimension analysis."
+                                width="1200"
+                                height="675"
+                                loading="lazy"
+                                decoding="async"
+                            >
+                            <figcaption class="help-about-dialog__caption">
+                                Scrap in—fabrication-aware readout (material, scale, use cases).
+                            </figcaption>
+                        </figure>
+                        <figure class="help-about-dialog__figure">
+                            <img
+                                src="../Assets/ComfyProcess1.png"
+                                alt="End-to-end diagram: photo of cardboard scrap through ComfyUI pipelines to chair renders, step-by-step instructions, and numbered assembly diagram."
+                                width="1200"
+                                height="500"
+                                loading="lazy"
+                                decoding="async"
+                            >
+                            <figcaption class="help-about-dialog__caption">
+                                Full journey: waste photo → concepts → buildable form + instructions + sequencing.
+                            </figcaption>
+                        </figure>
+                        <figure class="help-about-dialog__figure">
+                            <img
+                                src="../Assets/Diagram2.png"
+                                alt="Technical workflow diagram with ComfyUI pipeline stages from input image to outputs."
+                                width="1200"
+                                height="400"
+                                loading="lazy"
+                                decoding="async"
+                            >
+                            <figcaption class="help-about-dialog__caption">
+                                Pipeline view—how multimodal steps connect toward a shippable design package.
+                            </figcaption>
+                        </figure>
+                    </div>
+                </section>
+            </div>
+        </article>
+    </main>
+</body>
+</html>

@@ -11,6 +11,7 @@
       CDNs: cdnjs, jsdelivr (Three.js, GLTFLoader, OrbitControls, Tween)
       GitHub Pages: add empty .nojekyll at repo root so Jekyll does not strip CSS/JS.
       Project-page URL (https://user.github.io/repo/) — set window.__REDO_PUBLISH_BASE = '/repo' on the line below before bootstrap runs.
+      About copy + pipeline figures: /info/ (info/index.html); link from the ? control in the app.
     -->
     <script>
         (function () {
@@ -34,7 +35,7 @@
         })();
     </script>
     <title>3D Objects Gallery</title>
-    <!-- Typography: Helvetica Neue via --font-site; technical numerals/labels via --font-mono (system mono stack). -->
+    <!-- Typography: Helvetica Neue stack sitewide (--font-site / --font-mono alias). -->
     <!-- UI motion: vanilla CSS + JS; catalog thumbnail snap uses Motion (Framer spring API) via dynamic import. Step 2→3: CSS cross-fade on #step-slider. -->
     <link rel="stylesheet" href="./styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -76,12 +77,6 @@
         <!-- Step badges (positioned globally) -->
         <div class="next-step-badge hidden" id="next-step-badge">2</div>
         <div class="prev-step-badge hidden" id="prev-step-badge">1</div>
-        
-        <!-- Top-left progress label (fixed; synced with current step) -->
-        <div class="step-top-left" role="status" aria-live="polite" aria-atomic="true">
-            <span class="step-top-left-circle" id="step-top-left-number">1</span>
-            <span class="step-top-left-title" id="step-top-left-title">Select Image</span>
-        </div>
         
         <!-- Manual slider control (hidden, kept for compatibility) -->
         <div class="manual-slider">
@@ -173,25 +168,44 @@
                     </div>
                     
                     <!-- Design Input Section -->
-                    <div class="step-2-input-section">
-                        <div class="step-2-input-wrapper">
-                            <input type="text" class="step-2-input" id="design-input" placeholder="Choose a Design...">
-                            <button class="step-2-arrow-button" id="design-arrow-btn">
-                                <div class="arrow-right-small"></div>
-                            </button>
+                    <div class="step-2-prompt-region">
+                        <div
+                            class="step-2-analysis-overlay"
+                            id="step-2-analysis-overlay"
+                            aria-hidden="true"
+                        >
+                            <div class="step-2-analysis-inner">
+                                <div class="step-2-analysis-spinner" aria-hidden="true"></div>
+                                <p
+                                    class="step-2-analysis-status"
+                                    id="step-2-analysis-status"
+                                    role="status"
+                                    aria-live="polite"
+                                    aria-atomic="true"
+                                ></p>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <!-- Design Options -->
-                    <div class="step-2-options">
-                        <div class="step-2-option" data-option="Low profile lounge chair ?">
-                            Low profile lounge chair ?
-                        </div>
-                        <div class="step-2-option" data-option="Faceted chair ?">
-                            Faceted chair ?
-                        </div>
-                        <div class="step-2-option" data-option="Modern minimalist chair ?">
-                            Modern minimalist chair ?
+                        <div class="step-2-prompt-inner">
+                            <div class="step-2-input-section">
+                                <div class="step-2-input-wrapper">
+                                    <input type="text" class="step-2-input" id="design-input" placeholder="Choose a Design...">
+                                    <button type="button" class="step-2-arrow-button" id="design-arrow-btn">
+                                        <div class="arrow-right-small"></div>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="step-2-options">
+                                <div class="step-2-option" data-option="Low profile lounge chair ?">
+                                    Low profile lounge chair ?
+                                </div>
+                                <div class="step-2-option" data-option="Faceted chair ?">
+                                    Faceted chair ?
+                                </div>
+                                <div class="step-2-option" data-option="Modern minimalist chair ?">
+                                    Modern minimalist chair ?
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -660,6 +674,15 @@ Cut cleanly</pre>
             <span class="step-label">Get it ready</span>
         </div>
     </div>
+
+    <a
+        class="help-fab"
+        id="help-fab-open"
+        href="info/"
+        aria-label="About reDO (opens full page)"
+    >
+        <span class="help-fab__glyph" aria-hidden="true">?</span>
+    </a>
     
     <!-- Loading screen -->
     <div id="loading-screen">
