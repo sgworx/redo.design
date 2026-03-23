@@ -1521,22 +1521,22 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
         transform: scale(1);
         box-shadow:
             0 0 0 0 transparent,
-            0 4px 18px rgba(0, 0, 0, 0.4);
-        border-color: rgba(255, 255, 255, 0.28);
+            0 3px 12px rgba(0, 0, 0, 0.22);
+        border-color: rgba(255, 255, 255, 0.16);
     }
     45% {
-        transform: scale(1.07);
+        transform: scale(1.05);
         box-shadow:
-            0 0 0 4px rgba(255, 255, 255, 0.1),
-            0 10px 36px rgba(0, 0, 0, 0.55);
-        border-color: rgba(255, 255, 255, 0.58);
+            0 0 0 3px rgba(255, 255, 255, 0.06),
+            0 8px 22px rgba(0, 0, 0, 0.28);
+        border-color: rgba(255, 255, 255, 0.32);
     }
     70% {
-        transform: scale(1.03);
+        transform: scale(1.02);
         box-shadow:
-            0 0 0 2px rgba(255, 255, 255, 0.14),
-            0 6px 24px rgba(0, 0, 0, 0.45);
-        border-color: rgba(255, 255, 255, 0.4);
+            0 0 0 1px rgba(255, 255, 255, 0.08),
+            0 5px 16px rgba(0, 0, 0, 0.22);
+        border-color: rgba(255, 255, 255, 0.24);
     }
 }
 
@@ -1588,8 +1588,8 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
         animation: none;
         transform: none;
         box-shadow:
-            0 0 0 2px rgba(255, 255, 255, 0.22),
-            0 0 28px rgba(0, 0, 0, 0.35);
+            0 0 0 1px rgba(255, 255, 255, 0.14),
+            0 0 20px rgba(0, 0, 0, 0.22);
     }
 
     #step-slider.step-slider--drag-hint-next#step-slider.design-selected
@@ -1599,8 +1599,8 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
         animation: none;
         transform: none;
         box-shadow:
-            0 0 0 2px rgba(255, 255, 255, 0.22),
-            0 0 28px rgba(0, 0, 0, 0.35);
+            0 0 0 1px rgba(255, 255, 255, 0.14),
+            0 0 20px rgba(0, 0, 0, 0.22);
     }
 
 }
@@ -1665,10 +1665,10 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 @keyframes grabber-border-pulse-inverse {
     0%,
     100% {
-        border-color: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.12);
     }
     50% {
-        border-color: rgba(255, 255, 255, 0.48);
+        border-color: rgba(255, 255, 255, 0.28);
     }
 }
 
@@ -1722,50 +1722,55 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     overflow: visible;
 }
 
-/* Forward drag: black disc, light border pulse, inverted arrows */
-#step-slider:not(.hidden) .step-slide .canvas-slider .progress-circle {
-    background: var(--color-black);
-    border-color: rgba(255, 255, 255, 0.26);
+/* Forward drag: translucent dark chip (less dominant than solid black) */
+#step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle {
+    background: rgba(0, 0, 0, 0.34);
+    border-color: rgba(255, 255, 255, 0.16);
     box-shadow: none;
+    backdrop-filter: blur(10px) saturate(112%);
+    -webkit-backdrop-filter: blur(10px) saturate(112%);
     animation: grabber-border-pulse-inverse 1.65s ease-in-out infinite;
 }
 
-#step-slider:not(.hidden) .step-slide .canvas-slider .progress-circle .arrow-right,
-#step-slider:not(.hidden) .step-slide .canvas-slider .progress-circle .arrow-left {
-    filter: grayscale(1) contrast(1.05) invert(1) brightness(1.1);
-    opacity: 0.92;
+#step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle .arrow-right {
+    filter: grayscale(1) contrast(1.02) invert(1) brightness(1.02);
+    opacity: 0.58;
 }
 
-#step-slider:not(.hidden) .step-slide .canvas-slider .progress-circle .drag-letter {
-    fill: var(--redo-drag-label-fill-on-dark);
+#step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle .drag-letter {
+    fill: rgba(210, 210, 210, 0.72);
 }
 
-/* Backward drag: grey secondary (forward stays primary black) */
+/* Backward drag: lighter, more transparent — recedes vs forward */
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle {
-    background: #d6d6d6;
-    border-color: rgba(0, 0, 0, 0.14);
+    background: rgba(245, 245, 245, 0.42);
+    border-color: rgba(0, 0, 0, 0.09);
     animation: none;
+    backdrop-filter: blur(10px) saturate(112%);
+    -webkit-backdrop-filter: blur(10px) saturate(112%);
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle .arrow-left {
-    filter: grayscale(1) contrast(1.12);
-    opacity: 0.72;
+    filter: grayscale(1) contrast(1.08);
+    opacity: 0.48;
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle .drag-letter {
-    fill: var(--redo-drag-label-fill);
+    fill: rgba(0, 0, 0, 0.45);
 }
 
-/* Step 1 before image: keep the original light forward handle */
+/* Step 1 before image: soft light forward handle */
 #step-slider:not(.hidden):not(.image-selected) .step-slide[data-step='1'] .slider-right .progress-circle {
-    background: var(--color-white);
-    border: 1px solid var(--color-border-stroke);
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(0, 0, 0, 0.1);
     animation: none;
+    backdrop-filter: blur(8px) saturate(110%);
+    -webkit-backdrop-filter: blur(8px) saturate(110%);
 }
 
 #step-slider:not(.hidden):not(.image-selected) .step-slide[data-step='1'] .slider-right .progress-circle .arrow-right {
-    filter: grayscale(1) contrast(1.15);
-    opacity: 0.72;
+    filter: grayscale(1) contrast(1.1);
+    opacity: 0.55;
 }
 
 #step-slider:not(.hidden):not(.image-selected) .step-slide[data-step='1'] .slider-right .progress-circle .drag-letter {
@@ -1843,24 +1848,32 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     background: linear-gradient(165deg, #e6e6e6 0%, #f0f0f0 100%);
 }
 
-#step-slider:not(.hidden) .step-slide .canvas-slider .progress-circle:hover {
-    background: linear-gradient(165deg, #2a2a2a 0%, #161616 52%, #0c0c0c 100%);
-    border-color: rgba(255, 255, 255, 0.34);
-}
-
-#step-slider:not(.hidden) .step-slide .canvas-slider .progress-circle:active {
-    background: linear-gradient(165deg, #050505 0%, #101010 100%);
+#step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle:hover {
+    background: rgba(0, 0, 0, 0.48);
     border-color: rgba(255, 255, 255, 0.22);
 }
 
+#step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle:hover .arrow-right {
+    opacity: 0.72;
+}
+
+#step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle:active {
+    background: rgba(0, 0, 0, 0.55);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle:hover {
-    background: linear-gradient(165deg, #e4e4e4 0%, #d8d8d8 52%, #cfcfcf 100%);
-    border-color: rgba(0, 0, 0, 0.2);
+    background: rgba(252, 252, 252, 0.58);
+    border-color: rgba(0, 0, 0, 0.12);
+}
+
+#step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle:hover .arrow-left {
+    opacity: 0.62;
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle:active {
-    background: linear-gradient(165deg, #c4c4c4 0%, #d0d0d0 100%);
-    border-color: rgba(0, 0, 0, 0.16);
+    background: rgba(255, 255, 255, 0.5);
+    border-color: rgba(0, 0, 0, 0.1);
 }
 
 #step-slider:not(.hidden):not(.image-selected) .step-slide[data-step='1'] .slider-right .progress-circle:hover {
