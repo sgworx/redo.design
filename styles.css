@@ -557,16 +557,14 @@ textarea {
         margin-top: clamp(70px, 10vh, 100px);
     }
 
-    .step-3-options-container {
-        margin-top: clamp(70px, 10vh, 100px);
-        max-width: clamp(360px, 70vw, 600px);
-        max-height: calc(100vh - 200px);
-        overflow-y: auto;
+    .step-3-content {
+        --step-3-bottom-safe: clamp(196px, 30vh, 264px);
     }
 
-    .step-3-option .step-3-option-img {
-        width: clamp(220px, 40vw, 320px);
-        height: clamp(220px, 40vw, 320px);
+    .step-3-options-container {
+        margin-top: 0;
+        max-width: clamp(360px, 70vw, 600px);
+        --step3-tile: clamp(220px, 40vw, 320px);
     }
 
     .step-4-guide {
@@ -610,16 +608,14 @@ textarea {
         padding-bottom: clamp(10px, 2vh, 20px);
     }
 
-    .step-3-options-container {
-        margin-top: clamp(60px, 8vh, 90px);
-        max-width: clamp(320px, 60vw, 520px);
-        max-height: calc(100vh - 220px);
-        overflow-y: auto;
+    .step-3-content {
+        --step-3-bottom-safe: clamp(200px, 32vh, 270px);
     }
 
-    .step-3-option .step-3-option-img {
-        width: clamp(200px, 36vw, 280px);
-        height: clamp(200px, 36vw, 280px);
+    .step-3-options-container {
+        margin-top: 0;
+        max-width: clamp(320px, 60vw, 520px);
+        --step3-tile: clamp(200px, 36vw, 280px);
     }
 
     .step-4-guide {
@@ -683,15 +679,14 @@ textarea {
         padding-bottom: clamp(12px, 2vh, 24px);
     }
 
-    .step-3-options-container {
-        max-width: clamp(320px, 56vw, 520px);
-        max-height: calc(100vh - 220px);
-        overflow-y: auto;
+    .step-3-content {
+        --step-3-bottom-safe: clamp(200px, 32vh, 270px);
     }
 
-    .step-3-option .step-3-option-img {
-        width: clamp(200px, 32vw, 280px);
-        height: clamp(200px, 32vw, 280px);
+    .step-3-options-container {
+        margin-top: 0;
+        max-width: clamp(320px, 56vw, 520px);
+        --step3-tile: clamp(200px, 32vw, 280px);
     }
 
     .step-4-guide {
@@ -1722,23 +1717,23 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     overflow: visible;
 }
 
-/* Forward drag: translucent dark chip (less dominant than solid black) */
+/* Forward drag: solid black on the divider; softness stays on slider-left (back) only */
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle {
-    background: rgba(0, 0, 0, 0.34);
-    border-color: rgba(255, 255, 255, 0.16);
+    background: var(--color-black);
+    border-color: rgba(255, 255, 255, 0.2);
     box-shadow: none;
-    backdrop-filter: blur(10px) saturate(112%);
-    -webkit-backdrop-filter: blur(10px) saturate(112%);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     animation: grabber-border-pulse-inverse 1.65s ease-in-out infinite;
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle .arrow-right {
     filter: grayscale(1) contrast(1.02) invert(1) brightness(1.02);
-    opacity: 0.58;
+    opacity: 1;
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle .drag-letter {
-    fill: rgba(210, 210, 210, 0.72);
+    fill: rgba(235, 235, 235, 0.92);
 }
 
 /* Backward drag: lighter, more transparent — recedes vs forward */
@@ -1849,17 +1844,17 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle:hover {
-    background: rgba(0, 0, 0, 0.48);
-    border-color: rgba(255, 255, 255, 0.22);
+    background: var(--color-black);
+    border-color: rgba(255, 255, 255, 0.32);
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle:hover .arrow-right {
-    opacity: 0.72;
+    opacity: 1;
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle:active {
-    background: rgba(0, 0, 0, 0.55);
-    border-color: rgba(255, 255, 255, 0.2);
+    background: #0a0a0a;
+    border-color: rgba(255, 255, 255, 0.22);
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle:hover {
@@ -2723,19 +2718,32 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     height: 100%;
 }
 
-/* Step 3 Content Styles - fixed size, centered (header is absolute positioned) */
+/* Step 3 Content Styles — true vertical center via flex spacers; bottom padding clears fixed nav */
 .step-3-content {
+    --step-3-bottom-safe: clamp(188px, 28vh, 252px);
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    padding: 0;
+    justify-content: flex-start;
+    padding-top: max(8px, env(safe-area-inset-top, 0px));
+    padding-bottom: var(--step-3-bottom-safe);
+    padding-left: clamp(8px, 2.5vw, 24px);
+    padding-right: clamp(8px, 2.5vw, 24px);
     width: 100%;
     height: 100%;
     box-sizing: border-box;
-    position: relative; /* For absolute positioned header */
+    position: relative;
     overflow-y: auto;
     overflow-x: hidden;
+}
+
+.step-3-content::before,
+.step-3-content::after {
+    content: '';
+    flex: 1 1 0;
+    min-height: 0;
+    width: 0;
+    pointer-events: none;
 }
 
 .step-4-content {
@@ -2857,6 +2865,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 
 /* Step 3 Options Container */
 .step-3-options-container {
+    --step3-tile: 320px;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -2864,11 +2873,16 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     gap: 24px;
     width: auto;
     max-width: 600px;
-    margin-top: 72px;
-    padding: 20px;
+    margin: 0 auto;
+    flex: 0 0 auto;
+    padding: 12px 20px 20px;
     box-sizing: border-box;
     scroll-behavior: smooth;
     scroll-snap-type: y proximity;
+}
+
+.step-3-options-container.step-3-selection-visual {
+    gap: clamp(20px, 3.5vw, 32px);
 }
 
 /* Step 3 — “AI generation” feedback: skeleton + progressive status */
@@ -3017,19 +3031,32 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     border: 1px solid var(--panel-border);
     border-radius: 2px;
     box-shadow: var(--photo-emboss-shadow);
-    width: 320px;
-    height: 320px;
+    width: var(--step3-tile);
+    height: var(--step3-tile);
     max-height: none;
-    transition: transform var(--duration-interact) var(--ease-standard);
+    box-sizing: border-box;
+    transition:
+        transform var(--duration-interact) var(--ease-standard),
+        width var(--duration-interact) var(--ease-standard),
+        height var(--duration-interact) var(--ease-standard);
     transform-origin: center center;
 }
 
+/* Selection: resize in layout (not transform: scale) so flex gap stays between real bounds — no overlap */
 .step-3-options-container.step-3-selection-visual .step-3-option.selected {
     z-index: 2;
 }
 
 .step-3-options-container.step-3-selection-visual .step-3-option.selected .step-3-option-img {
-    transform: scale(1.22);
+    transform: none;
+    width: calc(var(--step3-tile) * 1.14);
+    height: calc(var(--step3-tile) * 1.14);
+}
+
+.step-3-options-container.step-3-selection-visual .step-3-option:not(.selected) .step-3-option-img {
+    transform: none;
+    width: calc(var(--step3-tile) * 0.72);
+    height: calc(var(--step3-tile) * 0.72);
 }
 
 .step-3-options-container:not(.step-3-selection-visual) .step-3-option:hover .step-3-option-img {
@@ -3037,11 +3064,13 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 }
 
 .step-3-options-container.step-3-selection-visual .step-3-option:not(.selected):hover .step-3-option-img {
-    transform: scale(1.04);
+    width: calc(var(--step3-tile) * 0.76);
+    height: calc(var(--step3-tile) * 0.76);
 }
 
 .step-3-options-container.step-3-selection-visual .step-3-option.selected:hover .step-3-option-img {
-    transform: scale(1.26);
+    width: calc(var(--step3-tile) * 1.18);
+    height: calc(var(--step3-tile) * 1.18);
 }
 
 .step-3-option-img[src=""] {
@@ -3059,11 +3088,13 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 }
 
 .step-3-options-container.step-3-selection-visual .step-3-option:not(.selected):active .step-3-option-img {
-    transform: scale(0.98);
+    width: calc(var(--step3-tile) * 0.7);
+    height: calc(var(--step3-tile) * 0.7);
 }
 
 .step-3-options-container.step-3-selection-visual .step-3-option.selected:active .step-3-option-img {
-    transform: scale(1.18);
+    width: calc(var(--step3-tile) * 1.1);
+    height: calc(var(--step3-tile) * 1.1);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3071,10 +3102,16 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
         transition: none;
     }
 
-    .step-3-options-container.step-3-selection-visual .step-3-option.selected .step-3-option-img {
-        transform: none;
+    .step-3-options-container.step-3-selection-visual .step-3-option.selected .step-3-option-img,
+    .step-3-options-container.step-3-selection-visual .step-3-option:not(.selected) .step-3-option-img {
+        width: var(--step3-tile);
+        height: var(--step3-tile);
         outline: 2px solid rgba(0, 0, 0, 0.2);
         outline-offset: 4px;
+    }
+
+    .step-3-options-container.step-3-selection-visual .step-3-option.selected .step-3-option-img {
+        outline-color: rgba(0, 0, 0, 0.35);
     }
 
     .step-3-options-container:not(.step-3-selection-visual) .step-3-option:hover .step-3-option-img,
