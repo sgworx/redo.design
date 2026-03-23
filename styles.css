@@ -9,9 +9,9 @@
     /* Legacy token kept so existing rules stay valid; same family everywhere */
     --font-mono: var(--font-site);
     /* DRAG arc + hint copy: one palette, shared bounce timing (1.65s) */
-    --redo-drag-label-fill: rgba(0, 0, 0, 0.88);
-    --redo-drag-label-fill-on-dark: rgba(165, 165, 165, 0.92);
-    --redo-drag-hint-copy: rgba(0, 0, 0, 0.74);
+    --redo-drag-label-fill: rgba(18, 18, 18, 0.94);
+    --redo-drag-label-fill-on-dark: rgba(130, 130, 130, 0.96);
+    --redo-drag-hint-copy: rgba(0, 0, 0, 0.78);
     /* Monochrome UI — black, white, greys only (no accent hues) */
     /* OLED-friendly deep base (large fills), vs pure #000 for hairline UI strokes */
     --color-obsidian: #0a0a0a;
@@ -638,8 +638,8 @@ textarea {
         overflow: visible; /* avoid clipping handles at boundaries */
     }
 
-    .canvas-content {
-        overflow-y: auto; /* allow vertical scroll when needed */
+    .canvas-content:not(.step-3-content) {
+        overflow-y: auto; /* allow vertical scroll when needed; step 3 clips, step 4 scrolls on .step-4-content */
         overflow-x: hidden;
     }
 
@@ -711,7 +711,7 @@ textarea {
     overflow: visible;
   }
 
-  .canvas-content {
+  .canvas-content:not(.step-3-content) {
     overflow-y: auto;
     overflow-x: hidden;
   }
@@ -1717,23 +1717,23 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     overflow: visible;
 }
 
-/* Forward drag: solid black on the divider; softness stays on slider-left (back) only */
+/* Forward drag: idle grey on the divider; black only on hover / active (Step 1 pre-image overrides below) */
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle {
-    background: var(--color-black);
-    border-color: rgba(255, 255, 255, 0.2);
+    background: #adadad;
+    border-color: rgba(0, 0, 0, 0.14);
     box-shadow: none;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    animation: grabber-border-pulse-inverse 1.65s ease-in-out infinite;
+    animation: none;
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle .arrow-right {
-    filter: grayscale(1) contrast(1.02) invert(1) brightness(1.02);
-    opacity: 1;
+    filter: grayscale(1) contrast(1.12);
+    opacity: 0.9;
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle .drag-letter {
-    fill: rgba(235, 235, 235, 0.92);
+    fill: rgba(28, 28, 28, 0.82);
 }
 
 /* Backward drag: lighter, more transparent — recedes vs forward */
@@ -1751,7 +1751,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle .drag-letter {
-    fill: rgba(0, 0, 0, 0.45);
+    fill: rgba(38, 38, 38, 0.72);
 }
 
 /* Step 1 before image: soft light forward handle */
@@ -1849,12 +1849,26 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle:hover .arrow-right {
+    filter: grayscale(1) contrast(1.02) invert(1) brightness(1.02);
     opacity: 1;
+}
+
+#step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle:hover .drag-letter {
+    fill: rgba(200, 200, 200, 0.95);
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle:active {
     background: #0a0a0a;
     border-color: rgba(255, 255, 255, 0.22);
+}
+
+#step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle:active .arrow-right {
+    filter: grayscale(1) contrast(1.02) invert(1) brightness(1.02);
+    opacity: 1;
+}
+
+#step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle:active .drag-letter {
+    fill: rgba(210, 210, 210, 0.96);
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle:hover {
@@ -1879,6 +1893,17 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 #step-slider:not(.hidden):not(.image-selected) .step-slide[data-step='1'] .slider-right .progress-circle:active {
     background: linear-gradient(165deg, #e6e6e6 0%, #f0f0f0 100%);
     border-color: rgba(0, 0, 0, 0.18);
+}
+
+#step-slider:not(.hidden):not(.image-selected) .step-slide[data-step='1'] .slider-right .progress-circle:hover .arrow-right,
+#step-slider:not(.hidden):not(.image-selected) .step-slide[data-step='1'] .slider-right .progress-circle:active .arrow-right {
+    filter: grayscale(1) contrast(1.1);
+    opacity: 0.55;
+}
+
+#step-slider:not(.hidden):not(.image-selected) .step-slide[data-step='1'] .slider-right .progress-circle:hover .drag-letter,
+#step-slider:not(.hidden):not(.image-selected) .step-slide[data-step='1'] .slider-right .progress-circle:active .drag-letter {
+    fill: var(--redo-drag-label-fill);
 }
 
 /* DRAG label follows circle: keep grab while pointer is over label during handle drag */
@@ -2718,7 +2743,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     height: 100%;
 }
 
-/* Step 3 Content Styles — true vertical center via flex spacers; bottom padding clears fixed nav */
+/* Step 3 Content Styles — true vertical center via flex spacers; bottom padding clears fixed nav; no scrollbar (step 4 only scrolls) */
 .step-3-content {
     --step-3-bottom-safe: clamp(188px, 28vh, 252px);
     display: flex;
@@ -2733,8 +2758,12 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     height: 100%;
     box-sizing: border-box;
     position: relative;
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: hidden;
+    scrollbar-width: none;
+}
+
+.step-3-content::-webkit-scrollbar {
+    display: none;
 }
 
 .step-3-content::before,
@@ -3689,7 +3718,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     overflow: visible;
   }
 
-  .canvas-content {
+  .canvas-content:not(.step-3-content) {
     overflow-y: auto;
     overflow-x: hidden;
   }

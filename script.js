@@ -17,7 +17,7 @@ const STEP2_ANALYSIS_MESSAGES = [
 const STEP2_ANALYSIS_LINE_MS = 720;
 
 /** Step 2 — “Processing image” delay when entering from Step 1 only (0 with reduced motion) */
-const STEP2_IMAGE_PROCESSING_MS = 420;
+const STEP2_IMAGE_PROCESSING_MS = 820;
 
 /** Step 3 — sequential copy after leaving Step 2, before previews resolve */
 const STEP3_BUILD_MESSAGES = [
