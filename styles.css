@@ -1535,49 +1535,49 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     }
 }
 
-#step-slider.step-slider--drag-hint-next.step-slider.image-selected
-    .step-slide[data-step='1'].is-current-step
+#step-slider.step-slider--drag-hint-next.step-slider.image-selected[data-active-flow-step='1']
+    .step-slide[data-step='1']
     .slider-right
     .progress-circle {
     animation: drag-handle-next-hint-inverse 1.65s ease-in-out infinite;
 }
 
-#step-slider.step-slider--drag-hint-next.step-slider.image-selected
-    .step-slide[data-step='3'].is-current-step
+#step-slider.step-slider--drag-hint-next.step-slider.image-selected[data-active-flow-step='3']
+    .step-slide[data-step='3']
     .slider-right
     .progress-circle {
     animation: drag-handle-next-hint-inverse 1.65s ease-in-out infinite;
 }
 
-#step-slider.step-slider--drag-hint-next#step-slider.design-selected
-    .step-slide[data-step='2'].is-current-step
+#step-slider.step-slider--drag-hint-next#step-slider.design-selected[data-active-flow-step='2']
+    .step-slide[data-step='2']
     .slider-right
     .progress-circle {
     animation: drag-handle-next-hint-inverse 1.65s ease-in-out infinite;
 }
 
-#step-slider.step-slider--drag-hint-next.step-slider.image-selected
-    .step-slide[data-step='1'].is-current-step
+#step-slider.step-slider--drag-hint-next.step-slider.image-selected[data-active-flow-step='1']
+    .step-slide[data-step='1']
     .slider-right
     .progress-circle:hover,
-#step-slider.step-slider--drag-hint-next#step-slider.design-selected
-    .step-slide[data-step='2'].is-current-step
+#step-slider.step-slider--drag-hint-next#step-slider.design-selected[data-active-flow-step='2']
+    .step-slide[data-step='2']
     .slider-right
     .progress-circle:hover,
-#step-slider.step-slider--drag-hint-next.step-slider.image-selected
-    .step-slide[data-step='3'].is-current-step
+#step-slider.step-slider--drag-hint-next.step-slider.image-selected[data-active-flow-step='3']
+    .step-slide[data-step='3']
     .slider-right
     .progress-circle:hover {
     animation-play-state: paused;
 }
 
 @media (prefers-reduced-motion: reduce) {
-    #step-slider.step-slider--drag-hint-next.step-slider.image-selected
-        .step-slide[data-step='1'].is-current-step
+    #step-slider.step-slider--drag-hint-next.step-slider.image-selected[data-active-flow-step='1']
+        .step-slide[data-step='1']
         .slider-right
         .progress-circle,
-    #step-slider.step-slider--drag-hint-next.step-slider.image-selected
-        .step-slide[data-step='3'].is-current-step
+    #step-slider.step-slider--drag-hint-next.step-slider.image-selected[data-active-flow-step='3']
+        .step-slide[data-step='3']
         .slider-right
         .progress-circle {
         animation: none;
@@ -1587,8 +1587,8 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
             0 0 20px rgba(0, 0, 0, 0.22);
     }
 
-    #step-slider.step-slider--drag-hint-next#step-slider.design-selected
-        .step-slide[data-step='2'].is-current-step
+    #step-slider.step-slider--drag-hint-next#step-slider.design-selected[data-active-flow-step='2']
+        .step-slide[data-step='2']
         .slider-right
         .progress-circle {
         animation: none;
@@ -1667,21 +1667,13 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     }
 }
 
-/* Step 2: asymmetry with grey vs black until option chosen */
+/* Step 2: forward divider matches Step 1 (black when image in flow); left line is hidden on .slider-left */
 .step-slide[data-step="2"] .slider-left .progress-line {
     background: var(--color-text-muted) !important;
 }
 
 .step-slide[data-step="2"] .slider-right .progress-line {
     background: var(--color-obsidian) !important;
-}
-
-#step-slider.design-selected .step-slide[data-step="2"] .slider-left .progress-line {
-    background: var(--color-obsidian) !important;
-}
-
-#step-slider.design-selected .step-slide[data-step="2"] .slider-right .progress-line {
-    background: var(--color-text-muted) !important;
 }
 
 /* Progress circle inside canvas slider */
@@ -1736,31 +1728,31 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     fill: rgba(28, 28, 28, 0.88);
 }
 
-/* Armed by flow: Step 1 = image chosen; Step 2 = design chosen; Step 3 = in flow with image */
-#step-slider.image-selected .step-slide[data-step='1'].is-current-step .slider-right .progress-circle,
-#step-slider.design-selected .step-slide[data-step='2'].is-current-step .slider-right .progress-circle,
-#step-slider.image-selected .step-slide[data-step='3'].is-current-step .slider-right .progress-circle {
+/* Armed by flow + active step (data-active-flow-step mirrors currentStep in JS — same logic as Step 1) */
+#step-slider[data-active-flow-step='1'].image-selected .step-slide[data-step='1'] .slider-right .progress-circle,
+#step-slider[data-active-flow-step='2'].design-selected .step-slide[data-step='2'] .slider-right .progress-circle,
+#step-slider[data-active-flow-step='3'].image-selected.design-selected .step-slide[data-step='3'] .slider-right .progress-circle {
     background: var(--color-black);
     border-color: rgba(255, 255, 255, 0.22);
 }
 
-#step-slider.image-selected .step-slide[data-step='1'].is-current-step .slider-right .progress-circle .arrow-right,
-#step-slider.design-selected .step-slide[data-step='2'].is-current-step .slider-right .progress-circle .arrow-right,
-#step-slider.image-selected .step-slide[data-step='3'].is-current-step .slider-right .progress-circle .arrow-right {
+#step-slider[data-active-flow-step='1'].image-selected .step-slide[data-step='1'] .slider-right .progress-circle .arrow-right,
+#step-slider[data-active-flow-step='2'].design-selected .step-slide[data-step='2'] .slider-right .progress-circle .arrow-right,
+#step-slider[data-active-flow-step='3'].image-selected.design-selected .step-slide[data-step='3'] .slider-right .progress-circle .arrow-right {
     filter: grayscale(1) contrast(1.02) invert(1) brightness(1.05);
     opacity: 1;
 }
 
-#step-slider.image-selected .step-slide[data-step='1'].is-current-step .slider-right .progress-circle .drag-letter,
-#step-slider.design-selected .step-slide[data-step='2'].is-current-step .slider-right .progress-circle .drag-letter,
-#step-slider.image-selected .step-slide[data-step='3'].is-current-step .slider-right .progress-circle .drag-letter {
+#step-slider[data-active-flow-step='1'].image-selected .step-slide[data-step='1'] .slider-right .progress-circle .drag-letter,
+#step-slider[data-active-flow-step='2'].design-selected .step-slide[data-step='2'] .slider-right .progress-circle .drag-letter,
+#step-slider[data-active-flow-step='3'].image-selected.design-selected .step-slide[data-step='3'] .slider-right .progress-circle .drag-letter {
     fill: rgba(154, 154, 154, 0.98);
 }
 
-/* Previous (back): fully opaque light grey, dark grey arrow — no translucency / blur */
+/* Previous (back): black border only (other back styles unchanged) */
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle {
     background: #e6e6e6;
-    border: 1px solid rgba(0, 0, 0, 0.12);
+    border: 1px solid var(--color-black);
     animation: none;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
@@ -1894,49 +1886,49 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 }
 
 /* Forward armed hover / active — stay black; DRAG stays grey */
-#step-slider.image-selected .step-slide[data-step='1'].is-current-step .slider-right .progress-circle:hover,
-#step-slider.design-selected .step-slide[data-step='2'].is-current-step .slider-right .progress-circle:hover,
-#step-slider.image-selected .step-slide[data-step='3'].is-current-step .slider-right .progress-circle:hover {
+#step-slider[data-active-flow-step='1'].image-selected .step-slide[data-step='1'] .slider-right .progress-circle:hover,
+#step-slider[data-active-flow-step='2'].design-selected .step-slide[data-step='2'] .slider-right .progress-circle:hover,
+#step-slider[data-active-flow-step='3'].image-selected.design-selected .step-slide[data-step='3'] .slider-right .progress-circle:hover {
     background: #0a0a0a;
     border-color: rgba(255, 255, 255, 0.3);
 }
 
-#step-slider.image-selected .step-slide[data-step='1'].is-current-step .slider-right .progress-circle:hover .arrow-right,
-#step-slider.design-selected .step-slide[data-step='2'].is-current-step .slider-right .progress-circle:hover .arrow-right,
-#step-slider.image-selected .step-slide[data-step='3'].is-current-step .slider-right .progress-circle:hover .arrow-right {
+#step-slider[data-active-flow-step='1'].image-selected .step-slide[data-step='1'] .slider-right .progress-circle:hover .arrow-right,
+#step-slider[data-active-flow-step='2'].design-selected .step-slide[data-step='2'] .slider-right .progress-circle:hover .arrow-right,
+#step-slider[data-active-flow-step='3'].image-selected.design-selected .step-slide[data-step='3'] .slider-right .progress-circle:hover .arrow-right {
     filter: grayscale(1) contrast(1.02) invert(1) brightness(1.05);
     opacity: 1;
 }
 
-#step-slider.image-selected .step-slide[data-step='1'].is-current-step .slider-right .progress-circle:hover .drag-letter,
-#step-slider.design-selected .step-slide[data-step='2'].is-current-step .slider-right .progress-circle:hover .drag-letter,
-#step-slider.image-selected .step-slide[data-step='3'].is-current-step .slider-right .progress-circle:hover .drag-letter {
+#step-slider[data-active-flow-step='1'].image-selected .step-slide[data-step='1'] .slider-right .progress-circle:hover .drag-letter,
+#step-slider[data-active-flow-step='2'].design-selected .step-slide[data-step='2'] .slider-right .progress-circle:hover .drag-letter,
+#step-slider[data-active-flow-step='3'].image-selected.design-selected .step-slide[data-step='3'] .slider-right .progress-circle:hover .drag-letter {
     fill: rgba(154, 154, 154, 0.98);
 }
 
-#step-slider.image-selected .step-slide[data-step='1'].is-current-step .slider-right .progress-circle:active,
-#step-slider.design-selected .step-slide[data-step='2'].is-current-step .slider-right .progress-circle:active,
-#step-slider.image-selected .step-slide[data-step='3'].is-current-step .slider-right .progress-circle:active {
+#step-slider[data-active-flow-step='1'].image-selected .step-slide[data-step='1'] .slider-right .progress-circle:active,
+#step-slider[data-active-flow-step='2'].design-selected .step-slide[data-step='2'] .slider-right .progress-circle:active,
+#step-slider[data-active-flow-step='3'].image-selected.design-selected .step-slide[data-step='3'] .slider-right .progress-circle:active {
     background: #000000;
     border-color: rgba(255, 255, 255, 0.22);
 }
 
-#step-slider.image-selected .step-slide[data-step='1'].is-current-step .slider-right .progress-circle:active .arrow-right,
-#step-slider.design-selected .step-slide[data-step='2'].is-current-step .slider-right .progress-circle:active .arrow-right,
-#step-slider.image-selected .step-slide[data-step='3'].is-current-step .slider-right .progress-circle:active .arrow-right {
+#step-slider[data-active-flow-step='1'].image-selected .step-slide[data-step='1'] .slider-right .progress-circle:active .arrow-right,
+#step-slider[data-active-flow-step='2'].design-selected .step-slide[data-step='2'] .slider-right .progress-circle:active .arrow-right,
+#step-slider[data-active-flow-step='3'].image-selected.design-selected .step-slide[data-step='3'] .slider-right .progress-circle:active .arrow-right {
     filter: grayscale(1) contrast(1.02) invert(1) brightness(1.05);
     opacity: 1;
 }
 
-#step-slider.image-selected .step-slide[data-step='1'].is-current-step .slider-right .progress-circle:active .drag-letter,
-#step-slider.design-selected .step-slide[data-step='2'].is-current-step .slider-right .progress-circle:active .drag-letter,
-#step-slider.image-selected .step-slide[data-step='3'].is-current-step .slider-right .progress-circle:active .drag-letter {
+#step-slider[data-active-flow-step='1'].image-selected .step-slide[data-step='1'] .slider-right .progress-circle:active .drag-letter,
+#step-slider[data-active-flow-step='2'].design-selected .step-slide[data-step='2'] .slider-right .progress-circle:active .drag-letter,
+#step-slider[data-active-flow-step='3'].image-selected.design-selected .step-slide[data-step='3'] .slider-right .progress-circle:active .drag-letter {
     fill: rgba(154, 154, 154, 0.98);
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle:hover {
     background: #dedede;
-    border-color: rgba(0, 0, 0, 0.14);
+    border-color: var(--color-black);
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle:hover .arrow-left {
@@ -1946,7 +1938,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle:active {
     background: #d4d4d4;
-    border-color: rgba(0, 0, 0, 0.12);
+    border-color: var(--color-black);
 }
 
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-left .progress-circle:active .arrow-left {
