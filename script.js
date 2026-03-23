@@ -2480,7 +2480,9 @@ class Scene3D {
 
     updateActiveSlideClasses() {
         const slider = document.getElementById('step-slider');
-        if (slider) slider.dataset.activeFlowStep = String(this.currentStep);
+        const stepStr = String(this.currentStep);
+        if (slider) slider.dataset.activeFlowStep = stepStr;
+        document.body.dataset.activeFlowStep = stepStr;
 
         const slides = document.querySelectorAll('.step-slide');
         slides.forEach((slide) => {
@@ -2591,29 +2593,38 @@ class Scene3D {
         this._step2InteractionsBound = true;
 
         const options = document.querySelectorAll('.step-2-option');
-        const designInput = document.getElementById('design-input');
+        const chosenDisplay = document.getElementById('design-chosen-display');
+
+        const applyStep2Selection = (option, index) => {
+            options.forEach((opt) => {
+                opt.classList.remove('selected');
+                opt.setAttribute('aria-selected', 'false');
+            });
+            option.classList.add('selected');
+            option.setAttribute('aria-selected', 'true');
+
+            const optionText = option.dataset.option || option.textContent.trim();
+            if (chosenDisplay) {
+                chosenDisplay.textContent = optionText;
+                chosenDisplay.classList.remove('step-2-chosen-display--empty');
+            }
+
+            this.selectedDesignOption = index + 1;
+            console.log(`Selected design option: ${this.selectedDesignOption}`);
+
+            this.updateStep2Draggers();
+            this.syncNavStepsFromFlow();
+            queueMicrotask(() => this.updateDragHandleHint());
+        };
 
         options.forEach((option, index) => {
-            option.addEventListener('click', () => {
-                // Remove selected class from all options
-                options.forEach(opt => opt.classList.remove('selected'));
-                
-                // Add selected class to clicked option
-                option.classList.add('selected');
-                
-                // Update input field with selected option text
-                if (designInput) {
-                    const optionText = option.dataset.option || option.textContent.trim();
-                    designInput.value = optionText;
+            option.setAttribute('aria-selected', 'false');
+            option.addEventListener('click', () => applyStep2Selection(option, index));
+            option.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    applyStep2Selection(option, index);
                 }
-                
-                // Store selected design option (1, 2, or 3)
-                this.selectedDesignOption = index + 1;
-                console.log(`Selected design option: ${this.selectedDesignOption}`);
-
-                this.updateStep2Draggers();
-                this.syncNavStepsFromFlow();
-                queueMicrotask(() => this.updateDragHandleHint());
             });
         });
 
@@ -2899,15 +2910,11 @@ class Scene3D {
         if (!container) return;
         container.classList.remove('step-3-selection-visual');
         const options = container.querySelectorAll('.step-3-option');
-        const arrow = document.getElementById('step-3-finalize-arrow');
         options.forEach((o) => o.classList.remove('selected'));
         const preferred =
             container.querySelector('.step-3-option[data-option-index="1"]') || options[1] || options[0];
         if (preferred) {
             preferred.classList.add('selected');
-            if (arrow && !preferred.contains(arrow)) {
-                preferred.appendChild(arrow);
-            }
         }
     }
 
@@ -2915,39 +2922,14 @@ class Scene3D {
         if (this._step3InteractionsBound) return;
         this._step3InteractionsBound = true;
 
-        const finalizeArrow = document.getElementById('step-3-finalize-arrow');
-        if (finalizeArrow) {
-            finalizeArrow.addEventListener('click', (e) => {
-                e.stopPropagation();
-
-                this.boundaries['3-4'] = 0;
-                this.boundaries['2-3'] = 0;
-                this.boundaries['1-2'] = 0;
-
-                this.updateCanvasPositions();
-                this.updateSliderVisibility();
-
-                this.currentStep = 4;
-                this.maxFlowStepReached = Math.max(this.maxFlowStepReached || 1, 4);
-                this.updateCurrentStepFromBoundaries();
-                this.syncNavStepsFromFlow();
-
-                console.log('Finalized design, moved to Step 4');
-            });
-        }
-        
         const container = document.getElementById('step-3-options');
         const options = container?.querySelectorAll('.step-3-option');
 
         options?.forEach((option) => {
-            option.addEventListener('click', (e) => {
-                if (e.target.closest('.step-3-arrow-indicator')) return;
+            option.addEventListener('click', () => {
                 options.forEach((o) => o.classList.remove('selected'));
                 option.classList.add('selected');
                 container.classList.add('step-3-selection-visual');
-                if (finalizeArrow) {
-                    option.appendChild(finalizeArrow);
-                }
                 option.scrollIntoView({ behavior: 'smooth', block: 'center' });
             });
         });

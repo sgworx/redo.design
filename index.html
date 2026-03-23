@@ -34,7 +34,7 @@
             else document.head.prepend(b);
         })();
     </script>
-    <title>3D Objects Gallery</title>
+    <title>reDO ai</title>
     <!-- Typography: Helvetica Neue stack sitewide (--font-site / --font-mono alias). -->
     <!-- UI motion: vanilla CSS + JS; catalog thumbnail snap uses Motion (Framer spring API) via dynamic import. Step 2→3: CSS cross-fade on #step-slider. -->
     <link rel="stylesheet" href="./styles.css">
@@ -43,7 +43,7 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
 </head>
-<body>
+<body data-active-flow-step="1">
     <!-- Cinematic intro: text first, then handoff to 3D (see Scene3D.startHomeIntro) -->
     <div id="home-intro" class="home-intro" role="dialog" aria-modal="true" aria-labelledby="home-intro-line-1">
         <div class="home-intro__inner">
@@ -186,24 +186,36 @@
                             </div>
                         </div>
                         <div class="step-2-prompt-inner">
-                            <div class="step-2-input-section">
-                                <div class="step-2-input-wrapper">
-                                    <input type="text" class="step-2-input" id="design-input" placeholder="Choose a Design...">
-                                    <button type="button" class="step-2-arrow-button" id="design-arrow-btn">
-                                        <div class="arrow-right-small"></div>
-                                    </button>
+                            <div class="step-2-prompt-tab">
+                                <p class="step-2-tab-heading">Choose design</p>
+                                <div class="step-2-input-section">
+                                    <div class="step-2-input-wrapper">
+                                        <div
+                                            class="step-2-chosen-display step-2-chosen-display--empty"
+                                            id="design-chosen-display"
+                                            role="status"
+                                            aria-live="polite"
+                                            data-empty-label="Select a design from Options below"
+                                        ></div>
+                                        <button type="button" class="step-2-arrow-button" id="design-arrow-btn" aria-label="Continue to design preview">
+                                            <div class="arrow-right-small"></div>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="step-2-options">
-                                <div class="step-2-option" data-option="Low profile lounge chair ?">
-                                    Low profile lounge chair ?
-                                </div>
-                                <div class="step-2-option" data-option="Faceted chair ?">
-                                    Faceted chair ?
-                                </div>
-                                <div class="step-2-option" data-option="Modern minimalist chair ?">
-                                    Modern minimalist chair ?
+                            <div class="step-2-options-tab">
+                                <p class="step-2-tab-heading">Options</p>
+                                <div class="step-2-options" role="listbox" aria-label="Suggested designs">
+                                    <div class="step-2-option" role="option" tabindex="0" data-option="Low profile lounge chair ?">
+                                        Low profile lounge chair ?
+                                    </div>
+                                    <div class="step-2-option" role="option" tabindex="0" data-option="Faceted chair ?">
+                                        Faceted chair ?
+                                    </div>
+                                    <div class="step-2-option" role="option" tabindex="0" data-option="Modern minimalist chair ?">
+                                        Modern minimalist chair ?
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -266,9 +278,6 @@
 
                         <div class="step-3-option selected" data-option-index="1">
                             <img src="" alt="Design option 2" class="step-3-option-img">
-                            <div class="step-3-arrow-indicator" id="step-3-finalize-arrow">
-                                <div class="arrow-diagonal"></div>
-                            </div>
                         </div>
 
                         <div class="step-3-option" data-option-index="2">

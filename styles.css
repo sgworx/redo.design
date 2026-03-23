@@ -147,8 +147,7 @@ textarea {
 
 /* —— Primary controls: elastic easing, hover lift, press tuck —— */
 .arrow-button,
-.step-2-arrow-button,
-.step-3-arrow-indicator {
+.step-2-arrow-button {
     transition:
         transform var(--duration-interact) var(--ease-standard),
         box-shadow var(--duration-interact) var(--ease-standard),
@@ -160,14 +159,12 @@ textarea {
 }
 
 .arrow-button:hover,
-.step-2-arrow-button:hover,
-.step-3-arrow-indicator:hover {
+.step-2-arrow-button:hover {
     transform: scale(1.02);
 }
 
 .arrow-button:active,
-.step-2-arrow-button:active,
-.step-3-arrow-indicator:active {
+.step-2-arrow-button:active {
     transform: scale(0.98);
 }
 
@@ -546,8 +543,8 @@ textarea {
         height: clamp(320px, 60vw, 520px);
     }
 
-    .step-2-input-wrapper,
-    .step-2-options {
+    .step-2-prompt-tab,
+    .step-2-options-tab {
         width: clamp(320px, 60vw, 520px);
     }
 
@@ -603,8 +600,8 @@ textarea {
         height: clamp(280px, 50vw, 420px);
     }
 
-    .step-2-input-wrapper,
-    .step-2-options {
+    .step-2-prompt-tab,
+    .step-2-options-tab {
         width: clamp(280px, 50vw, 420px);
     }
 
@@ -676,8 +673,8 @@ textarea {
         aspect-ratio: 1 / 1; /* keep square */
     }
 
-    .step-2-input-wrapper,
-    .step-2-options {
+    .step-2-prompt-tab,
+    .step-2-options-tab {
         width: clamp(300px, 46vw, 460px);
     }
 
@@ -761,6 +758,7 @@ textarea {
     position: fixed;
     bottom: clamp(28px, 4.5vh, 52px);
     left: clamp(20px, 3.5vw, 40px);
+    right: auto;
     display: flex;
     align-items: flex-end;
     gap: clamp(2.25rem, 4vw, 3.25rem);
@@ -773,7 +771,19 @@ textarea {
     box-shadow: none;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    transition: opacity var(--duration-slow) var(--ease-out-smooth);
+    transform: none;
+    transition:
+        opacity var(--duration-slow) var(--ease-out-smooth),
+        left 0.38s var(--ease-out-smooth),
+        transform 0.38s var(--ease-out-smooth);
+}
+
+/* Steps 2 & 3: center the nav row in the viewport (over the active canvas column); 1 & 4 keep default left anchor */
+body[data-active-flow-step='2'] .nav-steps,
+body[data-active-flow-step='3'] .nav-steps {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
 }
 
 .nav-step {
@@ -1300,6 +1310,13 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
         bottom: max(20px, env(safe-area-inset-bottom, 0px));
         left: max(16px, env(safe-area-inset-left, 0px));
         gap: clamp(1.35rem, 5vw, 2rem);
+    }
+
+    body[data-active-flow-step='2'] .nav-steps,
+    body[data-active-flow-step='3'] .nav-steps {
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
     }
 
     .step-circle {
@@ -2897,12 +2914,6 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
         filter 0.35s var(--ease-standard);
 }
 
-.step-3-options-container.step-3-generation--busy .step-3-arrow-indicator {
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.25s var(--ease-standard);
-}
-
 .step-3-generation-skeleton {
     display: flex;
     flex-direction: column;
@@ -3018,52 +3029,6 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 
 .step-3-options-container.step-3-selection-visual .step-3-option.selected:hover .step-3-option-img {
     transform: scale(1.26);
-}
-
-/* Arrow indicator on main image */
-.step-3-arrow-indicator {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    width: 40px;
-    height: 40px;
-    background: var(--color-white);
-    border: 1px solid var(--color-border-stroke);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    z-index: 10;
-    box-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-}
-
-.step-3-arrow-indicator:hover {
-    background: linear-gradient(160deg, #ffffff 0%, #ececec 55%, #f2f2f2 100%);
-    border-color: rgba(0, 0, 0, 0.22);
-}
-
-.step-3-arrow-indicator:active {
-    background: linear-gradient(160deg, #e8e8e8 0%, #f5f5f5 100%);
-}
-
-/* Step 3 arrow icon */
-.arrow-diagonal {
-    width: 18px;
-    height: 18px;
-    background-image: url('Assets/arrow2.png');
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: contain;
-    opacity: 0.78;
-    filter: grayscale(1) contrast(1.1);
-}
-
-.arrow-diagonal::before,
-.arrow-diagonal::after {
-    content: none;
 }
 
 .step-3-option-img[src=""] {
@@ -3235,7 +3200,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0;
+    gap: 14px;
 }
 
 .step-2-analysis-overlay {
@@ -3306,49 +3271,73 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     }
 }
 
+/* Step 2 — two panels: “Choose design” (prompt) vs “Options” (list) */
+.step-2-prompt-tab,
+.step-2-options-tab {
+    width: 520px;
+    flex-shrink: 0;
+    border: 1px solid var(--panel-border);
+    border-radius: 2px;
+    background: var(--color-white);
+    overflow: hidden;
+    box-shadow: var(--photo-emboss-shadow);
+}
+
+.step-2-tab-heading {
+    margin: 0;
+    padding: 10px 14px 9px;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    border-bottom: 1px solid var(--panel-border);
+    background: var(--color-surface-low);
+}
+
 /* Step 2 Input Section - fixed size */
 .step-2-input-section {
-    width: auto;
+    width: 100%;
     display: flex;
     justify-content: center;
     flex-shrink: 0;
 }
 
-.step-2-input-wrapper {
+.step-2-prompt-tab .step-2-input-wrapper {
     display: flex;
     align-items: center;
-    gap: 12px;
-    width: 520px; /* Fixed width matching image box */
-    flex-shrink: 0;
+    gap: 0;
+    width: 100%;
+    min-height: 48px;
 }
 
-.step-2-input {
+/* Read-only summary of the selection (typing only happens in browser chrome, not here) */
+.step-2-chosen-display {
     flex: 1;
-    height: 48px;
+    min-height: 48px;
     padding: 0 16px;
-    background: var(--color-white);
-    border: 1px solid var(--panel-border);
-    border-radius: 2px;
+    display: flex;
+    align-items: center;
     font-size: 16px;
-    color: #000;
-    outline: none;
+    color: var(--color-text);
     font-family: inherit;
-    box-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    transition:
-        background-color var(--duration-fast) var(--ease-out-smooth),
-        border-color var(--duration-fast) var(--ease-out-smooth);
+    background: var(--color-white);
+    user-select: none;
+    cursor: default;
+    box-sizing: border-box;
 }
 
-.step-2-input::placeholder {
-    color: #666;
-    transition: opacity var(--duration-fast) var(--ease-out-smooth);
+.step-2-chosen-display--empty {
+    color: var(--color-text-muted);
 }
 
-.step-2-input:focus {
-    outline: 2px solid var(--color-black);
-    outline-offset: 2px;
+.step-2-chosen-display--empty::before {
+    content: attr(data-empty-label);
+}
+
+.step-2-chosen-display:not(.step-2-chosen-display--empty)::before {
+    content: none;
 }
 
 .step-2-arrow-button {
@@ -3365,6 +3354,11 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     flex-shrink: 0;
+}
+
+.step-2-prompt-tab .step-2-arrow-button {
+    margin: 6px 10px 6px 8px;
+    border: 1px solid var(--color-border-stroke);
 }
 
 .step-slide.is-current-step .step-2-arrow-button {
@@ -3420,12 +3414,12 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     content: none;
 }
 
-/* Step 2 Options - fixed size */
-.step-2-options {
-    width: 520px; /* Fixed width matching image box */
+/* Step 2 options — rows inside the options tab */
+.step-2-options-tab .step-2-options {
+    width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 0;
     flex-shrink: 0;
 }
 
@@ -3454,25 +3448,40 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     font-family: inherit;
 }
 
-.step-2-option:hover {
-    background: var(--color-surface);
-    transform: scale(1.02);
-    border-color: rgba(0, 0, 0, 0.22);
-    box-shadow: var(--photo-emboss-shadow-hover), var(--card-glass-glow);
-    backdrop-filter: blur(14px) saturate(118%);
-    -webkit-backdrop-filter: blur(14px) saturate(118%);
+.step-2-options-tab .step-2-option {
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
 }
 
-.step-2-option:active {
-    transform: scale(0.98);
-    opacity: 0.96;
-    box-shadow: var(--photo-emboss-shadow);
+.step-2-options-tab .step-2-option + .step-2-option {
+    border-top: 1px solid var(--panel-border);
 }
 
-.step-2-option.selected {
-    background: var(--color-white);
-    border: 1px solid var(--color-black);
-    box-shadow: var(--photo-emboss-shadow-hover);
+.step-2-options-tab .step-2-option:hover {
+    background: #efefef;
+    transform: none;
+    border-color: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.step-2-options-tab .step-2-option:active {
+    transform: none;
+    opacity: 1;
+    box-shadow: none;
+    background: #e5e5e5;
+}
+
+.step-2-options-tab .step-2-option.selected {
+    background: #d8d8d8;
+    border-color: transparent;
+    box-shadow: none;
+}
+
+.step-2-options-tab .step-2-option.selected:hover {
+    background: #d0d0d0;
 }
 
 @media (max-width: 768px) {
@@ -3543,11 +3552,12 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     .step-slide[data-step='2'],
     .step-slide[data-step='3'],
     .step-slide[data-step='4'],
-    .step-2-input,
+    .step-2-prompt-tab,
+    .step-2-options-tab,
+    .step-2-chosen-display,
     .step-2-option,
     .step-2-arrow-button,
     .step-2-image-box,
-    .step-3-arrow-indicator,
     .step-4-guide,
     .thumbnail-badge,
     .nav-step.active .step-circle {
