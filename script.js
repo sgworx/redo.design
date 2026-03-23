@@ -16,6 +16,9 @@ const STEP2_ANALYSIS_MESSAGES = [
 ];
 const STEP2_ANALYSIS_LINE_MS = 720;
 
+/** Step 2 — “Processing image” delay when entering from Step 1 only (0 with reduced motion) */
+const STEP2_IMAGE_PROCESSING_MS = 420;
+
 /** Step 3 — sequential copy after leaving Step 2, before previews resolve */
 const STEP3_BUILD_MESSAGES = [
     'Building selected design',
@@ -593,6 +596,9 @@ class Scene3D {
         this._crossfade23Timer = null;
         this._step2AnalysisRunId = 0;
         this._step2SeqTimer = null;
+        this._step2MaterialImageSrc = '';
+        this._step2ImageRevealRunId = 0;
+        this._step2ImageRevealTimer = null;
 
         // Boundary positions for canvas transitions (in vw)
         // Each boundary represents the position between two steps
@@ -1823,6 +1829,7 @@ class Scene3D {
 
         if (step !== 2) {
             this._abortStep2Analysis();
+            this._abortStep2ImageReveal();
         }
         if (step !== 3) {
             this._abortStep3GenerationUi();
@@ -1838,6 +1845,9 @@ class Scene3D {
 
         if (step === 2 && prevStep === 1) {
             queueMicrotask(() => this._runStep2AnalysisSequence());
+        }
+        if (step === 2) {
+            queueMicrotask(() => this._revealStep2MaterialImage(prevStep));
         }
 
         if (step === 3 && this.selectedDesignOption) {
@@ -2446,6 +2456,7 @@ class Scene3D {
 
             if (newStep !== 2) {
                 this._abortStep2Analysis();
+                this._abortStep2ImageReveal();
             }
             if (newStep !== 3) {
                 this._abortStep3GenerationUi();
@@ -2453,6 +2464,9 @@ class Scene3D {
 
             if (newStep === 2 && prevStep === 1) {
                 queueMicrotask(() => this._runStep2AnalysisSequence());
+            }
+            if (newStep === 2) {
+                queueMicrotask(() => this._revealStep2MaterialImage(prevStep));
             }
 
             if (newStep === 3) {
@@ -2573,19 +2587,119 @@ class Scene3D {
         }, 720);
     }
 
-    updateStep2Image(imageSrc) {
-        // Update the Step 2 image display with the selected image from Step 1
+    _abortStep2ImageReveal() {
+        this._step2ImageRevealRunId += 1;
+        if (this._step2ImageRevealTimer != null) {
+            clearTimeout(this._step2ImageRevealTimer);
+            this._step2ImageRevealTimer = null;
+        }
+        const box = document.querySelector('.step-2-image-box');
+        const overlay = document.getElementById('step-2-image-processing');
+        if (box) box.classList.remove('step-2-image-box--processing');
+        if (overlay) overlay.setAttribute('aria-hidden', 'true');
+    }
+
+    _commitStep2ImageToDom(src) {
         const step2Image = document.getElementById('step-2-selected-image');
-        if (step2Image) {
-            if (imageSrc && imageSrc.trim() !== '') {
-                step2Image.src = imageSrc;
-                step2Image.style.display = 'block';
-                console.log('Step 2 image updated:', imageSrc);
-            } else {
+        if (!step2Image || !src) return;
+        step2Image.src = src;
+        step2Image.style.display = 'block';
+    }
+
+    /**
+     * Show Step 2 material image only once the user is on Step 2.
+     * From Step 1: brief “Processing image” state, then reveal.
+     * From other steps: show immediately (no loader).
+     */
+    _revealStep2MaterialImage(previousStep) {
+        const src = (this._step2MaterialImageSrc || '').trim();
+        if (!src) {
+            const step2Image = document.getElementById('step-2-selected-image');
+            if (step2Image) {
                 step2Image.removeAttribute('src');
                 step2Image.style.display = 'none';
             }
+            const box = document.querySelector('.step-2-image-box');
+            if (box) box.classList.remove('step-2-image-box--processing');
+            const overlay = document.getElementById('step-2-image-processing');
+            if (overlay) overlay.setAttribute('aria-hidden', 'true');
+            return;
         }
+
+        if (previousStep !== 1) {
+            this._abortStep2ImageReveal();
+            this._commitStep2ImageToDom(src);
+            return;
+        }
+
+        this._abortStep2ImageReveal();
+        this._step2ImageRevealRunId += 1;
+        const runId = this._step2ImageRevealRunId;
+
+        const box = document.querySelector('.step-2-image-box');
+        const overlay = document.getElementById('step-2-image-processing');
+        const img = document.getElementById('step-2-selected-image');
+        if (img) {
+            img.removeAttribute('src');
+            img.style.display = 'none';
+        }
+
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const processingMs = reduce ? 0 : STEP2_IMAGE_PROCESSING_MS;
+
+        const showGreyLoaderThenImage = () => {
+            if (runId !== this._step2ImageRevealRunId) return;
+            if (box) box.classList.add('step-2-image-box--processing');
+            if (overlay) overlay.setAttribute('aria-hidden', 'false');
+            this._step2ImageRevealTimer = window.setTimeout(() => {
+                this._step2ImageRevealTimer = null;
+                if (runId !== this._step2ImageRevealRunId) return;
+                if ((this._step2MaterialImageSrc || '').trim() !== src) return;
+                this._commitStep2ImageToDom(src);
+                if (box) box.classList.remove('step-2-image-box--processing');
+                if (overlay) overlay.setAttribute('aria-hidden', 'true');
+            }, processingMs);
+        };
+
+        // After Step 2 is painted (user has “landed”), then match the same loader treatment as the prompt analysis overlay
+        requestAnimationFrame(() => {
+            requestAnimationFrame(showGreyLoaderThenImage);
+        });
+    }
+
+    /** Stash material URL from Step 1; Step 2 preview is filled only when user reaches Step 2 (see _revealStep2MaterialImage). */
+    updateStep2Image(imageSrc) {
+        const trimmed = imageSrc && String(imageSrc).trim() !== '' ? String(imageSrc).trim() : '';
+        this._step2MaterialImageSrc = trimmed;
+
+        const step2Image = document.getElementById('step-2-selected-image');
+        const box = document.querySelector('.step-2-image-box');
+        const overlay = document.getElementById('step-2-image-processing');
+
+        if (!trimmed) {
+            this._abortStep2ImageReveal();
+            if (step2Image) {
+                step2Image.removeAttribute('src');
+                step2Image.style.display = 'none';
+            }
+            if (box) box.classList.remove('step-2-image-box--processing');
+            if (overlay) overlay.setAttribute('aria-hidden', 'true');
+            return;
+        }
+
+        this._abortStep2ImageReveal();
+        if (step2Image) {
+            step2Image.removeAttribute('src');
+            step2Image.style.display = 'none';
+        }
+        if (box) box.classList.remove('step-2-image-box--processing');
+        if (overlay) overlay.setAttribute('aria-hidden', 'true');
+
+        if (this.currentStep === 2) {
+            this._revealStep2MaterialImage(3);
+        }
+
+        console.log('Step 2 material stashed (shown when user opens Step 2):', trimmed);
     }
     
     setupStep2Interactions() {

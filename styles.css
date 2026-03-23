@@ -3132,6 +3132,38 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     box-shadow: var(--photo-emboss-shadow);
 }
 
+/* Same glass + grey + spinner/type as .step-2-analysis-overlay (prompt region) */
+.step-2-image-processing {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+    box-sizing: border-box;
+    background: rgba(245, 245, 245, 0.88);
+    backdrop-filter: blur(10px) saturate(115%);
+    -webkit-backdrop-filter: blur(10px) saturate(115%);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+        opacity 0.35s var(--ease-out-smooth),
+        visibility 0.35s var(--ease-out-smooth);
+}
+
+.step-2-image-box.step-2-image-box--processing .step-2-image-processing {
+    opacity: 1;
+    visibility: visible;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .step-2-image-processing {
+        transition: none;
+    }
+}
+
 .step-2-image-box img {
     width: 100%;
     height: 100%;
@@ -3558,6 +3590,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     .step-2-option,
     .step-2-arrow-button,
     .step-2-image-box,
+    .step-2-image-processing,
     .step-4-guide,
     .thumbnail-badge,
     .nav-step.active .step-circle {
