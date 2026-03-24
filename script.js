@@ -3352,7 +3352,7 @@ class Scene3D {
         const body = document.getElementById('step-4-instructions-body');
 
         copyBtn?.addEventListener('click', async () => {
-            const t = body ? body.textContent : '';
+            const t = this._step4LastText || (body ? body.textContent : '');
             if (!t) return;
             try {
                 await navigator.clipboard.writeText(t);
@@ -3424,6 +3424,103 @@ class Scene3D {
         this.setStep4View(v);
     }
 
+    /** Renders raw markdown text as clean HTML for the instructions panel. */
+    _step4RenderMarkdown(raw) {
+        const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const inline = (s) => {
+            s = esc(s);
+            s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            return s;
+        };
+
+        const lines = raw.split('\n');
+        const out = [];
+        let listType = null;
+        let paraLines = [];
+
+        const flushPara = () => {
+            if (!paraLines.length) return;
+            out.push(`<p class="md-p">${paraLines.map(inline).join('<br>')}</p>`);
+            paraLines = [];
+        };
+        const closeList = () => {
+            if (!listType) return;
+            out.push(`</${listType}>`);
+            listType = null;
+        };
+        const openList = (type) => {
+            if (listType === type) return;
+            closeList();
+            out.push(`<${type} class="md-list">`);
+            listType = type;
+        };
+
+        let i = 0;
+        while (i < lines.length) {
+            const line = lines[i].trimEnd();
+
+            // Fenced code block
+            if (line.trim().startsWith('```')) {
+                flushPara(); closeList();
+                const codeLines = [];
+                i++;
+                while (i < lines.length && !lines[i].trim().startsWith('```')) {
+                    codeLines.push(esc(lines[i]));
+                    i++;
+                }
+                out.push(`<pre class="md-pre">${codeLines.join('\n')}</pre>`);
+                i++; continue;
+            }
+
+            // ATX heading  # to ######
+            const hm = line.match(/^(#{1,6})\s+(.*)/);
+            if (hm) {
+                flushPara(); closeList();
+                const depth = hm[1].length;
+                const tag = depth <= 2 ? `h${depth}` : depth <= 4 ? 'h3' : 'h4';
+                out.push(`<${tag} class="md-h${depth}">${inline(hm[2].trim())}</${tag}>`);
+                i++; continue;
+            }
+
+            // Horizontal rule (4+ dashes)
+            if (/^-{4,}\s*$/.test(line.trim())) {
+                flushPara(); closeList();
+                out.push('<hr class="md-hr">');
+                i++; continue;
+            }
+
+            // Unordered list item (- or *, any indent)
+            const ulm = line.match(/^(\s*)([-*])\s+(.+)$/);
+            if (ulm) {
+                flushPara(); openList('ul');
+                out.push(`<li>${inline(ulm[3])}</li>`);
+                i++; continue;
+            }
+
+            // Ordered list item (1. …, any indent)
+            const olm = line.match(/^(\s*)\d+\.\s+(.+)$/);
+            if (olm) {
+                flushPara(); openList('ol');
+                out.push(`<li>${inline(olm[2])}</li>`);
+                i++; continue;
+            }
+
+            // Empty line — paragraph break
+            if (line.trim() === '') {
+                flushPara(); closeList();
+                i++; continue;
+            }
+
+            // Regular text — accumulate
+            closeList();
+            paraLines.push(line.trim());
+            i++;
+        }
+
+        flushPara(); closeList();
+        return out.join('\n');
+    }
+
     /** Loads GLB, diagram, and instructions for the Step 3–selected design; tabs only change which panel is visible. */
     refreshStep4Outputs() {
         if (this.currentStep !== 4) return;
@@ -3444,20 +3541,18 @@ class Scene3D {
         }
 
         const body = document.getElementById('step-4-instructions-body');
-        const placeholder =
-            'Loading instructions…\n\nIf this never resolves, add the .txt file next to your diagram assets or check the network tab.';
-        if (body) body.textContent = placeholder;
+        if (body) body.innerHTML = '<p class="md-p md-p--loading">Loading instructions\u2026</p>';
 
         fetch(txtUrl)
             .then((r) => (r.ok ? r.text() : Promise.reject(new Error(String(r.status)))))
             .then((text) => {
                 this._step4LastText = text;
-                if (body) body.textContent = text;
+                if (body) body.innerHTML = this._step4RenderMarkdown(text);
             })
             .catch(() => {
                 const fb = `Could not load ${spec.instructionsTxt}. Add the file under Assets/ or fix the path.`;
                 this._step4LastText = fb;
-                if (body) body.textContent = fb;
+                if (body) body.innerHTML = `<p class="md-p">${fb}</p>`;
             });
 
         this._ensureStep4Viewer();

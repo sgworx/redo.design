@@ -1513,9 +1513,9 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     pointer-events: none;
 }
 
-/* Avoid double line overlap at shared boundaries */
+/* Back dragger: vertical track behind the left handle (black on light steps; Step 4 override below) */
 .slider-left .progress-line {
-    display: none;
+    display: block;
 }
 
 /* Ready for next step: full contrast (back / shared tracks; forward line scoped below) */
@@ -1526,6 +1526,16 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 /* Forward vertical track: same grey as default line + knob ring until this step’s forward dragger is armed */
 #step-slider.image-selected .step-slide .slider-right .progress-line {
     background: var(--color-disabled) !important;
+}
+
+/* Back track: black (overrides .image-selected obsidian on shared .progress-line rule) */
+#step-slider .canvas-slider.slider-left .progress-line {
+    background: var(--color-black) !important;
+}
+
+/* Step 4 obsidian panel: pure black rail would disappear — light track for contrast */
+#step-slider .step-slide[data-step="4"] .canvas-slider.slider-left .progress-line {
+    background: rgba(255, 255, 255, 0.28) !important;
 }
 
 #step-slider[data-active-flow-step='1'].image-selected .step-slide[data-step='1'] .slider-right .progress-line,
@@ -1705,11 +1715,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     }
 }
 
-/* Step 2: forward divider matches Step 1 (black when image in flow); left line is hidden on .slider-left */
-.step-slide[data-step="2"] .slider-left .progress-line {
-    background: var(--color-text-muted) !important;
-}
-
+/* Step 2: forward divider matches Step 1 (black when image in flow) */
 .step-slide[data-step="2"] .slider-right .progress-line {
     background: var(--color-obsidian) !important;
 }
@@ -2914,7 +2920,8 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     );
 }
 
-/* Let the output guide use full column width and flex height (parent uses align-items: center) */
+
+/* Full width of Step 4 column */
 .canvas-content.step-4-content > .step-4-guide.step-4-output-layout {
     align-self: stretch;
 }
@@ -3073,21 +3080,44 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     white-space: pre;
 }
 
-/* Step 4 — three panels; guide fills column height so tab panels share one vertical slot */
+/* Step 4 — guide fills full column height; square embeds stay their natural size inside the taller card. */
 .step-4-guide.step-4-output-layout {
     --step-4-guide-pad-y: clamp(18px, 2.75vmin, 30px);
-    flex: 1 1 auto;
-    min-height: 0;
+    flex: 1 0 auto;
+    /* Explicit min-height so the card always reaches the bottom gutter even when flex propagation fails
+       in overflow-y:auto containers. Uses the same variables as .step-4-content padding. */
+    min-height: calc(
+        100dvh
+        - var(--step-4-v-gutter) * 2
+        - var(--step-4-nav-band)
+        - env(safe-area-inset-top, 0px)
+        - env(safe-area-inset-bottom, 0px)
+    );
     display: flex;
     flex-direction: column;
     align-items: stretch;
     max-width: min(960px, 92vw);
     width: 100%;
     margin: 0 auto;
-    padding: var(--step-4-guide-pad-y) clamp(16px, 3vw, 28px) var(--step-4-guide-pad-y);
-    overflow: hidden;
+    padding: 0 clamp(16px, 3vw, 28px) var(--step-4-guide-pad-y);
+    overflow: visible;
     box-sizing: border-box;
     font-family: var(--font-site);
+}
+
+/* Sticky header + tab strip — freezes at top of scroll area while tab panel scrolls beneath */
+.step-4-sticky-chrome {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--color-obsidian);
+    padding: var(--step-4-guide-pad-y) 0 0;
+    margin-left: calc(-1 * clamp(16px, 3vw, 28px));
+    margin-right: calc(-1 * clamp(16px, 3vw, 28px));
+    padding-left: clamp(16px, 3vw, 28px);
+    padding-right: clamp(16px, 3vw, 28px);
+    box-sizing: border-box;
+    flex-shrink: 0;
 }
 
 .step-4-output-header {
@@ -3149,7 +3179,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    padding: 10px 4px 12px;
+    padding: 10px 4px 10px;
     border: none;
     border-bottom: 2px solid transparent;
     margin-bottom: -1px;
@@ -3192,8 +3222,8 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 
 .step-4-panels {
     --step-4-panel-max: min(640px, 100%);
-    /* basis 0 so this region always consumes remaining guide height (not content-sized) */
-    flex: 1 1 0;
+    /* Height always follows active tab (square + chrome, or full instructions) — no empty flex column */
+    flex: 0 0 auto;
     min-height: 0;
     display: flex;
     flex-direction: column;
@@ -3207,20 +3237,10 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     flex-direction: column;
     align-items: stretch;
     align-self: center;
-    flex: 1 1 0;
+    flex: 0 0 auto;
     min-height: 0;
     width: 100%;
     max-width: var(--step-4-panel-max);
-    justify-content: flex-start;
-}
-
-/* Square embeds: center in the flex panel so unused height splits evenly top/bottom */
-.step-4-panels .step-4-section--3d,
-.step-4-panels .step-4-section--diagram {
-    justify-content: center;
-}
-
-.step-4-panels .step-4-section--text {
     justify-content: flex-start;
 }
 
@@ -3229,7 +3249,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     display: none !important;
 }
 
-/* 3D + diagram: square embed only — fixed height from width; does not stretch with tab body */
+/* 3D + diagram: square embed; side capped by remaining viewport height (~one screen, portrait-friendly 9∶16 slot) */
 .step-4-viewport {
     position: relative;
     flex: 0 0 auto;
@@ -3264,6 +3284,31 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+/* Cap square side so 3D/diagram fit one viewport above nav (no flex “stage”; card ends under the square) */
+.step-4-panels[data-step4-view='3d'] .step-4-viewport,
+.step-4-panels[data-step4-view='diagram'] .step-4-diagram-frame {
+    --step-4-embed-chrome: clamp(200px, 32svh, 300px);
+    width: min(
+        var(--step-4-panel-max),
+        calc(100svh - var(--step-4-embed-chrome)),
+        calc(100dvh - var(--step-4-embed-chrome))
+    );
+    max-width: 100%;
+    align-self: center;
+}
+
+/* Portrait 9∶16-ish handsets: keep the square inside the narrow “page” width */
+@media (max-aspect-ratio: 9 / 16) {
+    .step-4-panels[data-step4-view='3d'] .step-4-viewport,
+    .step-4-panels[data-step4-view='diagram'] .step-4-diagram-frame {
+        width: min(
+            var(--step-4-panel-max),
+            calc(100vw - clamp(24px, 6vw, 40px)),
+            calc((100svh - var(--step-4-embed-chrome)) * 9 / 16)
+        );
+    }
 }
 
 .step-4-diagram-img {
@@ -3320,46 +3365,133 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     border-color: rgba(255, 255, 255, 0.35);
 }
 
+/* Instructions region: transparent, no box — content flows on obsidian */
 .step-4-section--text .step-4-code-shell {
-    flex: 1 1 0;
+    flex: 0 0 auto;
     min-height: 0;
-    overflow-x: hidden;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-}
-
-.step-4-code-shell {
-    border-radius: 0;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(0, 0, 0, 0.45);
+    overflow: visible;
+    background: none;
+    border: none;
     width: 100%;
     max-width: 100%;
-    margin: 0 auto;
+    margin: 0;
+    padding: 0;
     box-sizing: border-box;
 }
 
-.step-4-instructions-pre {
-    margin: 0;
-    padding: 16px 18px 20px;
-    max-height: none;
-    overflow: visible;
-    font-family: var(--font-site);
-    font-size: 13px;
-    line-height: 1.55;
+/* ── Rendered markdown body ─────────────────────────────────────────────── */
+.step-4-md-body {
+    width: 100%;
+    padding: 0;
+    box-sizing: border-box;
     color: rgba(235, 235, 235, 0.92);
-    white-space: pre-wrap;
-    word-break: break-word;
-    tab-size: 4;
 }
 
-.step-4-code-shell::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+.step-4-md-body .md-h1 {
+    font-size: clamp(20px, 2vw, 24px);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    color: rgba(255, 255, 255, 0.98);
+    margin: 0 0 8px;
+    line-height: 1.25;
 }
 
-.step-4-code-shell::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.18);
-    border-radius: 8px;
+.step-4-md-body .md-h2 {
+    font-size: clamp(16px, 1.6vw, 19px);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    color: rgba(255, 255, 255, 0.95);
+    margin: 28px 0 6px;
+    line-height: 1.3;
+}
+
+.step-4-md-body .md-h3 {
+    font-size: clamp(14px, 1.3vw, 16px);
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.90);
+    margin: 20px 0 4px;
+    line-height: 1.35;
+}
+
+.step-4-md-body .md-h4,
+.step-4-md-body .md-h5,
+.step-4-md-body .md-h6 {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: rgba(255, 255, 255, 0.70);
+    text-transform: uppercase;
+    margin: 16px 0 4px;
+    line-height: 1.4;
+}
+
+.step-4-md-body .md-p {
+    font-size: 14px;
+    line-height: 1.65;
+    color: rgba(235, 235, 235, 0.82);
+    margin: 0 0 10px;
+}
+
+.step-4-md-body .md-p--loading {
+    color: rgba(255, 255, 255, 0.35);
+    font-style: italic;
+}
+
+.step-4-md-body .md-hr {
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    margin: 24px 0;
+}
+
+.step-4-md-body .md-list {
+    margin: 4px 0 10px 0;
+    padding-left: 20px;
+    list-style: none;
+}
+
+.step-4-md-body ul.md-list > li::before {
+    content: '•';
+    display: inline-block;
+    width: 16px;
+    margin-left: -20px;
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 12px;
+}
+
+.step-4-md-body ol.md-list {
+    list-style: decimal;
+    list-style-position: outside;
+}
+
+.step-4-md-body ol.md-list > li::before {
+    content: none;
+}
+
+.step-4-md-body .md-list > li {
+    font-size: 14px;
+    line-height: 1.6;
+    color: rgba(235, 235, 235, 0.82);
+    margin-bottom: 3px;
+}
+
+.step-4-md-body .md-pre {
+    font-family: "SFMono-Regular", "Consolas", "Liberation Mono", monospace;
+    font-size: 11.5px;
+    line-height: 1.55;
+    color: rgba(210, 210, 210, 0.88);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 4px;
+    padding: 12px 14px;
+    margin: 8px 0 12px;
+    overflow-x: auto;
+    white-space: pre;
+    tab-size: 2;
+}
+
+.step-4-md-body strong {
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.96);
 }
 
 /* Step 3 Options Container */
