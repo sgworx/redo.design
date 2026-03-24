@@ -791,11 +791,10 @@ textarea {
 
 /* Navigation steps — floating row, no chrome
    Must stack above #step-slider (2000 / 4600); otherwise the full-viewport slider steals all clicks. */
-/* Bottom step labels: always centered so position does not jump between home / steps 1–4 */
 .nav-steps {
     position: fixed;
     bottom: clamp(28px, 4.5vh, 52px);
-    left: 50%;
+    left: clamp(20px, 3.5vw, 40px);
     right: auto;
     display: flex;
     align-items: flex-end;
@@ -809,11 +808,19 @@ textarea {
     box-shadow: none;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    transform: translateX(-50%);
+    transform: none;
     transition:
         opacity var(--duration-slow) var(--ease-out-smooth),
         left 0.38s var(--ease-out-smooth),
         transform 0.38s var(--ease-out-smooth);
+}
+
+/* Steps 2–3: center nav over the main column. Step 1, 4, and homepage use default left (matches Step 1). */
+body[data-active-flow-step='2'] .nav-steps,
+body[data-active-flow-step='3'] .nav-steps {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
 }
 
 .nav-step {
@@ -1335,10 +1342,15 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 @media (max-width: 768px) {
     .nav-steps {
         bottom: max(20px, env(safe-area-inset-bottom, 0px));
+        left: max(16px, env(safe-area-inset-left, 0px));
+        gap: clamp(1.35rem, 5vw, 2rem);
+    }
+
+    body[data-active-flow-step='2'] .nav-steps,
+    body[data-active-flow-step='3'] .nav-steps {
         left: 50%;
         right: auto;
         transform: translateX(-50%);
-        gap: clamp(1.35rem, 5vw, 2rem);
     }
 
     .step-circle {
@@ -3063,6 +3075,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 
 /* Step 4 — three panels; guide fills column height so tab panels share one vertical slot */
 .step-4-guide.step-4-output-layout {
+    --step-4-guide-pad-y: clamp(18px, 2.75vmin, 30px);
     flex: 1 1 auto;
     min-height: 0;
     display: flex;
@@ -3071,7 +3084,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     max-width: min(960px, 92vw);
     width: 100%;
     margin: 0 auto;
-    padding: clamp(20px, 3vw, 32px) clamp(16px, 3vw, 28px) clamp(20px, 3vh, 36px);
+    padding: var(--step-4-guide-pad-y) clamp(16px, 3vw, 28px) var(--step-4-guide-pad-y);
     overflow: hidden;
     box-sizing: border-box;
     font-family: var(--font-site);
@@ -3179,7 +3192,8 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 
 .step-4-panels {
     --step-4-panel-max: min(640px, 100%);
-    flex: 1 1 auto;
+    /* basis 0 so this region always consumes remaining guide height (not content-sized) */
+    flex: 1 1 0;
     min-height: 0;
     display: flex;
     flex-direction: column;
@@ -3193,7 +3207,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     flex-direction: column;
     align-items: stretch;
     align-self: center;
-    flex: 1 1 auto;
+    flex: 1 1 0;
     min-height: 0;
     width: 100%;
     max-width: var(--step-4-panel-max);
@@ -3307,7 +3321,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 }
 
 .step-4-section--text .step-4-code-shell {
-    flex: 1 1 auto;
+    flex: 1 1 0;
     min-height: 0;
     overflow-x: hidden;
     overflow-y: auto;
