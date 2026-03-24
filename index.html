@@ -370,10 +370,6 @@
                     <div class="step-4-guide step-4-output-layout" id="step-4-output-root">
                         <header class="step-4-output-header">
                             <h1 class="step-4-output-title">Get it ready</h1>
-                            <p class="step-4-output-sub">
-                                Tabs switch between the 3D model, assembly diagram, and step-by-step instructions for your
-                                Step&nbsp;3 design.
-                            </p>
                         </header>
                         <nav
                             class="step-4-output-scroller"
@@ -428,9 +424,8 @@
                                 id="step-4-panel-3d"
                                 data-step4-view="3d"
                                 role="tabpanel"
-                                aria-labelledby="step-4-3d-heading"
+                                aria-labelledby="step-4-view-tab-3d"
                             >
-                                <h2 id="step-4-3d-heading" class="step-4-section-title">3D</h2>
                                 <div class="step-4-viewport">
                                     <canvas id="step-4-model-canvas" width="640" height="360" aria-label="3D model preview"></canvas>
                                 </div>
@@ -440,10 +435,9 @@
                                 id="step-4-panel-diagram"
                                 data-step4-view="diagram"
                                 role="tabpanel"
-                                aria-labelledby="step-4-diagram-heading"
+                                aria-labelledby="step-4-view-tab-diagram"
                                 hidden
                             >
-                                <h2 id="step-4-diagram-heading" class="step-4-section-title">Construction diagram</h2>
                                 <div class="step-4-diagram-frame">
                                     <img id="step-4-diagram-img" src="" alt="Construction diagram" class="step-4-diagram-img" />
                                 </div>
@@ -453,11 +447,10 @@
                                 id="step-4-panel-instructions"
                                 data-step4-view="instructions"
                                 role="tabpanel"
-                                aria-labelledby="step-4-text-heading"
+                                aria-labelledby="step-4-view-tab-instructions"
                                 hidden
                             >
                                 <div class="step-4-text-head">
-                                    <h2 id="step-4-text-heading" class="step-4-section-title">Build instructions</h2>
                                     <div class="step-4-text-actions">
                                         <button type="button" class="step-4-action-btn" id="step-4-copy-btn">Copy</button>
                                         <button type="button" class="step-4-action-btn step-4-action-btn--primary" id="step-4-download-btn">Download .txt</button>

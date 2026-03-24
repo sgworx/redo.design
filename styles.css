@@ -585,10 +585,6 @@ textarea {
         --step-3-bottom-safe: clamp(196px, 30vh, 264px);
     }
 
-    .canvas-content.step-4-content {
-        --step-4-bottom-safe: clamp(220px, 34vh, 300px);
-    }
-
     .step-3-options-container {
         margin-top: 0;
         max-width: clamp(360px, 70vw, 600px);
@@ -795,10 +791,11 @@ textarea {
 
 /* Navigation steps — floating row, no chrome
    Must stack above #step-slider (2000 / 4600); otherwise the full-viewport slider steals all clicks. */
+/* Bottom step labels: always centered so position does not jump between home / steps 1–4 */
 .nav-steps {
     position: fixed;
     bottom: clamp(28px, 4.5vh, 52px);
-    left: clamp(20px, 3.5vw, 40px);
+    left: 50%;
     right: auto;
     display: flex;
     align-items: flex-end;
@@ -812,20 +809,11 @@ textarea {
     box-shadow: none;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    transform: none;
+    transform: translateX(-50%);
     transition:
         opacity var(--duration-slow) var(--ease-out-smooth),
         left 0.38s var(--ease-out-smooth),
         transform 0.38s var(--ease-out-smooth);
-}
-
-/* Steps 2–4: center nav over the main column so labels align with centered step content */
-body[data-active-flow-step='2'] .nav-steps,
-body[data-active-flow-step='3'] .nav-steps,
-body[data-active-flow-step='4'] .nav-steps {
-    left: 50%;
-    right: auto;
-    transform: translateX(-50%);
 }
 
 .nav-step {
@@ -1347,15 +1335,10 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 @media (max-width: 768px) {
     .nav-steps {
         bottom: max(20px, env(safe-area-inset-bottom, 0px));
-        left: max(16px, env(safe-area-inset-left, 0px));
-        gap: clamp(1.35rem, 5vw, 2rem);
-    }
-
-    body[data-active-flow-step='2'] .nav-steps,
-    body[data-active-flow-step='3'] .nav-steps {
         left: 50%;
         right: auto;
         transform: translateX(-50%);
+        gap: clamp(1.35rem, 5vw, 2rem);
     }
 
     .step-circle {
@@ -2895,9 +2878,11 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     box-sizing: border-box;
 }
 
-/* Step 4: center block in column; bottom padding clears fixed nav + step labels */
+/* Step 4: fill column height; same vertical gutter top + bottom, bottom adds nav clearance */
 .canvas-content.step-4-content {
-    --step-4-bottom-safe: clamp(200px, 30vh, 280px);
+    --step-4-v-gutter: clamp(16px, 2.5vh, 28px);
+    /* Fixed .nav-steps: bottom offset + STEP + circle + label (see .nav-steps / .step-circle) */
+    --step-4-nav-band: calc(clamp(20px, 4.5vh, 52px) + clamp(138px, 17.5vh, 198px));
     position: relative;
     width: 100%;
     height: 100%;
@@ -2909,10 +2894,17 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     justify-content: flex-start;
     overflow-x: hidden;
     overflow-y: auto;
-    padding-top: max(16px, env(safe-area-inset-top, 0px));
+    padding-top: calc(var(--step-4-v-gutter) + env(safe-area-inset-top, 0px));
     padding-left: max(clamp(12px, 3vw, 28px), env(safe-area-inset-left, 0px));
     padding-right: max(clamp(12px, 3vw, 28px), env(safe-area-inset-right, 0px));
-    padding-bottom: calc(var(--step-4-bottom-safe) + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(
+        var(--step-4-v-gutter) + var(--step-4-nav-band) + env(safe-area-inset-bottom, 0px)
+    );
+}
+
+/* Let the output guide use full column width and flex height (parent uses align-items: center) */
+.canvas-content.step-4-content > .step-4-guide.step-4-output-layout {
+    align-self: stretch;
 }
 
 /* Inner scroll root (same element carries .step-4-content) */
@@ -3069,15 +3061,20 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     white-space: pre;
 }
 
-/* Step 4 — three panels (3D / diagram / copy-ready text) */
+/* Step 4 — three panels; guide fills column height so tab panels share one vertical slot */
 .step-4-guide.step-4-output-layout {
-    flex: 0 1 auto;
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
     max-width: min(960px, 92vw);
     width: 100%;
-    margin: auto;
+    margin: 0 auto;
     padding: clamp(20px, 3vw, 32px) clamp(16px, 3vw, 28px) clamp(20px, 3vh, 36px);
-    max-height: none;
-    overflow: visible;
+    overflow: hidden;
+    box-sizing: border-box;
+    font-family: var(--font-site);
 }
 
 .step-4-output-header {
@@ -3089,6 +3086,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 
 /* Step 4: horizontal tab strip (3D vs diagram vs instructions — same Step 3 build) */
 .step-4-output-scroller {
+    flex: 0 0 auto;
     margin: 0 0 24px;
     position: relative;
     width: 100%;
@@ -3174,32 +3172,42 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     font-size: clamp(22px, 2.4vw, 28px);
     font-weight: 700;
     letter-spacing: -0.03em;
-    margin: 0 0 8px;
-    color: rgba(255, 255, 255, 0.96);
-}
-
-.step-4-output-sub {
     margin: 0;
-    font-size: 14px;
-    line-height: 1.5;
-    color: rgba(255, 255, 255, 0.58);
+    color: rgba(255, 255, 255, 0.96);
+    font-family: var(--font-site);
 }
 
 .step-4-panels {
     --step-4-panel-max: min(640px, 100%);
+    flex: 1 1 auto;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: clamp(28px, 4vh, 40px);
     width: 100%;
+    gap: 0;
 }
 
 .step-4-panels .step-4-section {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
+    align-self: center;
+    flex: 1 1 auto;
+    min-height: 0;
     width: 100%;
     max-width: var(--step-4-panel-max);
+    justify-content: flex-start;
+}
+
+/* Square embeds: center in the flex panel so unused height splits evenly top/bottom */
+.step-4-panels .step-4-section--3d,
+.step-4-panels .step-4-section--diagram {
+    justify-content: center;
+}
+
+.step-4-panels .step-4-section--text {
+    justify-content: flex-start;
 }
 
 /* Only one deliverable view at a time (tab state also toggles [hidden] in JS) */
@@ -3207,23 +3215,10 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     display: none !important;
 }
 
-.step-4-guide.step-4-output-layout h2.step-4-section-title {
-    position: static;
-    background: none;
-    margin: 0 0 12px;
-    padding: 0;
-    width: 100%;
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    text-align: center;
-    color: rgba(255, 255, 255, 0.55);
-}
-
-/* 3D + diagram: square embed only; section width matches instructions tab */
+/* 3D + diagram: square embed only — fixed height from width; does not stretch with tab body */
 .step-4-viewport {
     position: relative;
+    flex: 0 0 auto;
     width: 100%;
     max-width: none;
     aspect-ratio: 1 / 1;
@@ -3243,6 +3238,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 }
 
 .step-4-diagram-frame {
+    flex: 0 0 auto;
     border-radius: 0;
     border: 1px solid rgba(255, 255, 255, 0.12);
     background: rgba(255, 255, 255, 0.04);
@@ -3266,18 +3262,17 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 }
 
 .step-4-text-head {
+    flex: 0 0 auto;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-end;
     gap: 12px 16px;
     margin-bottom: 12px;
     width: 100%;
     max-width: 100%;
-}
-
-.step-4-text-head .step-4-section-title {
-    margin-bottom: 0;
+    min-height: 0;
+    box-sizing: border-box;
 }
 
 .step-4-text-actions {
@@ -3311,11 +3306,18 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     border-color: rgba(255, 255, 255, 0.35);
 }
 
+.step-4-section--text .step-4-code-shell {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
 .step-4-code-shell {
     border-radius: 0;
     border: 1px solid rgba(255, 255, 255, 0.12);
     background: rgba(0, 0, 0, 0.45);
-    overflow: visible;
     width: 100%;
     max-width: 100%;
     margin: 0 auto;
@@ -3327,7 +3329,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     padding: 16px 18px 20px;
     max-height: none;
     overflow: visible;
-    font-family: var(--font-mono);
+    font-family: var(--font-site);
     font-size: 13px;
     line-height: 1.55;
     color: rgba(235, 235, 235, 0.92);
