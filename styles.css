@@ -2944,10 +2944,19 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     display: none;
 }
 
-.step-3-content::before,
+/* Slightly more flex above than below so the tile stack sits nearer true viewport center
+   (bottom safe padding shrinks the flex box upward if these were equal). */
+.step-3-content::before {
+    content: '';
+    flex: 1.18 1 0;
+    min-height: 0;
+    width: 0;
+    pointer-events: none;
+}
+
 .step-3-content::after {
     content: '';
-    flex: 1 1 0;
+    flex: 0.82 1 0;
     min-height: 0;
     width: 0;
     pointer-events: none;
@@ -3091,10 +3100,10 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 .step-4-output-scroller__strip {
     display: flex;
     flex-direction: row;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: flex-end;
-    justify-content: center;
-    gap: clamp(12px, 3vw, 28px);
+    justify-content: stretch;
+    gap: clamp(8px, 2vw, 16px);
     overflow-x: auto;
     overflow-y: hidden;
     padding: 2px 2px 0;
@@ -3118,9 +3127,10 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     border-radius: 6px;
 }
 
-/* Plain text tabs — active = underline (no pill chrome) */
+/* Plain text tabs — equal width across the same horizontal band as the instructions panel */
 .step-4-output-tab {
-    flex: 0 1 auto;
+    flex: 1 1 0;
+    min-width: 0;
     scroll-snap-align: start;
     margin: 0;
     font-family: var(--font-site);
@@ -3128,7 +3138,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    padding: 10px 0 12px;
+    padding: 10px 4px 12px;
     border: none;
     border-bottom: 2px solid transparent;
     margin-bottom: -1px;
@@ -3137,10 +3147,9 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     color: rgba(255, 255, 255, 0.48);
     cursor: pointer;
     line-height: 1.25;
-    white-space: nowrap;
-    text-align: left;
-    display: inline-block;
-    min-height: 0;
+    white-space: normal;
+    text-align: center;
+    display: block;
     box-sizing: border-box;
     transition:
         color var(--duration-interact) var(--ease-standard),
@@ -3177,6 +3186,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 }
 
 .step-4-panels {
+    --step-4-panel-max: min(640px, 100%);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -3189,17 +3199,12 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     flex-direction: column;
     align-items: center;
     width: 100%;
-    max-width: min(560px, 100%);
+    max-width: var(--step-4-panel-max);
 }
 
 /* Only one deliverable view at a time (tab state also toggles [hidden] in JS) */
 .step-4-panels .step-4-section[data-step4-view][hidden] {
     display: none !important;
-}
-
-/* Instructions tab: allow full-width text column inside centered shell */
-.step-4-panels .step-4-section--text {
-    max-width: min(640px, 100%);
 }
 
 .step-4-guide.step-4-output-layout h2.step-4-section-title {
@@ -3216,11 +3221,11 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     color: rgba(255, 255, 255, 0.55);
 }
 
-/* 3D + diagram: square frame, square corners (no radius) */
+/* 3D + diagram: square embed only; section width matches instructions tab */
 .step-4-viewport {
     position: relative;
     width: 100%;
-    max-width: min(520px, 100%);
+    max-width: none;
     aspect-ratio: 1 / 1;
     max-height: none;
     border-radius: 0;
@@ -3243,7 +3248,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     background: rgba(255, 255, 255, 0.04);
     overflow: hidden;
     width: 100%;
-    max-width: min(520px, 100%);
+    max-width: none;
     aspect-ratio: 1 / 1;
     min-height: 0;
     display: flex;
@@ -3268,7 +3273,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     gap: 12px 16px;
     margin-bottom: 12px;
     width: 100%;
-    max-width: min(640px, 100%);
+    max-width: 100%;
 }
 
 .step-4-text-head .step-4-section-title {
@@ -3312,7 +3317,7 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     background: rgba(0, 0, 0, 0.45);
     overflow: visible;
     width: 100%;
-    max-width: min(640px, 100%);
+    max-width: 100%;
     margin: 0 auto;
     box-sizing: border-box;
 }

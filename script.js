@@ -119,9 +119,9 @@ const R2_MODEL_URLS = buildModelUrls();
  * Tabs on Step 4 switch which panel is visible (3D vs diagram vs instructions), not which design bundle is loaded.
  */
 const STEP4_OUTPUT_SPECS = [
-    { glb: '1.glb', diagram: 'Assets/diagramOp1_1.png', instructionsTxt: 'Assets/step4_instructions_op1.txt' },
-    { glb: 'text8.glb', diagram: 'Assets/diagramOp2_2.png', instructionsTxt: 'Assets/step4_instructions_op2.txt' },
-    { glb: 'text15.glb', diagram: 'Assets/diagramOp3_3.png', instructionsTxt: 'Assets/step4_instructions_op3.txt' }
+    { glb: '1.glb', diagram: 'Assets/diagramOp1_1.png', instructionsTxt: 'Assets/Instructions_op1.txt' },
+    { glb: 'text8.glb', diagram: 'Assets/diagramOp2_2.png', instructionsTxt: 'Assets/Instructions_op1.txt' },
+    { glb: 'text15.glb', diagram: 'Assets/diagramOp3_3.png', instructionsTxt: 'Assets/Instructions_op1.txt' }
 ];
 
 /** R2 default when the mapped output GLB is missing or fails to load (same bucket as MODEL_ASSETS_BASE). */
