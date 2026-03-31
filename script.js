@@ -17,7 +17,7 @@ const STEP2_ANALYSIS_MESSAGES = [
 const STEP2_ANALYSIS_LINE_MS = 720;
 
 /** Step 2 — “Processing image” delay when entering from Step 1 only (0 with reduced motion) */
-const STEP2_IMAGE_PROCESSING_MS = 820;
+const STEP2_IMAGE_PROCESSING_MS = 420;
 
 /** Step 3 — sequential copy after leaving Step 2, before previews resolve */
 const STEP3_BUILD_MESSAGES = [
@@ -54,6 +54,8 @@ const HERO_PERSPECTIVE_UNIFORM_SCALE = true;
 /** Clamp perspective compensation so end chairs (e.g. 5th GLB) are not over-scaled vs center */
 const HERO_PERSPECTIVE_SCALE_MIN = 0.9;
 const HERO_PERSPECTIVE_SCALE_MAX = 1.02;
+/** Push last arc chair farther from camera (world −Z) so it matches #1 apparent size */
+const HERO_LAST_MODEL_Z_OFFSET = 0.62;
 
 /** Arc: circle radius in XZ (tune for composition); may grow slightly to satisfy spacing / max span */
 const ARC_RADIUS = 5.0;
@@ -128,10 +130,11 @@ const R2_MODEL_URLS = buildModelUrls();
  * If the mapped GLB fails to load, the viewer falls back to text1.glb (STEP4_FALLBACK_GLB).
  * Tabs on Step 4 switch which panel is visible (3D vs diagram vs instructions), not which design bundle is loaded.
  */
+const STEP4_ASSEMBLY_DIAGRAM = 'Assets/assemblydiagram.png';
 const STEP4_OUTPUT_SPECS = [
-    { glb: '1.glb', diagram: 'Assets/diagramOp1_1.png', instructionsTxt: 'Assets/Instructions_op1.txt' },
-    { glb: 'text8.glb', diagram: 'Assets/diagramOp2_2.png', instructionsTxt: 'Assets/Instructions_op1.txt' },
-    { glb: 'text15.glb', diagram: 'Assets/diagramOp3_3.png', instructionsTxt: 'Assets/Instructions_op1.txt' }
+    { glb: '1.glb', diagram: STEP4_ASSEMBLY_DIAGRAM, instructionsTxt: 'Assets/Instructions_op1.txt' },
+    { glb: 'text8.glb', diagram: STEP4_ASSEMBLY_DIAGRAM, instructionsTxt: 'Assets/Instructions_op1.txt' },
+    { glb: 'text15.glb', diagram: STEP4_ASSEMBLY_DIAGRAM, instructionsTxt: 'Assets/Instructions_op1.txt' }
 ];
 
 /** R2 default when the mapped output GLB is missing or fails to load (same bucket as MODEL_ASSETS_BASE). */
@@ -160,7 +163,8 @@ function step4NormalizeAndGround(model) {
     const box = new THREE.Box3().setFromObject(model);
     const size = box.getSize(new THREE.Vector3());
     const maxDim = Math.max(size.x, size.y, size.z, 1e-6);
-    const target = 1.65;
+    /* Slightly smaller world size + wider FOV / camera pullback = full model in frame */
+    const target = 1.38;
     model.scale.multiplyScalar(target / maxDim);
     box.setFromObject(model);
     const center = box.getCenter(new THREE.Vector3());
@@ -206,8 +210,9 @@ class Step4ModelViewer {
         this.canvas = canvas;
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0xffffff);
-        this.camera = new THREE.PerspectiveCamera(42, 1, 0.06, 80);
-        this.camera.position.set(0.35, 0.55, 2.25);
+        /* Wider FOV + farther camera = shorter effective focal length, more of GLB in view */
+        this.camera = new THREE.PerspectiveCamera(52, 1, 0.06, 80);
+        this.camera.position.set(0.32, 0.48, 2.85);
         this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
         if (THREE.sRGBEncoding !== undefined) {
@@ -216,7 +221,7 @@ class Step4ModelViewer {
         this.controls = new THREE.OrbitControls(this.camera, canvas);
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.06;
-        this.controls.target.set(0, 0.38, 0);
+        this.controls.target.set(0, 0.34, 0);
         this.root = new THREE.Group();
         this.scene.add(this.root);
         /* Studio-style fill on white ground so dark GLBs read clearly */
@@ -283,8 +288,8 @@ class Step4ModelViewer {
             this.root.add(model);
             step4NormalizeAndGround(model);
             redoFinalizeGltfMaterialsForColor(model);
-            this.controls.target.set(0, 0.38, 0);
-            this.camera.position.set(0.35, 0.55, 2.25);
+            this.controls.target.set(0, 0.34, 0);
+            this.camera.position.set(0.32, 0.48, 2.85);
             this.controls.update();
         };
         const tryLoad = (loadUrl, isFallbackAttempt) => {
@@ -379,6 +384,208 @@ function initRedoStepContentReveal() {
 
     document.querySelectorAll('.step-slide .canvas-content').forEach((el) => {
         window._redoStepContentRevealIO.observe(el);
+    });
+}
+
+/** White hint + square on dark UI (viewport, dragger, nav, dimmed adjacent columns) */
+function redoCursorUseLightHint(el) {
+    if (!el || !el.closest) return false;
+    return !!el.closest(
+        [
+            '.step-4-viewport',
+            '#step-4-model-canvas',
+            '.step-4-diagram-frame',
+            '.step-4-diagram-img',
+            '.nav-step.active .step-circle',
+            /* Forward handle is dark; back (.slider-left) is light — keep black cursor there */
+            '.canvas-slider.slider-right .progress-circle',
+            '.help-fab',
+            '.step-slide.step-slide--adjacent-prev',
+            '.step-slide.step-slide--adjacent-next'
+        ].join(', ')
+    );
+}
+
+/** I-beam only where native text editing / copy-paste applies (not instruction body) */
+function isRedoCopyPasteCursorSurface(el) {
+    if (!el || !el.closest) return false;
+    if (el.closest('#redo-cursor-hint')) return false;
+    return !!el.closest('input, textarea, select');
+}
+
+function hideRedoCursorHint() {
+    clearRedoCursorAll();
+}
+
+function clearRedoCursorAll() {
+    const hint = document.getElementById('redo-cursor-hint');
+    const dot = document.getElementById('redo-cursor-dot');
+    if (hint) {
+        hint.classList.remove(
+            'redo-cursor-hint--visible',
+            'redo-cursor-hint--invert',
+            'redo-cursor-hint--drag-dark'
+        );
+        hint.textContent = '';
+    }
+    if (dot) dot.classList.remove('redo-cursor-dot--visible', 'redo-cursor-dot--invert');
+    document.body.classList.remove('redo-cursor-hint-active', 'redo-cursor-ibeam');
+    document.documentElement.classList.remove('redo-cursor-lock');
+}
+
+/** Step 4 instructions: three bands — scroll down | scroll down · scroll up | scroll up */
+function redoStep4InstructionScrollHint(shell) {
+    if (!shell || shell.scrollHeight <= shell.clientHeight + 4) return null;
+    const st = shell.scrollTop;
+    const ch = shell.clientHeight;
+    const sh = shell.scrollHeight;
+    const maxScroll = Math.max(0, sh - ch);
+    if (maxScroll < 8) return null;
+    const t = st / maxScroll;
+    if (t <= 1 / 3) return 'scroll down';
+    if (t >= 2 / 3) return 'scroll up';
+    return 'scroll down · scroll up';
+}
+
+function applyRedoCursorSquare(clientX, clientY, pick) {
+    const dot = document.getElementById('redo-cursor-dot');
+    if (!dot) return;
+    dot.style.left = `${clientX}px`;
+    dot.style.top = `${clientY}px`;
+    const light = pick && redoCursorUseLightHint(pick);
+    dot.classList.toggle('redo-cursor-dot--invert', !!light);
+    dot.classList.add('redo-cursor-dot--visible');
+    document.documentElement.classList.add('redo-cursor-lock');
+}
+
+function updateRedoCursorHint(clientX, clientY) {
+    const hint = document.getElementById('redo-cursor-hint');
+    const dot = document.getElementById('redo-cursor-dot');
+    if (!hint) return;
+
+    if (!document.body.classList.contains('redo-chrome-visible')) {
+        clearRedoCursorAll();
+        return;
+    }
+
+    const pick = document.elementFromPoint(clientX, clientY);
+    if (!pick || pick === hint || pick.closest('#redo-cursor-hint')) {
+        clearRedoCursorAll();
+        return;
+    }
+
+    if (isRedoCopyPasteCursorSurface(pick)) {
+        clearRedoCursorAll();
+        document.body.classList.add('redo-cursor-ibeam');
+        return;
+    }
+
+    document.body.classList.remove('redo-cursor-ibeam');
+
+    applyRedoCursorSquare(clientX, clientY, pick);
+
+    hint.style.left = `${clientX + 16}px`;
+    hint.style.top = `${clientY + 16}px`;
+
+    const flow = parseInt(document.body.dataset.activeFlowStep || '1', 10);
+
+    let hintText = '';
+    let hintLight = false;
+
+    if (pick.closest('.canvas-slider.slider-left .progress-circle')) {
+        hintText = 'click';
+        hintLight = redoCursorUseLightHint(pick);
+    } else if (flow === 1 && pick.closest('.image-thumbnail')) {
+        hintText = 'select';
+        hintLight = redoCursorUseLightHint(pick);
+    } else if (flow === 3 && pick.closest('.step-3-option')) {
+        hintText = 'choose your favourite';
+        hintLight = redoCursorUseLightHint(pick);
+    } else if (flow === 4) {
+        const panels = document.getElementById('step-4-panels');
+        const view = panels?.getAttribute('data-step4-view') || '3d';
+
+        if (view === '3d') {
+            const in3dPanel = pick.closest('#step-4-panel-3d');
+            const vp = pick.closest('.step-4-viewport');
+            if (in3dPanel && vp && !pick.closest('button, a, [role="tab"], .step-4-output-tab')) {
+                hintText = 'left + drag';
+                hintLight = false;
+            }
+        }
+
+        if (view === 'instructions') {
+            const shell = pick.closest('.step-4-code-shell');
+            if (shell && shell.closest('#step-4-panel-instructions')) {
+                const scrollMsg = redoStep4InstructionScrollHint(shell);
+                if (scrollMsg) {
+                    hintText = scrollMsg;
+                    hintLight = redoCursorUseLightHint(pick);
+                }
+            }
+        }
+    }
+
+    if (hintText) {
+        hint.textContent = hintText;
+        hint.classList.toggle('redo-cursor-hint--invert', hintLight);
+        hint.classList.toggle(
+            'redo-cursor-hint--drag-dark',
+            hintText === 'left + drag' && !hintLight
+        );
+        hint.classList.add('redo-cursor-hint--visible');
+        document.body.classList.add('redo-cursor-hint-active');
+    } else {
+        hint.textContent = '';
+        hint.classList.remove(
+            'redo-cursor-hint--visible',
+            'redo-cursor-hint--invert',
+            'redo-cursor-hint--drag-dark'
+        );
+        document.body.classList.remove('redo-cursor-hint-active');
+    }
+}
+
+function initRedoCursorHint() {
+    if (typeof document === 'undefined' || window._redoCursorHintInit) return;
+    if (!document.getElementById('redo-cursor-hint')) return;
+    window._redoCursorHintInit = true;
+
+    let raf = 0;
+    let lastX = 0;
+    let lastY = 0;
+
+    const flush = () => {
+        raf = 0;
+        updateRedoCursorHint(lastX, lastY);
+    };
+
+    const scheduleFlush = () => {
+        if (raf) return;
+        raf = requestAnimationFrame(flush);
+    };
+
+    window.addEventListener(
+        'pointermove',
+        (e) => {
+            lastX = e.clientX;
+            lastY = e.clientY;
+            scheduleFlush();
+        },
+        { passive: true }
+    );
+
+    document.querySelector('.step-4-code-shell')?.addEventListener(
+        'scroll',
+        () => {
+            scheduleFlush();
+        },
+        { passive: true }
+    );
+
+    window.addEventListener('blur', () => clearRedoCursorAll());
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState !== 'visible') clearRedoCursorAll();
     });
 }
 
@@ -782,17 +989,21 @@ class Scene3D {
         this.hoveredModel = null;
         this.intersectTargets = [];
         this.selectedModel = null; // Click-to-select “chosen design” (visual only; camera unchanged)
+        this._heroRotateDrag = false;
+        this._heroLastDragXY = { x: 0, y: 0 };
+        this._heroSkipClickFromDrag = false;
         this.maxFlowStepReached = 1; // Unlocks bottom nav Step 4 after user has reached it once
 
         // Slider smoothing state
         this.currentSliderValue = 1; // smoothed value
         this.targetSliderValue = 1; // target value from input
         this.sliderAnimating = false;
-        this.isUserSliding = false; // true while user holds the slider
-        this.imageSelected = false; // track if image is selected (required for dragging)
+        this.imageSelected = false; // track if image is selected (required for steps 2+)
         this.currentStep = 1; // current active step (1-4)
         this.selectedDesignOption = null; // track which design option was selected in Step 2 (1, 2, or 3)
         this._forwardDraggerLogKey = '';
+        /** Step nav handles: click-only (one-time bind) */
+        this._stepNavHandlesBound = false;
         /** Step 3 forward dragger stays idle (white/grey) until generation finishes — mirrors Step 2 + design-selected */
         this._step3OutputsReady = false;
         this._step3GenRunId = 0;
@@ -885,11 +1096,11 @@ class Scene3D {
             }
 
             this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
-            this.controls.enableDamping = true;
-            /** Slightly softer orbit settle; requires controls.update() every frame */
-            this.controls.dampingFactor = 0.06;
-            this.controls.enableZoom = true;
+            /* Static hero camera — chairs rotate via rAF; user cannot orbit / zoom / pan */
+            this.controls.enableRotate = false;
+            this.controls.enableZoom = false;
             this.controls.enablePan = false;
+            this.controls.enableDamping = false;
             this.controls.autoRotate = false;
             this.controls.target.copy(VIEW_CAMERA_LOOK_AT);
             this.controls.update();
@@ -1247,15 +1458,16 @@ class Scene3D {
         pivots.forEach((pivot, i) => {
             const model = pivot.children[0];
             if (!model || !model.userData.heroRestScale) return;
+            const base = model.userData.heroUniformBaseScale || model.userData.heroRestScale;
             pivot.updateMatrixWorld(true);
             pivot.getWorldPosition(v);
             let factor = cam.distanceTo(v) / refDist;
             factor = Math.min(HERO_PERSPECTIVE_SCALE_MAX, Math.max(HERO_PERSPECTIVE_SCALE_MIN, factor));
-            /* Farthest arc ends still tended to read oversized — nudge last index slightly toward center scale */
+            /* Farthest arc end (#5) still reads large vs #1 — pull scale toward center reference */
             if (n >= 2 && i === n - 1) {
-                factor *= 0.96;
+                factor *= 0.88;
             }
-            model.scale.copy(model.userData.heroRestScale).multiplyScalar(factor);
+            model.scale.copy(base).multiplyScalar(factor);
             model.userData.heroRestScale.copy(model.scale);
         });
     }
@@ -1335,8 +1547,9 @@ class Scene3D {
     }
 
     /**
-     * Normalize scale (max axis → targetMaxDimension), recenter at origin, then shift Y so mesh rests on y≈0.
-     * Call with pivot at scene origin so box center and position.sub(center) align.
+     * Normalize scale (max axis → targetMaxDimension), then place mesh so the bbox bottom-center sits at the
+     * pivot origin (0,0,0). Yaw/idle spin on the parent pivot then rotates around the vertical through that
+     * footprint center — same ground line across chairs; alignHeroPivotsToSharedGround refines after layout.
      */
     normalizeCenterGroundModel(model) {
         model.updateMatrixWorld(true);
@@ -1358,11 +1571,10 @@ class Scene3D {
         model.updateMatrixWorld(true);
         box.setFromObject(model);
         const center = box.getCenter(new THREE.Vector3());
-        model.position.sub(center);
-
-        model.updateMatrixWorld(true);
-        box.setFromObject(model);
-        model.position.y -= box.min.y;
+        const minY = box.min.y;
+        model.position.x -= center.x;
+        model.position.z -= center.z;
+        model.position.y -= minY;
 
         console.log(
             '[Hero normalize] final model.position:',
@@ -1541,6 +1753,7 @@ class Scene3D {
                     });
 
                     model.userData.heroRestScale = model.scale.clone();
+                    model.userData.heroUniformBaseScale = model.scale.clone();
 
                     console.log(`[${i}] Loaded:`, this.modelFiles[i]);
                 } catch (error) {
@@ -1568,6 +1781,19 @@ class Scene3D {
                 this.resolveHeroScreenOverlap(pivots, this.camera);
                 layoutSpanX = this.getHeroPivotsHorizontalSpan(pivots, widths);
                 this.applyHeroViewCamera(layoutSpanX, pivots.length);
+            }
+
+            if (pivots.length >= 5) {
+                const last = pivots[pivots.length - 1];
+                last.position.z -= HERO_LAST_MODEL_Z_OFFSET;
+                last.userData.baseZ = last.position.z;
+                this.applyHeroPerspectiveUniformScale(pivots);
+                this.resolveHeroScreenOverlap(pivots, this.camera);
+                layoutSpanX = this.getHeroPivotsHorizontalSpan(pivots, widths);
+                this.applyHeroViewCamera(layoutSpanX, pivots.length);
+            }
+
+            if (pivots.length > 0) {
                 this.alignHeroPivotsToSharedGround(pivots);
             }
 
@@ -1803,11 +2029,8 @@ class Scene3D {
 
     syncHeroCanvasCursor(overHero) {
         if (!this.renderer?.domElement) return;
-        if (this.isLoading) {
-            this.renderer.domElement.style.cursor = 'default';
-            return;
-        }
-        this.renderer.domElement.style.cursor = overHero ? 'pointer' : 'grab';
+        /* Global square cursor — keep OS cursor hidden on canvas */
+        this.renderer.domElement.style.cursor = 'none';
     }
 
     updateHoverFromPointer() {
@@ -1862,9 +2085,19 @@ class Scene3D {
         if (prev) {
             delete prev.userData._glowMode;
             this.tweenHeroModelToTargetScale(prev);
+            const pPrev = prev.userData.pivot;
+            if (pPrev) {
+                pPrev.userData.heroDragYaw = 0;
+                pPrev.userData.heroDragPitch = 0;
+            }
         }
         delete model.userData._glowMode;
         this.tweenHeroModelToTargetScale(model);
+        const pNew = model.userData.pivot;
+        if (pNew) {
+            pNew.userData.heroDragYaw = 0;
+            pNew.userData.heroDragPitch = 0;
+        }
         this.syncHeroModelColors();
         this.syncHeroEmissiveForAll();
     }
@@ -1875,6 +2108,11 @@ class Scene3D {
         this.selectedModel = null;
         delete prev.userData._glowMode;
         this.intersectTargets.forEach((m) => delete m.userData._glowMode);
+        const pPrev = prev.userData.pivot;
+        if (pPrev) {
+            pPrev.userData.heroDragYaw = 0;
+            pPrev.userData.heroDragPitch = 0;
+        }
         this.tweenHeroModelToTargetScale(prev);
         this.syncHeroModelColors();
         this.syncHeroEmissiveForAll();
@@ -1884,13 +2122,18 @@ class Scene3D {
     updateHeroAmbientMotion(elapsed) {
         const heroSpinPhaseRad = elapsed * HERO_SPIN_RAD_PER_SEC;
         this.modelPivots.forEach((pivot) => {
+            const model = pivot.children[0];
+            const isSel = model && this.selectedModel === model;
             const baseYaw = pivot.userData.baseYaw ?? HERO_PIVOT_ROT_Y_BASE;
             const spin0 = pivot.userData.spinStartRad ?? 0;
             const baseY = pivot.userData.baseY ?? HERO_ARRANGEMENT_Y_OFFSET;
             const phase = pivot.userData.floatPhase ?? 0;
             const yBob = HERO_FLOAT_AMP * Math.sin(elapsed * HERO_FLOAT_FREQ_RAD_S + phase);
-            pivot.rotation.x = HERO_PIVOT_ROT_X;
-            pivot.rotation.y = baseYaw + spin0 + heroSpinPhaseRad;
+            const spinPhase = isSel ? 0 : heroSpinPhaseRad;
+            const dragYaw = isSel ? pivot.userData.heroDragYaw || 0 : 0;
+            const dragPitch = isSel ? pivot.userData.heroDragPitch || 0 : 0;
+            pivot.rotation.x = HERO_PIVOT_ROT_X + dragPitch;
+            pivot.rotation.y = baseYaw + spin0 + spinPhase + dragYaw;
             pivot.rotation.z = 0;
             pivot.position.set(pivot.userData.baseX ?? 0, baseY + yBob, pivot.userData.baseZ ?? 0);
         });
@@ -1934,17 +2177,54 @@ class Scene3D {
     }
     
     setupEventListeners() {
-        // Pointer move for parallax + hover (relative to renderer canvas)
-        this.renderer.domElement.addEventListener('mousemove', (event) => {
+        const onCanvasMouseMove = (event) => {
             const rect = this.renderer.domElement.getBoundingClientRect();
             const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
             const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
             this.pointer.x = x;
             this.pointer.y = y;
             this.pointerActive = true;
+
+            if (this._heroRotateDrag && this.selectedModel) {
+                const dx = event.clientX - this._heroLastDragXY.x;
+                const dy = event.clientY - this._heroLastDragXY.y;
+                this._heroLastDragXY.x = event.clientX;
+                this._heroLastDragXY.y = event.clientY;
+                const pivot = this.selectedModel.userData.pivot;
+                if (pivot) {
+                    const sens = 0.0065;
+                    pivot.userData.heroDragYaw = (pivot.userData.heroDragYaw || 0) - dx * sens;
+                    pivot.userData.heroDragPitch = (pivot.userData.heroDragPitch || 0) - dy * sens;
+                    pivot.userData.heroDragPitch = Math.max(-0.95, Math.min(0.95, pivot.userData.heroDragPitch));
+                    if (Math.abs(dx) + Math.abs(dy) > 2) this._heroSkipClickFromDrag = true;
+                }
+            }
+        };
+
+        this.renderer.domElement.addEventListener('mousemove', onCanvasMouseMove);
+
+        this.renderer.domElement.addEventListener('mousedown', (e) => {
+            if (e.button !== 0 || this.isLoading || !this.selectedModel) return;
+            const rect = this.renderer.domElement.getBoundingClientRect();
+            this.pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+            this.pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+            this.raycaster.setFromCamera(this.pointer, this.camera);
+            const intersects = this.raycaster.intersectObjects(this.intersectTargets, true);
+            if (intersects.length === 0) return;
+            const root = this.findIntersectRoot(intersects[0].object);
+            if (root !== this.selectedModel) return;
+            this._heroRotateDrag = true;
+            this._heroSkipClickFromDrag = false;
+            this._heroLastDragXY = { x: e.clientX, y: e.clientY };
         });
-        
+
+        const endHeroDrag = () => {
+            this._heroRotateDrag = false;
+        };
+        window.addEventListener('mouseup', endHeroDrag);
+
         this.renderer.domElement.addEventListener('mouseleave', () => {
+            endHeroDrag();
             this.pointerActive = false;
             if (this.hoveredModel) {
                 const prev = this.hoveredModel;
@@ -1962,6 +2242,10 @@ class Scene3D {
         });
 
         this.renderer.domElement.addEventListener('click', (event) => {
+            if (this._heroSkipClickFromDrag) {
+                this._heroSkipClickFromDrag = false;
+                return;
+            }
             if (this.isLoading || !this.intersectTargets.length) return;
             const rect = this.renderer.domElement.getBoundingClientRect();
             this.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -1982,8 +2266,6 @@ class Scene3D {
             this.camera.updateProjectionMatrix();
             this.renderer.setSize(window.innerWidth, window.innerHeight);
         });
-        
-        // Keep zoom via OrbitControls (no manual wheel zoom to avoid conflicts)
         
         // Navigation dots click functionality
         this.setupNavDots();
@@ -2008,7 +2290,9 @@ class Scene3D {
         this.setupTopLogoHome();
         initRedoBlueprintReveal();
         initRedoStepContentReveal();
+        initRedoCursorHint();
         initDragLabelMagnetic();
+        this.setupStepNavHandles();
         this.syncNavStepsFromFlow();
         this.syncStep3OutputChosenClass();
     }
@@ -2018,11 +2302,9 @@ class Scene3D {
         if (step === 2) return this.imageSelected === true;
         if (step === 3) return this.imageSelected === true && this.selectedDesignOption != null;
         if (step === 4) {
-            return (
-                this.imageSelected === true &&
-                this.selectedDesignOption != null &&
-                this.maxFlowStepReached >= 4
-            );
+            if (!this.imageSelected || this.selectedDesignOption == null) return false;
+            if (!this._step3OutputsReady) return false;
+            return !!document.querySelector('#step-3-options .step-3-option.selected');
         }
         return false;
     }
@@ -2103,12 +2385,15 @@ class Scene3D {
         const stepRange = document.getElementById('step-range');
         if (!slider) return;
 
+        document.body.classList.remove('redo-homepage');
+
         slider.classList.remove('hidden');
 
         this.syncFlowStateFromDom();
 
         const prevStep = this.currentStep;
         this.currentStep = step;
+        this.maxFlowStepReached = Math.max(this.maxFlowStepReached || 1, step);
         if (stepRange) stepRange.value = step;
         this.currentSliderValue = step;
         this.targetSliderValue = step;
@@ -2126,7 +2411,6 @@ class Scene3D {
         this.updateSliderVisibility();
         this.updateStep2Draggers();
         this.updateActiveSlideClasses();
-        this.updateCanvasBlur();
         this.applySliderVisuals(step, true);
 
         if (step === 2 && prevStep === 1) {
@@ -2142,12 +2426,6 @@ class Scene3D {
             } else {
                 queueMicrotask(() => this._applyStep3ImagesAfterBuild(this.selectedDesignOption));
             }
-        }
-
-        if (this.imageSelected) {
-            this.enableSliderDragging();
-        } else {
-            this.sliderDragEnabled = false;
         }
 
         queueMicrotask(() => {
@@ -2180,10 +2458,84 @@ class Scene3D {
         this.openStepSliderToStep(1);
     }
 
-    /** Homepage = full GLB view + step rail; step 1 active (same as initial flow after intro). */
+    /**
+     * Homepage = full-viewport 5-GLB scene + bottom nav; step panel stays hidden until user opens a step.
+     */
     goToHomepage() {
         this.skipHomeIntro();
-        this.openStepSliderToStep(1);
+        this.currentStep = 1;
+        const stepRange = document.getElementById('step-range');
+        if (stepRange) stepRange.value = '1';
+        this.currentSliderValue = 1;
+        this.targetSliderValue = 1;
+        document.body.dataset.activeFlowStep = '1';
+        document.body.classList.add('redo-homepage');
+        this.hideStepSlider();
+        this.syncNavStepsFromFlow();
+        this.updateActiveSlideClasses();
+    }
+
+    /** One click on the forward (right) handle → next step, with smooth panel transition. */
+    tryAdvanceForwardClick() {
+        const next = this.currentStep + 1;
+        if (next > 4) return;
+        if (!this.canUnlockFlowStep(next)) return;
+        const slider = document.getElementById('step-slider');
+        if (!slider || slider.classList.contains('hidden')) return;
+        slider.classList.add('step-slider--flow-animate');
+        this.openStepSliderToStep(next);
+        window.setTimeout(() => {
+            slider.classList.remove('step-slider--flow-animate');
+        }, 1150);
+    }
+
+    /** One click on the back (left) handle → previous step, with smooth panel transition. */
+    tryGoBackClick() {
+        const prev = this.currentStep - 1;
+        if (prev < 1) return;
+        if (!this.canUnlockFlowStep(prev)) return;
+        const slider = document.getElementById('step-slider');
+        if (!slider || slider.classList.contains('hidden')) return;
+        slider.classList.add('step-slider--flow-animate');
+        this.openStepSliderToStep(prev);
+        window.setTimeout(() => {
+            slider.classList.remove('step-slider--flow-animate');
+        }, 1150);
+    }
+
+    /**
+     * Forward/back handles: click only (no boundary drag).
+     * Bound once; uses capture so clicks on inner arrows/SVG still navigate.
+     */
+    setupStepNavHandles() {
+        if (this._stepNavHandlesBound) return;
+        this._stepNavHandlesBound = true;
+        const stepSlider = document.getElementById('step-slider');
+        if (!stepSlider) return;
+
+        stepSlider.addEventListener(
+            'click',
+            (e) => {
+                const handle = e.target.closest('.canvas-slider .progress-circle');
+                if (!handle) return;
+                const canvasSlider = handle.closest('.canvas-slider');
+                const stepSlide = handle.closest('.step-slide');
+                if (!canvasSlider || !stepSlide) return;
+
+                const canvasStep = parseInt(stepSlide.dataset.step, 10);
+                if (Number.isNaN(canvasStep) || canvasStep !== this.currentStep) return;
+
+                const dir = canvasSlider.dataset.direction;
+                if (dir === 'right') {
+                    e.preventDefault();
+                    this.tryAdvanceForwardClick();
+                } else if (dir === 'left') {
+                    e.preventDefault();
+                    this.tryGoBackClick();
+                }
+            },
+            true
+        );
     }
 
     setupTopLogoHome() {
@@ -2212,7 +2564,6 @@ class Scene3D {
             }
             thumbnails.forEach((t) => t.classList.remove('selected'));
             this.imageSelected = true;
-            this.enableSliderDragging();
             this.skipHomeIntro();
             this.openStepSliderToStep(1);
             this.updateSliderColor();
@@ -2342,36 +2693,6 @@ class Scene3D {
             prevBadge.style.right = `${100 - this.boundaries[boundaryKey]}vw`;
         }
 
-        this.updateCanvasBlur();
-    }
-
-    updateCanvasBlur() {
-        /* Softer falloff so previous/next columns read clearly (was 2–6px) */
-        const maxBlur = 3.25;
-        const minBlur = 0.35;
-        const widths = {
-            1: this.boundaries['1-2'],
-            2: this.boundaries['2-3'] - this.boundaries['1-2'],
-            3: this.boundaries['3-4'] - this.boundaries['2-3'],
-            4: 100 - this.boundaries['3-4']
-        };
-
-        document.querySelectorAll('.step-slide').forEach((slide) => {
-            const step = parseInt(slide.dataset.step);
-            const width = Math.max(0, widths[step] || 0);
-            const content = slide.querySelector('.canvas-content');
-
-            if (!content) return;
-
-            if (step === this.currentStep) {
-                content.style.filter = 'none';
-                return;
-            }
-
-            const ratio = Math.min(1, Math.max(0, width / 100));
-            const blur = minBlur + (maxBlur - minBlur) * (1 - ratio);
-            content.style.filter = `blur(${blur.toFixed(2)}px)`;
-        });
     }
     
     hideStepSlider() {
@@ -2405,7 +2726,6 @@ class Scene3D {
         }
 
         this.imageSelected = true;
-        this.enableSliderDragging();
         this.updateSliderColor();
         this.updateStep2Image(imageSrc);
         this.syncNavStepsFromFlow();
@@ -2520,7 +2840,7 @@ class Scene3D {
             });
         });
         
-        // Setup will be done in enableSliderDragging() after image selection
+        // Step nav handles: setupStepNavHandles() in setupNavDots (click-only)
         // Keep the old range input hidden for now
         stepRange.style.display = 'none';
         
@@ -2532,282 +2852,6 @@ class Scene3D {
         });
     }
     
-    enableSliderDragging() {
-        // Only enable if image is selected and not already enabled
-        if (!this.imageSelected || this.sliderDragEnabled) return;
-        this.sliderDragEnabled = true;
-        
-        const stepSlider = document.querySelector('.step-slider');
-        if (!stepSlider) return;
-        
-        // Get all dragger handles from all canvases
-        const allHandles = document.querySelectorAll('.canvas-slider .progress-circle');
-        
-        let isDragging = false;
-        let dragDirection = null; // 'left' or 'right'
-        let startX = 0;
-        let startBoundary = 0;
-        let activeBoundary = null; // e.g., '1-2', '2-3', '3-4'
-        
-        // Disable transitions during drag
-        const disableTransitions = () => {
-            stepSlider.classList.add('no-transition');
-        };
-        
-        // Re-enable transitions after drag
-        const enableTransitions = () => {
-            stepSlider.classList.remove('no-transition');
-        };
-        
-        // Update boundary position based on drag with minimum width constraints
-        const updateBoundary = (newPositionVw) => {
-            if (!activeBoundary) return;
-            
-            const MIN_STEP_WIDTH = 15; // Minimum width for each step in vw
-            
-            // Calculate the current width of each step
-            const step1Width = (activeBoundary === '1-2') ? newPositionVw : this.boundaries['1-2'];
-            const step2Width = (activeBoundary === '2-3') ? 
-                (newPositionVw - this.boundaries['1-2']) : 
-                (activeBoundary === '1-2' ? 
-                    (this.boundaries['2-3'] - newPositionVw) : 
-                    (this.boundaries['2-3'] - this.boundaries['1-2']));
-            const step3Width = (activeBoundary === '3-4') ? 
-                (newPositionVw - this.boundaries['2-3']) : 
-                (activeBoundary === '2-3' ? 
-                    (this.boundaries['3-4'] - newPositionVw) : 
-                    (this.boundaries['3-4'] - this.boundaries['2-3']));
-            const step4Width = (activeBoundary === '3-4') ? 
-                (100 - newPositionVw) : 
-                (100 - this.boundaries['3-4']);
-            
-            // Apply constraints: no step can go below minimum width
-            let clampedPosition = newPositionVw;
-            
-            if (activeBoundary === '1-2') {
-                // Step 1 must be at least MIN_STEP_WIDTH
-                if (step1Width < MIN_STEP_WIDTH) {
-                    clampedPosition = MIN_STEP_WIDTH;
-                }
-                // Step 2 must be at least MIN_STEP_WIDTH (if Step 2 is visible, i.e., boundary 2-3 < 100)
-                if (this.boundaries['2-3'] < 100 && (this.boundaries['2-3'] - clampedPosition) < MIN_STEP_WIDTH) {
-                    clampedPosition = this.boundaries['2-3'] - MIN_STEP_WIDTH;
-                }
-                // Step 1 can expand up to 100vw (when other steps are hidden)
-                clampedPosition = Math.max(MIN_STEP_WIDTH, Math.min(100, clampedPosition));
-            } else if (activeBoundary === '2-3') {
-                // Step 2 must be at least MIN_STEP_WIDTH
-                if (step2Width < MIN_STEP_WIDTH) {
-                    clampedPosition = this.boundaries['1-2'] + MIN_STEP_WIDTH;
-                }
-                // Step 3 must be at least MIN_STEP_WIDTH (if Step 3 is visible, i.e., boundary 3-4 < 100)
-                if (this.boundaries['3-4'] < 100 && (this.boundaries['3-4'] - clampedPosition) < MIN_STEP_WIDTH) {
-                    clampedPosition = this.boundaries['3-4'] - MIN_STEP_WIDTH;
-                }
-                // Boundary 2-3 must be between boundary 1-2 + MIN and 100
-                clampedPosition = Math.max(this.boundaries['1-2'] + MIN_STEP_WIDTH, Math.min(100, clampedPosition));
-            } else if (activeBoundary === '3-4') {
-                // Step 3 must be at least MIN_STEP_WIDTH
-                if (step3Width < MIN_STEP_WIDTH) {
-                    clampedPosition = this.boundaries['2-3'] + MIN_STEP_WIDTH;
-                }
-                // Step 4 must be at least MIN_STEP_WIDTH
-                if (step4Width < MIN_STEP_WIDTH) {
-                    clampedPosition = 100 - MIN_STEP_WIDTH;
-                }
-                // Boundary 3-4 must be between boundary 2-3 + MIN and 100 - MIN
-                clampedPosition = Math.max(this.boundaries['2-3'] + MIN_STEP_WIDTH, Math.min(100 - MIN_STEP_WIDTH, clampedPosition));
-            }
-            
-            this.boundaries[activeBoundary] = clampedPosition;
-            
-            // Update canvas positions in real-time
-            this.updateCanvasPositions();
-            this.updateSliderVisibility();
-        };
-        
-        // Start drag handler - works for both left and right handles
-        const startDrag = (e) => {
-            if (!this.imageSelected) return;
-            
-            const handle = e.target.closest('.progress-circle');
-            if (!handle) return;
-            
-            const canvasSlider = handle.closest('.canvas-slider');
-            if (!canvasSlider) return;
-            
-            const canvas = canvasSlider.closest('.step-slide');
-            if (!canvas) return;
-            
-            const canvasStep = parseInt(canvas.dataset.step);
-            dragDirection = canvasSlider.dataset.direction; // 'left' or 'right'
-            
-            // Determine which boundary we're dragging based on canvas and direction
-            if (dragDirection === 'right') {
-                // Dragging right from current canvas
-                if (canvasStep === 1) {
-                    activeBoundary = '1-2';
-                } else if (canvasStep === 2) {
-                    activeBoundary = '2-3';
-                } else if (canvasStep === 3) {
-                    activeBoundary = '3-4';
-                }
-            } else if (dragDirection === 'left') {
-                // Dragging left from current canvas
-                if (canvasStep === 2) {
-                    activeBoundary = '1-2';
-                } else if (canvasStep === 3) {
-                    activeBoundary = '2-3';
-                } else if (canvasStep === 4) {
-                    activeBoundary = '3-4';
-                }
-            }
-            
-            if (!activeBoundary) return; // Invalid drag
-            
-            isDragging = true;
-            this.isUserSliding = true;
-            this.updateDragHandleHint();
-            e.preventDefault();
-            e.stopPropagation();
-            
-            startX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
-            startBoundary = this.boundaries[activeBoundary];
-            
-            disableTransitions();
-            
-            handle.style.cursor = 'grabbing';
-            document.body.style.cursor = 'grabbing';
-        };
-        
-        // Mouse move during drag
-        const moveDrag = (e) => {
-            if (!isDragging || !this.imageSelected) return;
-            
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const currentX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
-            const deltaX = currentX - startX;
-            const deltaVw = (deltaX / window.innerWidth) * 100;
-            
-            // Calculate desired position
-            let newPosition = startBoundary + deltaVw;
-            
-            // Apply constraints through updateBoundary
-            updateBoundary(newPosition);
-        };
-        
-        // Mouse up - end drag
-        const endDrag = (e) => {
-            if (!isDragging) return;
-            
-            isDragging = false;
-            dragDirection = null;
-            activeBoundary = null;
-            this.isUserSliding = false;
-            
-            enableTransitions();
-            
-            // Update current step based on boundary positions
-            this.updateCurrentStepFromBoundaries();
-            
-            // Update slider visibility
-            this.updateSliderVisibility();
-
-            // Reset cursors
-            allHandles.forEach(handle => {
-                handle.style.cursor = 'grab';
-            });
-            document.body.style.cursor = '';
-            this.updateDragHandleHint();
-        };
-        
-        // Attach event listeners to all handles
-        allHandles.forEach(handle => {
-            handle.style.cursor = 'grab';
-            handle.addEventListener('pointerdown', startDrag);
-            handle.addEventListener('touchstart', startDrag, { passive: false });
-        });
-        
-        // Use document for move/up to handle mouse leaving element
-        document.addEventListener('pointermove', moveDrag);
-        document.addEventListener('pointerup', endDrag);
-        document.addEventListener('touchmove', moveDrag, { passive: false });
-        document.addEventListener('touchend', endDrag);
-    }
-    
-    updateCurrentStepFromBoundaries() {
-        const prevStep = this.currentStep;
-        // Determine current step based on which canvas is widest
-        // Use threshold to prevent switching too early
-        const threshold = 10; // Only switch when a canvas is clearly dominant (10vw threshold)
-        
-        const step1Width = this.boundaries['1-2'];
-        const step2Width = this.boundaries['2-3'] - this.boundaries['1-2'];
-        const step3Width = this.boundaries['3-4'] - this.boundaries['2-3'];
-        const step4Width = 100 - this.boundaries['3-4'];
-        
-        // Determine current step based on widest canvas
-        let newStep = this.currentStep; // Default to current step to prevent flickering
-        const widths = [step1Width, step2Width, step3Width, step4Width];
-        const maxWidth = Math.max(...widths);
-        if (maxWidth > threshold) {
-            const maxIndex = widths.indexOf(maxWidth);
-            newStep = maxIndex + 1;
-        }
-        
-        // Only update if step actually changed (prevents unnecessary updates)
-        if (newStep !== this.currentStep) {
-            this.currentStep = newStep;
-            this.maxFlowStepReached = Math.max(this.maxFlowStepReached || 1, newStep);
-
-            if (newStep !== 2) {
-                this._abortStep2Analysis();
-                this._abortStep2ImageReveal();
-            }
-            if (newStep !== 3) {
-                this._abortStep3GenerationUi();
-            }
-
-            if (newStep === 2 && prevStep === 1) {
-                queueMicrotask(() => this._runStep2AnalysisSequence());
-            }
-            if (newStep === 2) {
-                queueMicrotask(() => this._revealStep2MaterialImage(prevStep));
-            }
-
-            if (newStep === 3) {
-                const optionToLoad = this.selectedDesignOption || 1;
-                if (prevStep === 2) {
-                    queueMicrotask(() => this._startStep3EntryFlow(optionToLoad));
-                } else {
-                    queueMicrotask(() => this._applyStep3ImagesAfterBuild(optionToLoad));
-                }
-            }
-
-            if (prevStep === 2 && newStep === 3) {
-                queueMicrotask(() => this._runStep2To3Crossfade());
-            }
-
-            if (newStep === 2 && prevStep !== 2) {
-                queueMicrotask(() => this.syncStep2OptionsTabOpenStateForEntry());
-            }
-        }
-
-        if (!this.isUserSliding) {
-            this.applyStepComposition();
-        }
-
-        this.updateActiveSlideClasses();
-        this.syncNavStepsFromFlow();
-        this.updateDragHandleHint();
-
-        if (this.currentStep === 4) {
-            queueMicrotask(() => this.refreshStep4Outputs());
-        }
-    }
-
     updateActiveSlideClasses() {
         const slider = document.getElementById('step-slider');
         const stepStr = String(this.currentStep);
@@ -2817,10 +2861,16 @@ class Scene3D {
         const slides = document.querySelectorAll('.step-slide');
         slides.forEach((slide) => {
             const step = parseInt(slide.dataset.step);
+            slide.classList.remove('step-slide--adjacent-prev', 'step-slide--adjacent-next');
             if (step === this.currentStep) {
                 slide.classList.add('is-current-step');
             } else {
                 slide.classList.remove('is-current-step');
+                if (step < this.currentStep) {
+                    slide.classList.add('step-slide--adjacent-prev');
+                } else {
+                    slide.classList.add('step-slide--adjacent-next');
+                }
             }
         });
 
@@ -2828,7 +2878,7 @@ class Scene3D {
         if (cur) cur.classList.add('step-content--revealed');
     }
 
-    /** Bounce/glow on the “next” drag handle; cleared while the user is dragging. */
+    /** Bounce/glow on the “next” handle when the forward action is available. */
     updateDragHandleHint() {
         const slider = document.getElementById('step-slider');
         if (!slider) return;
@@ -2840,10 +2890,9 @@ class Scene3D {
         const step3Ready = slider.classList.contains('step-3-output-ready');
         const step3Chosen = slider.classList.contains('step-3-output-chosen');
         const wantsHint =
-            !this.isUserSliding &&
-            ((this.imageSelected && this.currentStep === 1) ||
-                (this.selectedDesignOption != null && this.currentStep === 2) ||
-                (this.imageSelected && this.currentStep === 3 && step3Ready && step3Chosen));
+            (this.imageSelected && this.currentStep === 1) ||
+            (this.selectedDesignOption != null && this.currentStep === 2) ||
+            (this.imageSelected && this.currentStep === 3 && step3Ready && step3Chosen);
 
         if (wantsHint) {
             slider.classList.add('step-slider--drag-hint-next');
@@ -2859,11 +2908,11 @@ class Scene3D {
             (flowAttr === '1' && hasImageCls) ||
             (flowAttr === '2' && hasDesignCls) ||
             (flowAttr === '3' && hasImageCls && step3Ready && step3Chosen);
-        const logKey = `${this.currentStep}|${flowAttr}|${hasImageCls}|${hasDesignCls}|${step3Ready}|${step3Chosen}|${hasHintCls}|${forwardArmedVisual}|${this.isUserSliding}`;
+        const logKey = `${this.currentStep}|${flowAttr}|${hasImageCls}|${hasDesignCls}|${step3Ready}|${step3Chosen}|${hasHintCls}|${forwardArmedVisual}`;
         if (logKey !== this._forwardDraggerLogKey) {
             this._forwardDraggerLogKey = logKey;
             console.log(
-                `Forward dragger: step=${this.currentStep} data-active-flow-step=${flowAttr} image-selected=${hasImageCls} design-selected=${hasDesignCls} step-3-output-ready=${step3Ready} step-3-output-chosen=${step3Chosen} drag-hint-next=${hasHintCls} forward-armed-visual=${forwardArmedVisual} userSliding=${this.isUserSliding}`
+                `Forward handle: step=${this.currentStep} data-active-flow-step=${flowAttr} image-selected=${hasImageCls} design-selected=${hasDesignCls} step-3-output-ready=${step3Ready} step-3-output-chosen=${step3Chosen} hint-next=${hasHintCls} forward-armed-visual=${forwardArmedVisual}`
             );
         }
     }
@@ -3771,7 +3820,7 @@ class Scene3D {
         const basePercent = 75;
         const stepOffset = 8;
         if (immediate) {
-            // Full user control while dragging
+            // Immediate jump (no animation path)
             this.currentSliderValue = sliderValue;
             const progressPercent = basePercent + ((this.currentSliderValue - 1) * stepOffset);
             if (progressLine) progressLine.style.left = `${progressPercent}%`;
@@ -3843,16 +3892,9 @@ class Scene3D {
         // Update canvas backgrounds based on current step
         const stepSlider = document.querySelector('.step-slider');
         if (stepSlider) {
-            if (activeStep === 1) {
-                stepSlider.style.setProperty('--left-canvas-bg', '#fafafa');
-                stepSlider.style.setProperty('--right-canvas-bg', '#111111');
-            } else if (activeStep === 2) {
-                stepSlider.style.setProperty('--left-canvas-bg', '#fafafa');
-                stepSlider.style.setProperty('--right-canvas-bg', '#fafafa');
-            } else {
-                stepSlider.style.setProperty('--left-canvas-bg', '#fafafa');
-                stepSlider.style.setProperty('--right-canvas-bg', '#fafafa');
-            }
+            const canvasBg = '#fafafa';
+            stepSlider.style.setProperty('--left-canvas-bg', canvasBg);
+            stepSlider.style.setProperty('--right-canvas-bg', canvasBg);
         }
     }
 

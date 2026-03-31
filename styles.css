@@ -8,7 +8,7 @@
     --font-site: "Helvetica Neue", Helvetica, Arial, sans-serif;
     /* Legacy token kept so existing rules stay valid; same family everywhere */
     --font-mono: var(--font-site);
-    /* DRAG arc on forward handle: stable darker grey (no state-based fill shifts) */
+    /* CLICK arc on forward handle: stable darker grey (no state-based fill shifts) */
     --redo-drag-label-fill: rgba(18, 18, 18, 0.94);
     --redo-drag-label-fill-on-dark: rgba(130, 130, 130, 0.96);
     /* Single tone on white + black forward knob (~5:1 on #000, readable on #fff) */
@@ -16,7 +16,7 @@
     --redo-drag-hint-copy: rgba(0, 0, 0, 0.78);
     /* Forward dragger: ring width + color track default .progress-line; same grey until forward is armed */
     /* Dragger ring + vertical track (all forward/back handles use this width) */
-    --redo-progress-line-width: 2px;
+    --redo-progress-line-width: 3px;
     --redo-forward-dragger-border-idle: var(--color-disabled);
     /* Armed (black fill): ring matches fill so idle grey ring does not linger */
     --redo-forward-dragger-border-armed: var(--color-black);
@@ -119,14 +119,14 @@ html {
 body {
     background: var(--color-surface-subtle);
     overflow: hidden;
-    cursor: grab;
+    cursor: default;
     min-height: 100%;
     max-width: 100%;
     box-sizing: border-box;
 }
 
 body:active {
-    cursor: grabbing;
+    cursor: default;
 }
 
 /* Focus — smooth outline, no layout jump */
@@ -1018,8 +1018,8 @@ body[data-active-flow-step='3'] .nav-steps {
     flex-direction: column;
     align-items: center;
     justify-content: flex-end;
-    gap: 0.18rem;
-    margin-bottom: 0.1rem;
+    gap: 0.28rem;
+    margin-bottom: clamp(0.55rem, 1.4vh, 0.95rem);
     pointer-events: none;
     user-select: none;
 }
@@ -1029,32 +1029,32 @@ body[data-active-flow-step='1'] .nav-step[data-flow-step='1'] .nav-step-start-hi
 }
 
 .nav-step-start-hint__text {
-    font-size: clamp(10px, 2vw, 12px);
-    font-weight: 500;
-    letter-spacing: 0.03em;
+    font-size: clamp(12px, 2.4vw, 15px);
+    font-weight: 700;
+    letter-spacing: 0.02em;
     text-transform: lowercase;
     color: var(--color-black);
-    line-height: 1.15;
+    line-height: 1.2;
 }
 
+/* Simple Unicode down-arrow */
 .nav-step-start-hint__arrow {
     display: block;
-    width: clamp(8px, 1.6vw, 11px);
-    height: clamp(8px, 1.6vw, 11px);
-    border-right: 1.5px solid var(--color-black);
-    border-bottom: 1.5px solid var(--color-black);
-    transform: rotate(45deg) translateY(-1px);
+    font-size: clamp(16px, 3vw, 22px);
+    font-weight: 700;
+    line-height: 1;
+    color: var(--color-black);
     animation: nav-step-start-hint-nudge 2s var(--ease-in-out-smooth) infinite;
 }
 
 @keyframes nav-step-start-hint-nudge {
     0%,
     100% {
-        transform: rotate(45deg) translateY(-1px);
-        opacity: 0.75;
+        transform: translateY(0);
+        opacity: 0.82;
     }
     50% {
-        transform: rotate(45deg) translateY(2px);
+        transform: translateY(3px);
         opacity: 1;
     }
 }
@@ -1062,8 +1062,8 @@ body[data-active-flow-step='1'] .nav-step[data-flow-step='1'] .nav-step-start-hi
 @media (prefers-reduced-motion: reduce) {
     .nav-step-start-hint__arrow {
         animation: none;
-        transform: rotate(45deg) translateY(0);
-        opacity: 0.9;
+        transform: none;
+        opacity: 0.95;
     }
 }
 
@@ -1077,6 +1077,94 @@ body[data-active-flow-step='1'] .nav-step[data-flow-step='1'] .nav-step-start-hi
 .nav-step.active .step-number {
     color: var(--color-white);
     font-weight: 500;
+}
+
+/* Contextual pointer hint — plain black text, no frame */
+.redo-cursor-hint {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 12000;
+    max-width: min(280px, calc(100vw - 24px));
+    pointer-events: none;
+    padding: 0;
+    margin: 0;
+    font-family: var(--font-site);
+    font-size: 0.8125rem;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    text-transform: none;
+    line-height: 1.25;
+    color: #000;
+    background: none;
+    border: none;
+    box-shadow: none;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+        opacity 0.1s ease,
+        visibility 0.1s ease;
+}
+
+.redo-cursor-hint.redo-cursor-hint--visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.redo-cursor-hint.redo-cursor-hint--invert {
+    color: #fff;
+}
+
+/* Step 4 3D orbit hint — always black (readable on light viewport chrome) */
+.redo-cursor-hint.redo-cursor-hint--drag-dark {
+    color: #000;
+}
+
+/* Square custom cursor (OS cursor hidden via html.redo-cursor-lock while slider is open) */
+.redo-cursor-dot {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 10px;
+    height: 10px;
+    margin: -5px 0 0 -5px;
+    z-index: 12001;
+    pointer-events: none;
+    background: #000;
+    border-radius: 0;
+    opacity: 0;
+    visibility: hidden;
+}
+
+.redo-cursor-dot.redo-cursor-dot--invert {
+    background: #fff;
+}
+
+.redo-cursor-dot.redo-cursor-dot--visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+html.redo-cursor-lock,
+html.redo-cursor-lock body {
+    cursor: none !important;
+}
+
+html.redo-cursor-lock a,
+html.redo-cursor-lock button,
+html.redo-cursor-lock [role='button'],
+html.redo-cursor-lock input,
+html.redo-cursor-lock textarea,
+html.redo-cursor-lock .canvas-slider .progress-circle {
+    cursor: none !important;
+}
+
+/* Copy/paste fields: I-beam (no square) */
+body.redo-cursor-ibeam,
+body.redo-cursor-ibeam input,
+body.redo-cursor-ibeam textarea,
+body.redo-cursor-ibeam select {
+    cursor: text !important;
 }
 
 /* Help / about — bottom-right FAB + modal
@@ -1518,7 +1606,7 @@ body.redo-chrome-visible .top-logo {
 	left: 0;
 	width: var(--slider-left, 75vw);
 	height: 100%;
-	background: var(--left-canvas-bg, #fafafa); /* Near-white panel */
+	background: var(--left-canvas-bg, #fafafa); /* Step 1 canvas — light panel */
 	z-index: -1;
 	transition: background var(--duration-slow) var(--ease-in-out-smooth);
 }
@@ -1530,7 +1618,7 @@ body.redo-chrome-visible .top-logo {
 	left: var(--slider-left, 75vw);
 	width: calc(100% - var(--slider-left, 75vw));
 	height: 100%;
-	background: var(--right-canvas-bg, #111111); /* Off-black accent panel */
+	background: var(--right-canvas-bg, #fafafa); /* Same light fill as Step 1 */
 	z-index: -1;
 	transition: background var(--duration-slow) var(--ease-in-out-smooth);
 }
@@ -1610,18 +1698,13 @@ body.redo-chrome-visible .top-logo {
     background: var(--color-black) !important;
 }
 
-/* Step 4 obsidian panel: pure black rail would disappear — light track for contrast */
-#step-slider .step-slide[data-step="4"] .canvas-slider.slider-left .progress-line {
-    background: rgba(255, 255, 255, 0.28) !important;
-}
-
 #step-slider[data-active-flow-step='1'].image-selected .step-slide[data-step='1'] .slider-right .progress-line,
 #step-slider[data-active-flow-step='2'].design-selected .step-slide[data-step='2'] .slider-right .progress-line,
 #step-slider[data-active-flow-step='3'].image-selected.step-3-output-ready.step-3-output-chosen .step-slide[data-step='3'] .slider-right .progress-line {
     background: var(--color-obsidian) !important;
 }
 
-/* “Drag next” affordance: scale + glow only (no horizontal nudge; calmer than translate + scale) */
+/* “Click next” affordance: scale + glow only (no horizontal nudge; calmer than translate + scale) */
 @keyframes drag-handle-next-hint {
     0%,
     100% {
@@ -1743,13 +1826,13 @@ body.redo-chrome-visible .top-logo {
 
 }
 
-/* DRAG ring: show when flow allows (step 2: design-selected; step 3: outputs generated) */
+/* CLICK ring: show when flow allows (step 2: design-selected; step 3: outputs generated) */
 #step-slider.image-selected .step-slide[data-step='1'] .slider-right .drag-label,
 #step-slider.design-selected .step-slide[data-step='2'] .slider-right .drag-label,
 #step-slider.image-selected.step-3-output-ready.step-3-output-chosen .step-slide[data-step='3'] .slider-right .drag-label {
     opacity: 1;
     pointer-events: auto;
-    cursor: grab;
+    cursor: default;
 }
 
 #step-slider.image-selected:not(.design-selected) .step-slide[data-step='2'] .slider-right .drag-label {
@@ -1765,7 +1848,7 @@ body.redo-chrome-visible .top-logo {
     animation: none !important;
 }
 
-/* DRAG SVG: no independent bounce — it scales with .progress-circle (hint + hover) */
+/* CLICK SVG: no independent bounce — it scales with .progress-circle (hint + hover) */
 #step-slider.image-selected .step-slide[data-step='1'] .slider-right .drag-label:not(.drag-label--shake),
 #step-slider.design-selected .step-slide[data-step='2'] .slider-right .drag-label:not(.drag-label--shake),
 #step-slider.image-selected.step-3-output-ready.step-3-output-chosen .step-slide[data-step='3'] .slider-right .drag-label:not(.drag-label--shake) {
@@ -1824,7 +1907,7 @@ body.redo-chrome-visible .top-logo {
         transform var(--duration-interact) var(--ease-standard),
         box-shadow var(--duration-interact) var(--ease-standard);
     z-index: 1001;
-    cursor: grab;
+    cursor: default;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1965,15 +2048,16 @@ body.redo-chrome-visible .top-logo {
 
 .drag-letter {
     fill: var(--redo-drag-label-fill);
-    font-size: 12px;
-    letter-spacing: 1.5px;
+    font-size: 10px;
+    font-weight: 300;
+    letter-spacing: 0.85px;
     font-family: var(--font-mono);
     dominant-baseline: middle;
     text-anchor: middle;
 }
 
 .drag-letter textPath {
-    letter-spacing: 1.5px;
+    letter-spacing: 0.85px;
 }
 
 @keyframes drag-label-shake {
@@ -2019,7 +2103,7 @@ body.redo-chrome-visible .top-logo {
 }
 
 .canvas-slider .progress-circle:active {
-    cursor: grabbing;
+    cursor: default;
     transform: scale(0.98);
     background: linear-gradient(165deg, #e6e6e6 0%, #f0f0f0 100%);
 }
@@ -2047,7 +2131,7 @@ body.redo-chrome-visible .top-logo {
     opacity: 1;
 }
 
-/* Forward armed hover / active — stay black; DRAG stays grey */
+/* Forward armed hover / active — stay black; CLICK arc stays grey */
 #step-slider[data-active-flow-step='1'].image-selected .step-slide[data-step='1'] .slider-right .progress-circle:hover,
 #step-slider[data-active-flow-step='2'].design-selected .step-slide[data-step='2'] .slider-right .progress-circle:hover,
 #step-slider[data-active-flow-step='3'].image-selected.step-3-output-ready.step-3-output-chosen .step-slide[data-step='3'] .slider-right .progress-circle:hover {
@@ -2137,15 +2221,17 @@ body.redo-chrome-visible .top-logo {
     opacity: 1;
 }
 
-/* Forward handle DRAG text: one grey everywhere; scales only with parent .progress-circle transform */
+/* Forward handle CLICK text — high-contrast black, slightly lighter weight on arc */
 #step-slider:not(.hidden) .step-slide .canvas-slider.slider-right .progress-circle .drag-letter {
-    fill: var(--redo-drag-label-hint-grey);
+    fill: #000;
+    font-size: 9.5px;
+    font-weight: 300;
+    letter-spacing: 0.75px;
     transition: none;
 }
 
-/* DRAG label follows circle: keep grab while pointer is over label during handle drag */
-#step-slider:not(.hidden) .step-slide .canvas-slider .progress-circle:active .drag-label {
-    cursor: grabbing;
+#step-slider:not(.hidden) .step-slide .canvas-slider .progress-circle .drag-label {
+    cursor: default;
 }
 
 /* Right slider circle (centered on right edge) */
@@ -2211,11 +2297,11 @@ body.redo-chrome-visible .top-logo {
     appearance: none;
     transform: translateY(-50%);
     pointer-events: all;
-    cursor: grab;
+    cursor: default;
 }
 
 .slider-input:active {
-    cursor: grabbing;
+    cursor: default;
 }
 
 .slider-input::-webkit-slider-thumb {
@@ -2225,7 +2311,7 @@ body.redo-chrome-visible .top-logo {
     height: 60px;
     border-radius: 50%;
     background: transparent;
-    cursor: grab;
+    cursor: default;
 }
 
 .slider-input::-moz-range-thumb {
@@ -2233,7 +2319,7 @@ body.redo-chrome-visible .top-logo {
     height: 60px;
     border-radius: 50%;
     background: transparent;
-    cursor: grab;
+    cursor: default;
     border: none;
 }
 
@@ -2297,11 +2383,11 @@ body.redo-chrome-visible .top-logo {
     z-index: 0;
 }
 
-/* Choreographed flow: longer, same easing when advancing after step completion */
+/* Choreographed flow: longer easing when advancing (click-to-next or completion) */
 .step-slider--flow-animate .step-slide {
     transition:
-        width 0.88s var(--ease-standard),
-        left 0.88s var(--ease-standard),
+        width 1.05s var(--ease-out-smooth),
+        left 1.05s var(--ease-out-smooth),
         background-color var(--duration-slow) var(--ease-in-out-smooth);
 }
 
@@ -2323,6 +2409,28 @@ body.redo-chrome-visible .top-logo {
     will-change: opacity, transform;
 }
 
+/*
+ * Adjacent step dimming on .step-slide (not .canvas-content::after).
+ * Step 3 uses .step-3-content::after as a flex spacer — a second ::after on the same element is impossible,
+ * so canvas-level overlays were dropped for step 3. Slide-level ::after sits above content, below .canvas-slider (z 4000).
+ */
+.step-slide.step-slide--adjacent-prev::after,
+.step-slide.step-slide--adjacent-next::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 50;
+    pointer-events: none;
+}
+
+.step-slide.step-slide--adjacent-prev::after {
+    background: rgba(0, 0, 0, 0.505);
+}
+
+.step-slide.step-slide--adjacent-next::after {
+    background: rgba(0, 0, 0, 0.8);
+}
+
 /* Entrance: fade + 20px rise (IntersectionObserver adds .step-content--revealed) */
 #step-slider:not(.hidden) .step-slide .canvas-content:not(.step-content--revealed) {
     opacity: 0;
@@ -2338,6 +2446,17 @@ body.redo-chrome-visible .top-logo {
     transition:
         opacity 0.55s var(--ease-standard),
         transform 0.55s var(--ease-standard);
+}
+
+/*
+ * Adjacent columns stay narrow; IntersectionObserver may never cross the reveal threshold,
+ * which left .canvas-content at opacity:0 and hid the dim overlays (::after). Force visible.
+ * Skip while step-slider--crossfade-2-3 is on so the 2↔3 cross-fade rules keep precedence.
+ */
+#step-slider:not(.hidden):not(.step-slider--crossfade-2-3) .step-slide.step-slide--adjacent-prev .canvas-content:not(.step-content--revealed),
+#step-slider:not(.hidden):not(.step-slider--crossfade-2-3) .step-slide.step-slide--adjacent-next .canvas-content:not(.step-content--revealed) {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 /*
@@ -2436,7 +2555,7 @@ body.redo-chrome-visible .top-logo {
 .step-slide[data-step="2"] {
     width: calc(var(--boundary-2-3, 100vw) - var(--boundary-1-2, 75vw));
     left: var(--boundary-1-2, 75vw);
-    background: var(--color-surface-low);
+    background: #fafafa;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     color: #000;
@@ -2445,7 +2564,7 @@ body.redo-chrome-visible .top-logo {
 .step-slide[data-step="3"] {
     width: calc(var(--boundary-3-4, 100vw) - var(--boundary-2-3, 100vw));
     left: var(--boundary-2-3, 100vw);
-    background: var(--color-surface-muted);
+    background: #fafafa;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     color: #000;
@@ -2454,10 +2573,10 @@ body.redo-chrome-visible .top-logo {
 .step-slide[data-step="4"] {
     width: calc(100vw - var(--boundary-3-4, 100vw));
     left: var(--boundary-3-4, 100vw);
-    background: #0a0a0a;
+    background: #fafafa;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    color: #fff;
+    color: #000;
 }
 
 /* Step header with navigation */
@@ -2800,36 +2919,8 @@ body.redo-chrome-visible .top-logo {
     max-width: 400px; /* Limit text width for better readability */
 }
 
-/* —— Step 1 empty state: only instructional text bounces (frame, +, thumbs stay static) —— */
-@keyframes redo-upload-text-bounce {
-    0%,
-    100% {
-        transform: translateY(0);
-    }
-    30% {
-        transform: translateY(-10px);
-    }
-    50% {
-        transform: translateY(-3px);
-    }
-    65% {
-        transform: translateY(-6px);
-    }
-    80% {
-        transform: translateY(-1px);
-    }
-}
-
-.step-slide[data-step='1'].is-current-step
-    .upload-box:not(.has-image):not(.drop-target--active):not(:hover):not(:active)
-    .upload-text {
-    animation: redo-upload-text-bounce 1.65s ease-in-out infinite;
-    color: var(--redo-drag-hint-copy);
-}
-
 @media (prefers-reduced-motion: reduce) {
     .step-slide[data-step='1'].is-current-step .upload-box:not(.has-image) .upload-text {
-        animation: none;
         transform: none;
     }
 
@@ -3027,7 +3118,7 @@ body.redo-chrome-visible .top-logo {
 /* Inner scroll root (same element carries .step-4-content) */
 .step-4-content {
     scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.28) transparent;
+    scrollbar-color: rgba(0, 0, 0, 0.28) transparent;
 }
 
 /* Step 3 Content Styles — true vertical center via flex spacers; bottom padding clears fixed nav; no scrollbar (step 4 only scrolls) */
@@ -3080,7 +3171,7 @@ body.redo-chrome-visible .top-logo {
 }
 
 .step-4-content::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.28);
+    background-color: rgba(0, 0, 0, 0.22);
     border-radius: 8px;
 }
 
@@ -3091,11 +3182,11 @@ body.redo-chrome-visible .top-logo {
     font-size: 15px;
     line-height: 1.65;
     letter-spacing: 0.01em;
-    color: rgba(255, 255, 255, 0.94);
+    color: var(--color-text);
     white-space: normal;
     border-radius: 2px;
-    background: var(--color-obsidian);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: transparent;
+    border: none;
     box-shadow: none;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
@@ -3116,9 +3207,9 @@ body.redo-chrome-visible .top-logo {
     z-index: 2;
     background: linear-gradient(
         to bottom,
-        var(--color-obsidian) 0%,
-        var(--color-obsidian) 78%,
-        rgba(10, 10, 10, 0) 100%
+        #fafafa 0%,
+        #fafafa 78%,
+        rgba(250, 250, 250, 0) 100%
     );
     padding: 10px 0 12px;
     margin-left: -4px;
@@ -3169,7 +3260,7 @@ body.redo-chrome-visible .top-logo {
 
 .step-4-guide pre {
     background: transparent;
-    color: #ffffff;
+    color: var(--color-text);
     margin: 8px 0 16px;
     padding: 0;
     font-family: var(--font-mono);
@@ -3208,8 +3299,8 @@ body.redo-chrome-visible .top-logo {
     position: sticky;
     top: 0;
     z-index: 10;
-    background: var(--color-obsidian);
-    padding: var(--step-4-guide-pad-y) 0 0;
+    background: #fafafa;
+    padding: var(--step-4-guide-pad-y) 0 var(--step-4-guide-pad-y);
     margin-left: calc(-1 * clamp(16px, 3vw, 28px));
     margin-right: calc(-1 * clamp(16px, 3vw, 28px));
     padding-left: clamp(16px, 3vw, 28px);
@@ -3221,14 +3312,14 @@ body.redo-chrome-visible .top-logo {
 .step-4-output-header {
     margin-bottom: 20px;
     padding-bottom: 18px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
     text-align: center;
 }
 
 /* Step 4: horizontal tab strip (3D vs diagram vs instructions — same Step 3 build) */
 .step-4-output-scroller {
     flex: 0 0 auto;
-    margin: 0 0 24px;
+    margin: 0 0 var(--step-4-guide-pad-y);
     position: relative;
     width: 100%;
     /* Edge fade hints more content off-screen on narrow widths */
@@ -3248,9 +3339,9 @@ body.redo-chrome-visible .top-logo {
     padding: 2px 2px 0;
     scroll-snap-type: x proximity;
     scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+    scrollbar-color: rgba(0, 0, 0, 0.25) transparent;
     -webkit-overflow-scrolling: touch;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
 }
 
 .step-4-output-scroller__strip::-webkit-scrollbar {
@@ -3262,7 +3353,7 @@ body.redo-chrome-visible .top-logo {
 }
 
 .step-4-output-scroller__strip::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.22);
+    background: rgba(0, 0, 0, 0.2);
     border-radius: 6px;
 }
 
@@ -3273,9 +3364,9 @@ body.redo-chrome-visible .top-logo {
     scroll-snap-align: start;
     margin: 0;
     font-family: var(--font-site);
-    font-size: 12px;
+    font-size: clamp(13px, 1.15vw, 15px);
     font-weight: 600;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.03em;
     text-transform: uppercase;
     padding: 10px 4px 10px;
     border: none;
@@ -3283,7 +3374,7 @@ body.redo-chrome-visible .top-logo {
     margin-bottom: -1px;
     border-radius: 0;
     background: transparent;
-    color: rgba(255, 255, 255, 0.48);
+    color: rgba(0, 0, 0, 0.45);
     cursor: pointer;
     line-height: 1.25;
     white-space: normal;
@@ -3296,17 +3387,17 @@ body.redo-chrome-visible .top-logo {
 }
 
 .step-4-output-tab:hover {
-    color: rgba(255, 255, 255, 0.82);
+    color: rgba(0, 0, 0, 0.78);
 }
 
 .step-4-output-tab:focus-visible {
-    outline: 2px solid rgba(255, 255, 255, 0.45);
+    outline: 2px solid rgba(0, 0, 0, 0.35);
     outline-offset: 4px;
 }
 
 .step-4-output-tab.step-4-output-tab--active {
-    color: rgba(255, 255, 255, 0.98);
-    border-bottom-color: rgba(255, 255, 255, 0.92);
+    color: rgba(0, 0, 0, 0.96);
+    border-bottom-color: rgba(0, 0, 0, 0.85);
 }
 
 .step-4-output-title {
@@ -3314,12 +3405,18 @@ body.redo-chrome-visible .top-logo {
     font-weight: 700;
     letter-spacing: -0.03em;
     margin: 0;
-    color: rgba(255, 255, 255, 0.96);
+    padding: 0;
+    display: block;
+    box-sizing: border-box;
     font-family: var(--font-site);
+    background: transparent;
+    color: var(--color-text);
+    border: none;
+    border-radius: 0;
 }
 
 .step-4-panels {
-    --step-4-panel-max: min(640px, 100%);
+    --step-4-panel-max: min(900px, min(92vw, 100%));
     /* Height always follows active tab (square + chrome, or full instructions) — no empty flex column */
     flex: 0 0 auto;
     min-height: 0;
@@ -3356,7 +3453,7 @@ body.redo-chrome-visible .top-logo {
     aspect-ratio: 1 / 1;
     max-height: none;
     border-radius: 0;
-    /* Light stage inside dark Step 4 column — hairline edge so the white field reads on obsidian */
+    /* Light stage on the same #fafafa step canvas as other steps */
     border: 1px solid rgba(0, 0, 0, 0.1);
     background: #ffffff;
     overflow: hidden;
@@ -3372,8 +3469,8 @@ body.redo-chrome-visible .top-logo {
 .step-4-diagram-frame {
     flex: 0 0 auto;
     border-radius: 0;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    background: #fafafa;
     overflow: hidden;
     width: 100%;
     max-width: none;
@@ -3384,10 +3481,10 @@ body.redo-chrome-visible .top-logo {
     justify-content: center;
 }
 
-/* Cap square side so 3D/diagram fit one viewport above nav (no flex “stage”; card ends under the square) */
+/* Larger square stage; less chrome reserved so 3D fills more of the column */
 .step-4-panels[data-step4-view='3d'] .step-4-viewport,
 .step-4-panels[data-step4-view='diagram'] .step-4-diagram-frame {
-    --step-4-embed-chrome: clamp(200px, 32svh, 300px);
+    --step-4-embed-chrome: clamp(140px, 22svh, 220px);
     width: min(
         var(--step-4-panel-max),
         calc(100svh - var(--step-4-embed-chrome)),
@@ -3444,9 +3541,9 @@ body.redo-chrome-visible .top-logo {
     font-weight: 500;
     padding: 8px 14px;
     border-radius: 6px;
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    background: rgba(255, 255, 255, 0.06);
-    color: rgba(255, 255, 255, 0.88);
+    border: 1px solid rgba(0, 0, 0, 0.18);
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--color-text);
     cursor: pointer;
     transition:
         background var(--duration-interact) var(--ease-standard),
@@ -3454,27 +3551,55 @@ body.redo-chrome-visible .top-logo {
 }
 
 .step-4-action-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.32);
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.28);
 }
 
 .step-4-action-btn--primary {
-    background: rgba(255, 255, 255, 0.14);
-    border-color: rgba(255, 255, 255, 0.35);
+    background: var(--color-black);
+    color: #ffffff;
+    border-color: var(--color-black);
 }
 
-/* Instructions region: transparent, no box — content flows on obsidian */
-.step-4-section--text .step-4-code-shell {
-    flex: 0 0 auto;
+.step-4-panels .step-4-section.step-4-section--text {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    flex: 0 1 auto;
     min-height: 0;
-    overflow: visible;
+    max-height: min(calc(100dvh - clamp(88px, 12vh, 128px)), 920px);
+}
+
+.step-4-section--text .step-4-text-head {
+    flex-shrink: 0;
+}
+
+/* Instructions: scrollable text region — extends toward bottom of viewport */
+.step-4-section--text .step-4-code-shell {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: min(calc(100dvh - clamp(96px, 14vh, 168px)), 860px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
     background: none;
     border: none;
     width: 100%;
     max-width: 100%;
     margin: 0;
-    padding: 0;
+    padding: 0 8px 0 0;
     box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.28) transparent;
+}
+
+.step-4-section--text .step-4-code-shell::-webkit-scrollbar {
+    width: 8px;
+}
+
+.step-4-section--text .step-4-code-shell::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.22);
+    border-radius: 8px;
 }
 
 /* ── Rendered markdown body ─────────────────────────────────────────────── */
@@ -3482,14 +3607,14 @@ body.redo-chrome-visible .top-logo {
     width: 100%;
     padding: 0;
     box-sizing: border-box;
-    color: rgba(235, 235, 235, 0.92);
+    color: var(--color-text-secondary);
 }
 
 .step-4-md-body .md-h1 {
     font-size: clamp(20px, 2vw, 24px);
     font-weight: 700;
     letter-spacing: -0.025em;
-    color: rgba(255, 255, 255, 0.98);
+    color: var(--color-text);
     margin: 0 0 8px;
     line-height: 1.25;
 }
@@ -3498,7 +3623,7 @@ body.redo-chrome-visible .top-logo {
     font-size: clamp(16px, 1.6vw, 19px);
     font-weight: 700;
     letter-spacing: -0.015em;
-    color: rgba(255, 255, 255, 0.95);
+    color: var(--color-text);
     margin: 28px 0 6px;
     line-height: 1.3;
 }
@@ -3506,7 +3631,7 @@ body.redo-chrome-visible .top-logo {
 .step-4-md-body .md-h3 {
     font-size: clamp(14px, 1.3vw, 16px);
     font-weight: 700;
-    color: rgba(255, 255, 255, 0.90);
+    color: var(--color-text);
     margin: 20px 0 4px;
     line-height: 1.35;
 }
@@ -3517,7 +3642,7 @@ body.redo-chrome-visible .top-logo {
     font-size: 13px;
     font-weight: 600;
     letter-spacing: 0.02em;
-    color: rgba(255, 255, 255, 0.70);
+    color: var(--color-text-muted);
     text-transform: uppercase;
     margin: 16px 0 4px;
     line-height: 1.4;
@@ -3526,18 +3651,18 @@ body.redo-chrome-visible .top-logo {
 .step-4-md-body .md-p {
     font-size: 14px;
     line-height: 1.65;
-    color: rgba(235, 235, 235, 0.82);
+    color: var(--color-text-secondary);
     margin: 0 0 10px;
 }
 
 .step-4-md-body .md-p--loading {
-    color: rgba(255, 255, 255, 0.35);
+    color: rgba(0, 0, 0, 0.35);
     font-style: italic;
 }
 
 .step-4-md-body .md-hr {
     border: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    border-top: 1px solid rgba(0, 0, 0, 0.12);
     margin: 24px 0;
 }
 
@@ -3552,7 +3677,7 @@ body.redo-chrome-visible .top-logo {
     display: inline-block;
     width: 16px;
     margin-left: -20px;
-    color: rgba(255, 255, 255, 0.45);
+    color: rgba(0, 0, 0, 0.45);
     font-size: 12px;
 }
 
@@ -3568,7 +3693,7 @@ body.redo-chrome-visible .top-logo {
 .step-4-md-body .md-list > li {
     font-size: 14px;
     line-height: 1.6;
-    color: rgba(235, 235, 235, 0.82);
+    color: var(--color-text-secondary);
     margin-bottom: 3px;
 }
 
@@ -3576,9 +3701,9 @@ body.redo-chrome-visible .top-logo {
     font-family: "SFMono-Regular", "Consolas", "Liberation Mono", monospace;
     font-size: 11.5px;
     line-height: 1.55;
-    color: rgba(210, 210, 210, 0.88);
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.10);
+    color: var(--color-text);
+    background: rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: 4px;
     padding: 12px 14px;
     margin: 8px 0 12px;
@@ -3589,10 +3714,10 @@ body.redo-chrome-visible .top-logo {
 
 .step-4-md-body strong {
     font-weight: 700;
-    color: rgba(255, 255, 255, 0.96);
+    color: var(--color-text);
 }
 
-/* Step 3 Options Container */
+/* Step 3 Options Container — flush on step canvas (no grey panel behind tiles) */
 .step-3-options-container {
     --step3-tile: 320px;
     position: relative;
@@ -3608,6 +3733,8 @@ body.redo-chrome-visible .top-logo {
     box-sizing: border-box;
     scroll-behavior: smooth;
     scroll-snap-type: y proximity;
+    background: transparent;
+    box-shadow: none;
 }
 
 .step-3-options-container.step-3-selection-visual {
@@ -3627,9 +3754,9 @@ body.redo-chrome-visible .top-logo {
     padding: 12px 20px 20px;
     gap: 24px;
     box-sizing: border-box;
-    background: rgba(235, 235, 235, 0.72);
-    backdrop-filter: blur(12px) saturate(118%);
-    -webkit-backdrop-filter: blur(12px) saturate(118%);
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
@@ -3816,9 +3943,9 @@ body.redo-chrome-visible .top-logo {
 }
 
 .step-3-option:hover {
-    box-shadow: var(--card-glass-glow);
-    backdrop-filter: blur(12px) saturate(115%);
-    -webkit-backdrop-filter: blur(12px) saturate(115%);
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
 }
 
 .step-3-options-container:not(.step-3-selection-visual) .step-3-option:active .step-3-option-img {
@@ -4026,15 +4153,15 @@ body.redo-chrome-visible .top-logo {
 .step-2-analysis-overlay {
     position: absolute;
     inset: 0;
-    z-index: 8;
+    z-index: 12;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 24px 16px;
     box-sizing: border-box;
-    background: rgba(245, 245, 245, 0.88);
-    backdrop-filter: blur(10px) saturate(115%);
-    -webkit-backdrop-filter: blur(10px) saturate(115%);
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
@@ -4091,6 +4218,22 @@ body.redo-chrome-visible .top-logo {
     }
 }
 
+/* While analysis runs, hide option rows + empty placeholder copy (avoids overlap with status lines) */
+.step-2-content.step-2--analysis-active .step-2-options-tab {
+    position: relative;
+    z-index: 2;
+}
+
+.step-2-content.step-2--analysis-active .step-2-options-tab .step-2-options {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.step-2-content.step-2--analysis-active .step-2-chosen-display--empty::before {
+    content: none;
+}
+
 /* Step 2 — two panels: “Choose design” (prompt) vs “Options” (list) */
 .step-2-prompt-tab,
 .step-2-options-tab {
@@ -4101,6 +4244,11 @@ body.redo-chrome-visible .top-logo {
     background: var(--color-white);
     overflow: hidden;
     box-shadow: var(--photo-emboss-shadow);
+}
+
+/* Analysis overlay sits only over the input row (not CHOOSE DESIGN header, not Options tab) */
+.step-2-prompt-tab {
+    position: relative;
 }
 
 .step-2-tab-heading {
@@ -4171,8 +4319,9 @@ button.step-2-tab-heading.step-2-options-tab__toggle:focus-visible {
     z-index: 1;
 }
 
-/* Step 2 Input Section - fixed size */
+/* Step 2 Input Section — hosts analysis overlay (positioned) + input row */
 .step-2-input-section {
+    position: relative;
     width: 100%;
     display: flex;
     justify-content: center;
@@ -4525,16 +4674,10 @@ button.step-2-tab-heading.step-2-options-tab__toggle:focus-visible {
         background: rgba(255, 255, 255, 0.98);
     }
 
-    .step-slide[data-step='2'] {
-        background: rgba(245, 245, 245, 0.98);
-    }
-
-    .step-slide[data-step='3'] {
-        background: rgba(230, 230, 230, 0.98);
-    }
-
+    .step-slide[data-step='2'],
+    .step-slide[data-step='3'],
     .step-slide[data-step='4'] {
-        background: rgba(10, 10, 10, 0.98);
+        background: rgba(250, 250, 250, 0.98);
     }
 }
 

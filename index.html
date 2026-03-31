@@ -138,7 +138,7 @@
                             </defs>
                             <g class="drag-magnetic-group">
                                 <text class="drag-letter">
-                                    <textPath href="#drag-arc-1" startOffset="50%" text-anchor="middle">DRAG</textPath>
+                                    <textPath href="#drag-arc-1" startOffset="50%" text-anchor="middle">click</textPath>
                                 </text>
                             </g>
                         </svg>
@@ -181,26 +181,26 @@
                     
                     <!-- Design Input Section -->
                     <div class="step-2-prompt-region">
-                        <div
-                            class="step-2-analysis-overlay"
-                            id="step-2-analysis-overlay"
-                            aria-hidden="true"
-                        >
-                            <div class="step-2-analysis-inner">
-                                <div class="step-2-analysis-spinner" aria-hidden="true"></div>
-                                <p
-                                    class="step-2-analysis-status"
-                                    id="step-2-analysis-status"
-                                    role="status"
-                                    aria-live="polite"
-                                    aria-atomic="true"
-                                ></p>
-                            </div>
-                        </div>
                         <div class="step-2-prompt-inner">
                             <div class="step-2-prompt-tab">
                                 <p class="step-2-tab-heading">Choose design</p>
                                 <div class="step-2-input-section">
+                                    <div
+                                        class="step-2-analysis-overlay"
+                                        id="step-2-analysis-overlay"
+                                        aria-hidden="true"
+                                    >
+                                        <div class="step-2-analysis-inner">
+                                            <div class="step-2-analysis-spinner" aria-hidden="true"></div>
+                                            <p
+                                                class="step-2-analysis-status"
+                                                id="step-2-analysis-status"
+                                                role="status"
+                                                aria-live="polite"
+                                                aria-atomic="true"
+                                            ></p>
+                                        </div>
+                                    </div>
                                     <div class="step-2-input-wrapper">
                                         <div
                                             class="step-2-chosen-display step-2-chosen-display--empty"
@@ -285,7 +285,7 @@
                             </defs>
                             <g class="drag-magnetic-group">
                                 <text class="drag-letter">
-                                    <textPath href="#drag-arc-2" startOffset="50%" text-anchor="middle">DRAG</textPath>
+                                    <textPath href="#drag-arc-2" startOffset="50%" text-anchor="middle">click</textPath>
                                 </text>
                             </g>
                         </svg>
@@ -349,7 +349,7 @@
                             </defs>
                             <g class="drag-magnetic-group">
                                 <text class="drag-letter">
-                                    <textPath href="#drag-arc-3" startOffset="50%" text-anchor="middle">DRAG</textPath>
+                                    <textPath href="#drag-arc-3" startOffset="50%" text-anchor="middle">click</textPath>
                                 </text>
                             </g>
                         </svg>
@@ -460,7 +460,13 @@
                                         <button type="button" class="step-4-action-btn step-4-action-btn--primary" id="step-4-download-btn">Download .txt</button>
                                     </div>
                                 </div>
-                                <div class="step-4-code-shell" role="region" aria-label="Instructions text">
+                                <div
+                                    class="step-4-code-shell"
+                                    role="region"
+                                    aria-label="Instructions text"
+                                    data-lenis-prevent
+                                    data-lenis-prevent-wheel
+                                >
                                     <div class="step-4-md-body" id="step-4-instructions-body"></div>
                                 </div>
                             </section>
@@ -476,7 +482,7 @@
         <div class="nav-step active" data-flow-step="1">
             <div class="nav-step-start-hint" aria-hidden="true">
                 <span class="nav-step-start-hint__text">start here</span>
-                <span class="nav-step-start-hint__arrow"></span>
+                <span class="nav-step-start-hint__arrow" aria-hidden="true">↓</span>
             </div>
             <span class="step-pretitle">Step</span>
             <div class="step-circle">
@@ -525,6 +531,9 @@
     </div>
 
     <p id="model-load-notice" class="model-load-notice hidden" role="alert"></p>
+
+    <div id="redo-cursor-hint" class="redo-cursor-hint" aria-hidden="true"></div>
+    <div id="redo-cursor-dot" class="redo-cursor-dot" aria-hidden="true"></div>
 
     <script src="./script.js"></script>
 </body>
