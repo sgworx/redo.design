@@ -94,10 +94,6 @@
         <div class="slider-container">
             <!-- Step 1: Select Image -->
             <div class="step-slide active is-current-step" data-step="1">
-                <!-- Outside .canvas-content so it is not hidden by step-content--reveal opacity (see styles.css) -->
-                <div class="step-1-scroll-hint" aria-hidden="true">
-                    <span class="step-1-scroll-hint__arrow"></span>
-                </div>
                 <!-- Canvas content -->
                 <div class="canvas-content">
                 <div class="upload-area">
@@ -478,6 +474,10 @@
     <!-- Navigation steps -->
     <div class="nav-steps">
         <div class="nav-step active" data-flow-step="1">
+            <div class="nav-step-start-hint" aria-hidden="true">
+                <span class="nav-step-start-hint__text">start here</span>
+                <span class="nav-step-start-hint__arrow"></span>
+            </div>
             <span class="step-pretitle">Step</span>
             <div class="step-circle">
                 <span class="step-number">1</span>

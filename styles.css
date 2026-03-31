@@ -1012,6 +1012,61 @@ body[data-active-flow-step='3'] .nav-steps {
     font-variant-numeric: tabular-nums;
 }
 
+/* “start here” + ↓ above Step 1 only — bottom nav on GLB / homepage (reference layout) */
+.nav-step[data-flow-step='1'] .nav-step-start-hint {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.18rem;
+    margin-bottom: 0.1rem;
+    pointer-events: none;
+    user-select: none;
+}
+
+body[data-active-flow-step='1'] .nav-step[data-flow-step='1'] .nav-step-start-hint {
+    display: flex;
+}
+
+.nav-step-start-hint__text {
+    font-size: clamp(10px, 2vw, 12px);
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    text-transform: lowercase;
+    color: var(--color-black);
+    line-height: 1.15;
+}
+
+.nav-step-start-hint__arrow {
+    display: block;
+    width: clamp(8px, 1.6vw, 11px);
+    height: clamp(8px, 1.6vw, 11px);
+    border-right: 1.5px solid var(--color-black);
+    border-bottom: 1.5px solid var(--color-black);
+    transform: rotate(45deg) translateY(-1px);
+    animation: nav-step-start-hint-nudge 2s var(--ease-in-out-smooth) infinite;
+}
+
+@keyframes nav-step-start-hint-nudge {
+    0%,
+    100% {
+        transform: rotate(45deg) translateY(-1px);
+        opacity: 0.75;
+    }
+    50% {
+        transform: rotate(45deg) translateY(2px);
+        opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nav-step-start-hint__arrow {
+        animation: none;
+        transform: rotate(45deg) translateY(0);
+        opacity: 0.9;
+    }
+}
+
 .step-number {
     font-size: 31px;
     font-weight: 400;
@@ -2345,7 +2400,7 @@ body.redo-chrome-visible .top-logo {
 /* Step 1 specific canvas content — flex column scales in short embeds / iframes (no fixed 340px thumbnail offset) */
 .step-slide[data-step="1"] .canvas-content {
     padding: clamp(0.35rem, 1.5vh, 1rem) clamp(0.5rem, 2vw, 1rem) clamp(0.75rem, 2.5vh, 1.5rem);
-    padding-top: clamp(2rem, 6.5vh, 3.75rem);
+    padding-top: clamp(1.25rem, 4.5vh, 2.75rem);
     background: transparent; /* Use canvas background */
     display: flex;
     flex-direction: column;
@@ -2355,60 +2410,6 @@ body.redo-chrome-visible .top-logo {
     overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-}
-
-/* Minimal “scroll to thumbnails below” cue — positioned on .step-slide (not .canvas-content) so entrance fade does not hide it */
-.step-slide[data-step="1"] .step-1-scroll-hint {
-    position: absolute;
-    left: 50%;
-    top: clamp(10px, 2.5vh, 26px);
-    transform: translateX(-50%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: auto;
-    pointer-events: none;
-    z-index: 60;
-    opacity: 0.85;
-    transition:
-        opacity 0.45s var(--ease-standard),
-        visibility 0.45s var(--ease-standard);
-}
-
-.step-1-scroll-hint__arrow {
-    display: block;
-    width: clamp(14px, 2.8vw, 22px);
-    height: clamp(14px, 2.8vw, 22px);
-    border-right: 2px solid rgba(0, 0, 0, 0.52);
-    border-bottom: 2px solid rgba(0, 0, 0, 0.52);
-    transform: rotate(45deg) translateY(-2px);
-    animation: step-1-scroll-hint-nudge 2.1s var(--ease-in-out-smooth) infinite;
-}
-
-@keyframes step-1-scroll-hint-nudge {
-    0%,
-    100% {
-        transform: rotate(45deg) translateY(-2px);
-        opacity: 0.65;
-    }
-    45% {
-        transform: rotate(45deg) translateY(3px);
-        opacity: 1;
-    }
-}
-
-#step-slider.image-selected .step-1-scroll-hint,
-.step-slide[data-step="1"]:not(.is-current-step) .step-1-scroll-hint {
-    opacity: 0;
-    visibility: hidden;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .step-1-scroll-hint__arrow {
-        animation: none;
-        transform: rotate(45deg) translateY(0);
-        opacity: 0.85;
-    }
 }
 
 /* Step 3 and Step 4 canvas content */
