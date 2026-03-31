@@ -70,6 +70,10 @@
     /* Flat panels (non-card) */
     --panel-border: rgba(0, 0, 0, 0.12);
     --panel-border-strong: rgba(0, 0, 0, 0.18);
+    /* Reserve space for fixed .nav-steps (matches Step 4 --step-4-nav-band idea) — short iframes/embeds need this */
+    --redo-nav-clearance: calc(
+        env(safe-area-inset-bottom, 0px) + clamp(20px, 4.5vh, 52px) + clamp(138px, 17.5vh, 198px)
+    );
     /* Photos & option tabs: embossed lift (inset highlight + layered soft shadow) */
     --photo-emboss-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.82),
@@ -2504,10 +2508,10 @@ body.redo-chrome-visible .top-logo {
     transform: translateY(0);
 }
 
-/* Stable vertical footprint while step columns resize (reduces perceived jump) */
+/* Stable vertical footprint; cap with dvh so short embeds can scroll instead of crushing panels */
 .step-slide[data-step='2'] .canvas-content.step-2-content,
 .step-slide[data-step='3'] .canvas-content.step-3-content {
-    min-height: min(520px, 58vh);
+    min-height: min(520px, 58vh, 92dvh);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -4009,21 +4013,27 @@ body.redo-chrome-visible .top-logo {
     line-height: 1.6;
 }
 
-/* Step 2 Content Styles - fixed size, centered */
+/* Step 2 — scroll column; bottom padding clears fixed .nav-steps (embeds / short iframes) */
 .step-2-content {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    padding: 0;
-    gap: 32px;
+    justify-content: flex-start;
+    padding:
+        clamp(10px, 2vh, 28px)
+        max(0px, env(safe-area-inset-right, 0px))
+        var(--redo-nav-clearance)
+        max(0px, env(safe-area-inset-left, 0px));
+    gap: clamp(16px, 3vh, 32px);
     width: 100%;
     height: 100%;
+    min-height: 0;
     box-sizing: border-box;
     background: transparent; /* Use canvas background */
     position: relative; /* For absolute positioned header */
     overflow-y: auto;
     overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* Step 2 Image Container */
@@ -4032,7 +4042,7 @@ body.redo-chrome-visible .top-logo {
     display: flex;
     justify-content: center;
     flex-shrink: 0;
-    margin-top: 72px;
+    margin-top: clamp(20px, 4vh, 72px);
 }
 
 .step-2-image-box {
@@ -4052,6 +4062,30 @@ body.redo-chrome-visible .top-logo {
 
 .step-2-image-box:has(img[src]:not([src=""])) {
     box-shadow: var(--photo-emboss-shadow);
+}
+
+/* Short viewports / embedded iframes: shrink hero image so panels + nav fit without overlap */
+@media (max-height: 760px) {
+    .step-2-image-box {
+        width: min(100%, clamp(280px, 78vw, 440px));
+        height: auto;
+        aspect-ratio: 1;
+        max-height: min(380px, 50dvh);
+    }
+
+    .step-2-content {
+        gap: clamp(12px, 2.2vh, 24px);
+    }
+}
+
+@media (max-height: 560px) {
+    .step-2-image-box {
+        max-height: min(260px, 44dvh);
+    }
+
+    .step-2-image-container {
+        margin-top: clamp(10px, 1.8vh, 24px);
+    }
 }
 
 /* Same glass + grey + spinner/type as .step-2-analysis-overlay (prompt region) */
