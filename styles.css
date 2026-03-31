@@ -489,7 +489,7 @@ textarea {
 .loading-spinner {
     width: 40px;
     height: 40px;
-    border: 3px solid rgba(0, 0, 0, 0.1);
+    border: 3px solid rgba(0, 0, 0, 0.002);
     border-top: 3px solid rgba(0, 0, 0, 0.8);
     border-radius: 50%;
     animation: spin 1s linear infinite;
@@ -1159,11 +1159,17 @@ html.redo-cursor-lock .canvas-slider .progress-circle {
     cursor: none !important;
 }
 
-/* Copy/paste fields: I-beam (no square) */
+/* Copy/paste fields + Step 4 instructions body: I-beam (no square / hint overlap) */
 body.redo-cursor-ibeam,
 body.redo-cursor-ibeam input,
 body.redo-cursor-ibeam textarea,
-body.redo-cursor-ibeam select {
+body.redo-cursor-ibeam select,
+body.redo-cursor-ibeam #step-4-instructions-body,
+body.redo-cursor-ibeam #step-4-instructions-body * {
+    cursor: text !important;
+}
+
+html.redo-cursor-lock body.redo-cursor-ibeam {
     cursor: text !important;
 }
 
@@ -3697,12 +3703,13 @@ body.redo-chrome-visible .top-logo {
     margin-bottom: 3px;
 }
 
+/* Fenced blocks in instructions are often ASCII diagrams, not terminal code — keep a light ground */
 .step-4-md-body .md-pre {
     font-family: "SFMono-Regular", "Consolas", "Liberation Mono", monospace;
     font-size: 11.5px;
     line-height: 1.55;
     color: var(--color-text);
-    background: rgba(0, 0, 0, 0.04);
+    background: var(--color-surface-low);
     border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: 4px;
     padding: 12px 14px;
@@ -4218,20 +4225,40 @@ body.redo-chrome-visible .top-logo {
     }
 }
 
-/* While analysis runs, hide option rows + empty placeholder copy (avoids overlap with status lines) */
-.step-2-content.step-2--analysis-active .step-2-options-tab {
-    position: relative;
-    z-index: 2;
+/*
+ * Analysis phase: hide both panel titles and the whole Options card — only a single loading surface.
+ * (Previously only the option rows were hidden, so “CHOOSE DESIGN” / “OPTIONS” still read as ready UI.)
+ */
+.step-2-content.step-2--analysis-active .step-2-prompt-tab > .step-2-tab-heading:first-of-type {
+    display: none;
 }
 
-.step-2-content.step-2--analysis-active .step-2-options-tab .step-2-options {
-    opacity: 0;
+.step-2-content.step-2--analysis-active #step-2-options-tab {
+    display: none;
+}
+
+.step-2-content.step-2--analysis-active .step-2-input-section {
+    min-height: min(200px, 42vh);
+}
+
+.step-2-content.step-2--analysis-active .step-2-input-wrapper {
     visibility: hidden;
     pointer-events: none;
 }
 
 .step-2-content.step-2--analysis-active .step-2-chosen-display--empty::before {
     content: none;
+}
+
+/*
+ * Adjacent Step 2 (e.g. peek from Step 1): no design row or option list until Step 2 is current;
+ * after that, options stay hidden until analysis completes (.step-2--analysis-active rules above).
+ */
+.step-slide[data-step='2']:not(.is-current-step) .step-2-prompt-tab .step-2-input-section,
+.step-slide[data-step='2']:not(.is-current-step) .step-2-options-tab .step-2-options {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
 }
 
 /* Step 2 — two panels: “Choose design” (prompt) vs “Options” (list) */

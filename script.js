@@ -387,13 +387,11 @@ function initRedoStepContentReveal() {
     });
 }
 
-/** White hint + square on dark UI (viewport, dragger, nav, dimmed adjacent columns) */
+/** White hint + square on dark UI (3D viewport/canvas excluded — keep black on white chrome) */
 function redoCursorUseLightHint(el) {
     if (!el || !el.closest) return false;
     return !!el.closest(
         [
-            '.step-4-viewport',
-            '#step-4-model-canvas',
             '.step-4-diagram-frame',
             '.step-4-diagram-img',
             '.nav-step.active .step-circle',
@@ -406,11 +404,14 @@ function redoCursorUseLightHint(el) {
     );
 }
 
-/** I-beam only where native text editing / copy-paste applies (not instruction body) */
-function isRedoCopyPasteCursorSurface(el) {
+/** Native text cursor: form fields + Step 4 instructions body (no square/hint overlap on copyable text) */
+function isRedoNativeTextCursorSurface(el) {
     if (!el || !el.closest) return false;
     if (el.closest('#redo-cursor-hint')) return false;
-    return !!el.closest('input, textarea, select');
+    if (el.closest('input, textarea, select')) return true;
+    if (!el.closest('#step-4-instructions-body')) return false;
+    if (el.closest('button, a, [role="tab"], .step-4-output-tab')) return false;
+    return true;
 }
 
 function hideRedoCursorHint() {
@@ -474,7 +475,7 @@ function updateRedoCursorHint(clientX, clientY) {
         return;
     }
 
-    if (isRedoCopyPasteCursorSurface(pick)) {
+    if (isRedoNativeTextCursorSurface(pick)) {
         clearRedoCursorAll();
         document.body.classList.add('redo-cursor-ibeam');
         return;
