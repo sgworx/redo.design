@@ -69,10 +69,10 @@
 
     <div id="container"></div>
     
-    <!-- Top left logo -->
-    <div class="top-logo">
-        <img src="Assets/redologo.png" alt="reDO">
-    </div>
+    <!-- Top-left: returns to homepage (GLB + steps) -->
+    <a href="./" class="top-logo" id="top-logo" aria-label="reDO — back to home">
+        <img src="Assets/redologo.png" alt="">
+    </a>
     
     <!-- Step slider interface -->
     <div id="step-slider" class="step-slider hidden" data-active-flow-step="1">
@@ -94,6 +94,10 @@
         <div class="slider-container">
             <!-- Step 1: Select Image -->
             <div class="step-slide active is-current-step" data-step="1">
+                <!-- Outside .canvas-content so it is not hidden by step-content--reveal opacity (see styles.css) -->
+                <div class="step-1-scroll-hint" aria-hidden="true">
+                    <span class="step-1-scroll-hint__arrow"></span>
+                </div>
                 <!-- Canvas content -->
                 <div class="canvas-content">
                 <div class="upload-area">

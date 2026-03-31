@@ -105,6 +105,8 @@
 
 html {
     scroll-behavior: smooth;
+    height: 100%;
+    max-width: 100%;
 }
 
 * {
@@ -118,6 +120,9 @@ body {
     background: var(--color-surface-subtle);
     overflow: hidden;
     cursor: grab;
+    min-height: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 body:active {
@@ -151,9 +156,11 @@ textarea {
 
 /* WebGL root: reserve viewport up-front so the canvas never shifts layout when GL initializes */
 #container {
-    width: 100vw;
+    width: 100%;
     max-width: 100%;
     height: 100vh;
+    height: 100dvh;
+    min-height: 100%;
     min-height: 100svh;
     min-block-size: 100dvh;
     position: relative;
@@ -543,17 +550,14 @@ textarea {
 
 /* Tablet (iPad) scaling - keep desktop unchanged */
 @media (max-width: 1024px) {
-    .upload-area {
-        margin-top: clamp(-60px, -6vh, -100px);
-    }
-
     .upload-box {
         width: clamp(320px, 60vw, 520px);
-        height: clamp(320px, 60vw, 520px);
+        height: auto;
+        max-height: min(520px, min(62vh, 62dvh));
+        aspect-ratio: 1;
     }
 
     .bottom-images {
-        margin-top: clamp(220px, 30vh, 340px);
         gap: clamp(12px, 2vw, 20px);
     }
 
@@ -610,11 +614,12 @@ textarea {
 @media (max-width: 1024px) and (orientation: landscape) {
     .upload-box {
         width: clamp(280px, 50vw, 420px);
-        height: clamp(280px, 50vw, 420px);
+        height: auto;
+        max-height: min(420px, min(58vh, 58dvh));
+        aspect-ratio: 1;
     }
 
     .bottom-images {
-        margin-top: clamp(180px, 24vh, 280px);
         gap: clamp(10px, 1.6vw, 16px);
     }
 
@@ -679,18 +684,14 @@ textarea {
         overflow-x: hidden;
     }
 
-    .upload-area {
-        margin-top: clamp(-60px, -6vh, -20px); /* reduce vertical push */
-    }
-
     .upload-box {
         width: clamp(300px, 46vw, 460px);
         height: auto;
         aspect-ratio: 1 / 1; /* keep square */
+        max-height: min(460px, min(60vh, 60dvh));
     }
 
     .bottom-images {
-        margin-top: clamp(200px, 26vh, 300px);
         gap: clamp(10px, 1.6vw, 18px);
     }
 
@@ -790,7 +791,8 @@ textarea {
 }
 
 /* Navigation steps — floating row, no chrome
-   Must stack above #step-slider (2000 / 4600); otherwise the full-viewport slider steals all clicks. */
+   Must stack above #step-slider (2000 / 4600); otherwise the full-viewport slider steals all clicks.
+   Left-bottom (steps 1 & 4) vs horizontal-center-bottom (steps 2–3); max-width keeps row inside embeds/iframes. */
 .nav-steps {
     position: fixed;
     bottom: clamp(28px, 4.5vh, 52px);
@@ -798,6 +800,7 @@ textarea {
     right: auto;
     display: flex;
     align-items: flex-end;
+    flex-wrap: nowrap;
     gap: clamp(2.25rem, 4vw, 3.25rem);
     z-index: 5000;
     pointer-events: none;
@@ -809,6 +812,8 @@ textarea {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     transform: none;
+    max-width: calc(100% - 2 * clamp(12px, 3vw, 40px));
+    box-sizing: border-box;
     transition:
         opacity var(--duration-slow) var(--ease-out-smooth),
         left 0.38s var(--ease-out-smooth),
@@ -821,6 +826,7 @@ body[data-active-flow-step='3'] .nav-steps {
     left: 50%;
     right: auto;
     transform: translateX(-50%);
+    max-width: calc(100% - 2 * clamp(12px, 3vw, 28px));
 }
 
 .nav-step {
@@ -1373,12 +1379,14 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     }
 }
 
-/* Top logo - only visible when slider is open */
+/* Top-left reDO — above full-screen #step-slider (4600) & canvas; visible with body.redo-chrome-visible */
 .top-logo {
     position: fixed;
     top: 20px;
-    left: 20px;
-    z-index: 3000;
+    left: clamp(16px, 3.5vw, 40px);
+    right: auto;
+    max-width: min(160px, 38vw);
+    z-index: 5100;
     pointer-events: none;
     opacity: 0;
     transition: opacity var(--duration-ui) var(--ease-out-smooth);
@@ -1389,16 +1397,25 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     box-shadow: none;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
+    text-decoration: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    box-sizing: border-box;
 }
 
-.top-logo.visible {
+body.redo-chrome-visible .top-logo {
     opacity: 1;
+    pointer-events: auto;
 }
 
 .top-logo img {
-    height: 40px;
-    width: auto;
     display: block;
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    max-height: 40px;
+    object-fit: contain;
+    object-position: left center;
     border-radius: 0;
     box-shadow: none;
 }
@@ -1406,7 +1423,8 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
 @media (max-width: 768px) {
     .top-logo {
         top: 15px;
-        left: 15px;
+        left: max(12px, env(safe-area-inset-left, 0px));
+        max-width: min(140px, 42vw);
     }
     
     .top-logo img {
@@ -1419,9 +1437,13 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100vw;
+    width: 100%;
+    max-width: 100%;
     height: 100vh;
+    height: 100dvh;
+    min-height: 100%;
     z-index: 2000;
+    box-sizing: border-box;
     opacity: 1;
     transition:
         opacity var(--duration-slow) var(--ease-out-smooth),
@@ -2320,10 +2342,73 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     }
 }
 
-/* Step 1 specific canvas content */
+/* Step 1 specific canvas content — flex column scales in short embeds / iframes (no fixed 340px thumbnail offset) */
 .step-slide[data-step="1"] .canvas-content {
-    padding: 0;
+    padding: clamp(0.35rem, 1.5vh, 1rem) clamp(0.5rem, 2vw, 1rem) clamp(0.75rem, 2.5vh, 1.5rem);
+    padding-top: clamp(2rem, 6.5vh, 3.75rem);
     background: transparent; /* Use canvas background */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(0.5rem, 2vh, 1.25rem);
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Minimal “scroll to thumbnails below” cue — positioned on .step-slide (not .canvas-content) so entrance fade does not hide it */
+.step-slide[data-step="1"] .step-1-scroll-hint {
+    position: absolute;
+    left: 50%;
+    top: clamp(10px, 2.5vh, 26px);
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    pointer-events: none;
+    z-index: 60;
+    opacity: 0.85;
+    transition:
+        opacity 0.45s var(--ease-standard),
+        visibility 0.45s var(--ease-standard);
+}
+
+.step-1-scroll-hint__arrow {
+    display: block;
+    width: clamp(14px, 2.8vw, 22px);
+    height: clamp(14px, 2.8vw, 22px);
+    border-right: 2px solid rgba(0, 0, 0, 0.52);
+    border-bottom: 2px solid rgba(0, 0, 0, 0.52);
+    transform: rotate(45deg) translateY(-2px);
+    animation: step-1-scroll-hint-nudge 2.1s var(--ease-in-out-smooth) infinite;
+}
+
+@keyframes step-1-scroll-hint-nudge {
+    0%,
+    100% {
+        transform: rotate(45deg) translateY(-2px);
+        opacity: 0.65;
+    }
+    45% {
+        transform: rotate(45deg) translateY(3px);
+        opacity: 1;
+    }
+}
+
+#step-slider.image-selected .step-1-scroll-hint,
+.step-slide[data-step="1"]:not(.is-current-step) .step-1-scroll-hint {
+    opacity: 0;
+    visibility: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .step-1-scroll-hint__arrow {
+        animation: none;
+        transform: rotate(45deg) translateY(0);
+        opacity: 0.85;
+    }
 }
 
 /* Step 3 and Step 4 canvas content */
@@ -2460,22 +2545,30 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     background: linear-gradient(160deg, #ececec 0%, #f8f8f8 100%);
 }
 
-/* Upload area - fixed size, centered */
+/* Upload area — flows in Step 1 flex column (embed-safe) */
 .upload-area {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
     z-index: 5;
-    margin-top: -100px; /* Offset to account for thumbnails below */
+    margin-top: 0;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    max-width: min(520px, 100%);
 }
 
 .upload-box {
     /* Step 1 tile: L-bracket arms + stroke (thicker than main 1px frame) */
     --upload-corner-arm: 34px;
     --upload-corner-stroke: 3px;
-    width: 520px; /* Fixed size - no scaling */
-    height: 520px; /* Fixed size - no scaling */
+    width: min(520px, 100%);
+    max-width: 520px;
+    aspect-ratio: 1;
+    height: auto;
+    max-height: min(520px, min(62vh, 62dvh));
     border: 1px solid var(--color-black);
     border-radius: 2px;
     display: flex;
@@ -2747,17 +2840,21 @@ body:has(#model-load-notice:not(.hidden)) .help-fab {
     }
 }
 
-/* Bottom image thumbnails - fixed size, centered */
+/* Bottom image thumbnails — below upload in flex column (replaces fixed 340px offset for embeds) */
 .bottom-images {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
     display: flex;
     justify-content: center;
-    gap: 20px;
+    flex-wrap: wrap;
+    gap: clamp(10px, 2.5vw, 20px);
     z-index: 5;
-    margin-top: 340px; /* Fixed offset below upload box (520px/2 + gap) */
+    margin-top: 0;
+    width: 100%;
+    max-width: min(520px, 100%);
+    flex-shrink: 0;
 }
 
 .image-thumbnail {
@@ -4330,14 +4427,22 @@ button.step-2-tab-heading.step-2-options-tab__toggle:focus-visible {
     }
     
     .upload-box {
-        width: 90%;
-        height: 250px;
+        width: min(90%, 100%);
+        max-width: 100%;
+        height: auto;
+        min-height: 200px;
+        max-height: min(250px, 42vh, 42dvh);
+        aspect-ratio: 1;
         --upload-corner-arm: 26px;
         --upload-corner-stroke: 2.5px;
     }
     
     .bottom-images {
         gap: 10px;
+    }
+
+    .step-slide[data-step="1"] .canvas-content {
+        padding-top: clamp(1.5rem, 5vh, 2.75rem);
     }
     
     .image-thumbnail img {

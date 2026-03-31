@@ -44,26 +44,30 @@ const MODEL_COUNT = 5;
 const targetMaxDimension = 2.0;
 
 /** Minimum chord gap between adjacent pivot centers (arc spacing baseline) */
-const MODEL_ROW_GAP = 0.35;
+const MODEL_ROW_GAP = 0.80;
 
 /**
  * After layout, scale each hero model by (distance from camera / distance to center chair) so side chairs
  * match center apparent size (arc depth + perspective otherwise shrinks the left/right).
  */
 const HERO_PERSPECTIVE_UNIFORM_SCALE = true;
+/** Clamp perspective compensation so end chairs (e.g. 5th GLB) are not over-scaled vs center */
+const HERO_PERSPECTIVE_SCALE_MIN = 0.9;
+const HERO_PERSPECTIVE_SCALE_MAX = 1.02;
 
 /** Arc: circle radius in XZ (tune for composition); may grow slightly to satisfy spacing / max span */
 const ARC_RADIUS = 5.0;
 /** Multiply required chord (width halves + gap) to keep motion / AABB error from clipping */
-const ARC_SAFETY_MULT = 1.18;
+const ARC_SAFETY_MULT = 1.5;
 /** If equal angular steps exceed this total span, radius is increased (shallower arc) */
 const ARC_MAX_HALF_SPAN_RAD = 0.72;
 /** 0 = fully face outward from arc center; 1 = same yaw as center chair (silhouette blend) */
 const ARC_YAW_INWARD_BLEND = 0.14;
 
-const VIEW_CAMERA_FOV = 36;
+/** Vertical FOV (deg). ~20% wider vs 36° baseline — shorter effective focal length / zoomed-out framing */
+const VIEW_CAMERA_FOV = 40;
 /** Baseline Z distance; widened FOV + multi-model boost keep the row framed with breathing room */
-const VIEW_CAMERA_BASE_Z = 6.0;
+const VIEW_CAMERA_BASE_Z = 8.0;
 /** Slightly lower eye line vs look-at for a neutral premium product view (less low-angle). */
 const VIEW_CAMERA_POSITION = new THREE.Vector3(0, 0.81, VIEW_CAMERA_BASE_Z);
 const VIEW_CAMERA_LOOK_AT = new THREE.Vector3(0, 0.57, 0);
@@ -92,14 +96,14 @@ const HOVER_SCALE_MULTIPLIER = 1.2;
 /** Rest scale when a chair is chosen (reads clearly vs neighbors) */
 const SELECTED_MODEL_SCALE_MULT = 1.28;
 /** Combined when selected + hover */
-const SELECTED_HOVER_MODEL_SCALE_MULT = 1.35;
+const SELECTED_HOVER_MODEL_SCALE_MULT = 1.55;
 /** Tween.js duration for hover scale in/out (discrete transition; rAF does not write model.scale) */
 const HOVER_SCALE_DURATION_MS = 380;
-/** NDC inset when testing AABB overlap (treat as overlap only if closer than this → push apart) */
-const HERO_SCREEN_OVERLAP_INSET_NDC = 0.035;
-const HERO_SCREEN_SEP_STEP_X = 0.04;
-const HERO_SCREEN_SEP_STEP_Z = 0.048;
-const HERO_SCREEN_SEP_MAX_ITERS = 18;
+/** NDC inset when testing AABB overlap (smaller = stricter “no touch” in screen space) */
+const HERO_SCREEN_OVERLAP_INSET_NDC = 0.015;
+const HERO_SCREEN_SEP_STEP_X = 0.15;
+const HERO_SCREEN_SEP_STEP_Z = 0.15;
+const HERO_SCREEN_SEP_MAX_ITERS = 50;
 
 function heroSpinStartRadForIndex(index) {
     const arr = HERO_SPIN_START_OFFSETS;
@@ -166,6 +170,36 @@ function step4NormalizeAndGround(model) {
     model.position.y -= minY;
 }
 
+/** Ensure textured GLBs show full-color maps (no stale grayscale; keeps originalMap refs for restore). */
+function redoFinalizeGltfMaterialsForColor(model) {
+    if (!model) return;
+    model.traverse((child) => {
+        if (!child.isMesh || !child.material) return;
+        const materials = Array.isArray(child.material) ? child.material : [child.material];
+        materials.forEach((mat) => {
+            if (mat.map && !mat.userData.originalMap) {
+                mat.userData.originalMap = mat.map;
+            }
+            if (mat.color && !mat.userData.originalColor) {
+                mat.userData.originalColor = mat.color.clone();
+            }
+            if (mat.userData.grayMap) {
+                try {
+                    mat.userData.grayMap.dispose?.();
+                } catch (_) {}
+                delete mat.userData.grayMap;
+            }
+            if (mat.userData.originalMap) {
+                mat.map = mat.userData.originalMap;
+            }
+            if (mat.color && mat.userData.originalColor) {
+                mat.color.copy(mat.userData.originalColor);
+            }
+            mat.needsUpdate = true;
+        });
+    });
+}
+
 /** Lightweight single-model viewer for Step 4 (separate from hero arc scene). */
 class Step4ModelViewer {
     constructor(canvas) {
@@ -176,6 +210,9 @@ class Step4ModelViewer {
         this.camera.position.set(0.35, 0.55, 2.25);
         this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        if (THREE.sRGBEncoding !== undefined) {
+            this.renderer.outputEncoding = THREE.sRGBEncoding;
+        }
         this.controls = new THREE.OrbitControls(this.camera, canvas);
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.06;
@@ -245,6 +282,7 @@ class Step4ModelViewer {
             const model = gltf.scene;
             this.root.add(model);
             step4NormalizeAndGround(model);
+            redoFinalizeGltfMaterialsForColor(model);
             this.controls.target.set(0, 0.38, 0);
             this.camera.position.set(0.35, 0.55, 2.25);
             this.controls.update();
@@ -819,6 +857,10 @@ class Scene3D {
             this.renderer = new THREE.WebGLRenderer({ antialias: true });
             this.renderer.setSize(window.innerWidth, window.innerHeight);
             this.renderer.setPixelRatio(window.devicePixelRatio);
+            /* Correct albedo / texture display vs default linear output (r128) */
+            if (THREE.sRGBEncoding !== undefined) {
+                this.renderer.outputEncoding = THREE.sRGBEncoding;
+            }
             this.renderer.shadowMap.enabled = true;
             this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             this.renderer.domElement.style.display = 'block';
@@ -1050,13 +1092,16 @@ class Scene3D {
     }
     
     setupLighting() {
-        // Ambient light
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        /* Cooler, lower ambient + keyed sun so albedo textures read richer / darker than prior flat fill */
+        const ambientLight = new THREE.AmbientLight(0xc9ccd4, 0.38);
         this.scene.add(ambientLight);
-        
-        // Directional light
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        directionalLight.position.set(10, 10, 5);
+
+        const fillLight = new THREE.DirectionalLight(0xe8eaef, 0.22);
+        fillLight.position.set(-6, 6, -4);
+        this.scene.add(fillLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xfff6ed, 0.58);
+        directionalLight.position.set(8, 11, 5);
         directionalLight.castShadow = true;
         directionalLight.shadow.mapSize.width = 2048;
         directionalLight.shadow.mapSize.height = 2048;
@@ -1198,12 +1243,18 @@ class Scene3D {
         const refDist = cam.distanceTo(refPos);
         if (refDist < 1e-6) return;
 
-        pivots.forEach((pivot) => {
+        const n = pivots.length;
+        pivots.forEach((pivot, i) => {
             const model = pivot.children[0];
             if (!model || !model.userData.heroRestScale) return;
             pivot.updateMatrixWorld(true);
             pivot.getWorldPosition(v);
-            const factor = cam.distanceTo(v) / refDist;
+            let factor = cam.distanceTo(v) / refDist;
+            factor = Math.min(HERO_PERSPECTIVE_SCALE_MAX, Math.max(HERO_PERSPECTIVE_SCALE_MIN, factor));
+            /* Farthest arc ends still tended to read oversized — nudge last index slightly toward center scale */
+            if (n >= 2 && i === n - 1) {
+                factor *= 0.96;
+            }
             model.scale.copy(model.userData.heroRestScale).multiplyScalar(factor);
             model.userData.heroRestScale.copy(model.scale);
         });
@@ -1247,6 +1298,30 @@ class Scene3D {
         pivots.forEach((p) => {
             p.userData.baseX = p.position.x;
             p.userData.baseZ = p.position.z;
+        });
+    }
+
+    /**
+     * Align all hero pivots so their world AABB bottoms share the same Y (fixes one chair “floating” higher).
+     */
+    alignHeroPivotsToSharedGround(pivots) {
+        if (!pivots.length) return;
+        const box = new THREE.Box3();
+        const mins = [];
+        pivots.forEach((pivot) => {
+            pivot.updateMatrixWorld(true);
+            box.setFromObject(pivot);
+            mins.push(box.min.y);
+        });
+        const targetGround = Math.min(...mins);
+        pivots.forEach((pivot) => {
+            pivot.updateMatrixWorld(true);
+            box.setFromObject(pivot);
+            const dy = targetGround - box.min.y;
+            if (Math.abs(dy) < 1e-7) return;
+            pivot.position.y += dy;
+            const by = pivot.userData.baseY ?? HERO_ARRANGEMENT_Y_OFFSET;
+            pivot.userData.baseY = by + dy;
         });
     }
 
@@ -1455,6 +1530,7 @@ class Scene3D {
                     console.log(`[Arc] model ${i} world X width (AABB):`, widthX.toFixed(4));
 
                     this.enableShadows(model);
+                    this.finalizeHeroMaterialsForColor(model);
                     this.intersectTargets.push(model);
 
                     this.originalPositions.push({
@@ -1488,6 +1564,11 @@ class Scene3D {
                 this.resolveHeroScreenOverlap(pivots, this.camera);
                 layoutSpanX = this.getHeroPivotsHorizontalSpan(pivots, widths);
                 this.applyHeroViewCamera(layoutSpanX, pivots.length);
+                /* Extra pass: perspective scaling can widen silhouettes; settle overlaps again */
+                this.resolveHeroScreenOverlap(pivots, this.camera);
+                layoutSpanX = this.getHeroPivotsHorizontalSpan(pivots, widths);
+                this.applyHeroViewCamera(layoutSpanX, pivots.length);
+                this.alignHeroPivotsToSharedGround(pivots);
             }
 
             console.log(`Scene models loaded: ${this.models.length}`);
@@ -1550,6 +1631,10 @@ class Scene3D {
                 child.receiveShadow = true;
             }
         });
+    }
+
+    finalizeHeroMaterialsForColor(model) {
+        redoFinalizeGltfMaterialsForColor(model);
     }
 
     setModelToGrayscale(model) {
@@ -1920,6 +2005,7 @@ class Scene3D {
         this.setupStep3Interactions();
         this.setupStep4Panel();
         this.setupMaterialUpload();
+        this.setupTopLogoHome();
         initRedoBlueprintReveal();
         initRedoStepContentReveal();
         initDragLabelMagnetic();
@@ -2014,12 +2100,10 @@ class Scene3D {
         if (step < 1 || step > 4 || !this.canUnlockFlowStep(step)) return;
 
         const slider = document.getElementById('step-slider');
-        const logo = document.querySelector('.top-logo');
         const stepRange = document.getElementById('step-range');
         if (!slider) return;
 
         slider.classList.remove('hidden');
-        if (logo) logo.classList.add('visible');
 
         this.syncFlowStateFromDom();
 
@@ -2094,6 +2178,21 @@ class Scene3D {
     /** @deprecated Use openStepSliderToStep(1) — kept for clarity at call sites */
     showStepSlider() {
         this.openStepSliderToStep(1);
+    }
+
+    /** Homepage = full GLB view + step rail; step 1 active (same as initial flow after intro). */
+    goToHomepage() {
+        this.skipHomeIntro();
+        this.openStepSliderToStep(1);
+    }
+
+    setupTopLogoHome() {
+        const el = document.getElementById('top-logo') || document.querySelector('.top-logo');
+        if (!el) return;
+        el.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.goToHomepage();
+        });
     }
 
     setupMaterialUpload() {
@@ -2277,10 +2376,8 @@ class Scene3D {
     
     hideStepSlider() {
         const slider = document.getElementById('step-slider');
-        const logo = document.querySelector('.top-logo');
         slider.classList.add('hidden');
         slider.classList.remove('step-slider--raise-above-intro');
-        logo.classList.remove('visible');
         slider.classList.remove('step-slider--drag-hint-next');
         this.syncNavStepsFromFlow();
     }
