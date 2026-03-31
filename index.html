@@ -8,7 +8,7 @@
         • ./styles.css  — site layout (must return 200, text/css)
         • ./script.js   — app logic (end of <body>)
         • Assets/       — images, icons; also referenced from styles.css url(Assets/…)
-      CDNs: cdnjs, jsdelivr (Three.js, GLTFLoader, OrbitControls, Tween)
+      CDNs: cdnjs, jsdelivr (Three.js, GLTFLoader, OrbitControls, Tween, Lenis); Motion via dynamic import
       GitHub Pages: add empty .nojekyll at repo root so Jekyll does not strip CSS/JS.
       Project-page URL (https://user.github.io/repo/) — set window.__REDO_PUBLISH_BASE = '/repo' on the line below before bootstrap runs.
       About copy + pipeline figures: /info/ (info/index.html); link from the ? control in the app.
@@ -38,10 +38,12 @@
     <!-- Typography: Helvetica Neue stack sitewide (--font-site / --font-mono alias). -->
     <!-- UI motion: vanilla CSS + JS; catalog thumbnail snap uses Motion (Framer spring API) via dynamic import. Step 2→3: CSS cross-fade on #step-slider. -->
     <link rel="stylesheet" href="./styles.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js"></script>
 </head>
 <body data-active-flow-step="1">
     <!-- Cinematic intro: text first, then handoff to 3D (see Scene3D.startHomeIntro) -->

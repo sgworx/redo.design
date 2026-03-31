@@ -46,6 +46,12 @@ const targetMaxDimension = 2.0;
 /** Minimum chord gap between adjacent pivot centers (arc spacing baseline) */
 const MODEL_ROW_GAP = 0.35;
 
+/**
+ * After layout, scale each hero model by (distance from camera / distance to center chair) so side chairs
+ * match center apparent size (arc depth + perspective otherwise shrinks the left/right).
+ */
+const HERO_PERSPECTIVE_UNIFORM_SCALE = true;
+
 /** Arc: circle radius in XZ (tune for composition); may grow slightly to satisfy spacing / max span */
 const ARC_RADIUS = 5.0;
 /** Multiply required chord (width halves + gap) to keep motion / AABB error from clipping */
@@ -737,7 +743,6 @@ class Scene3D {
         this.pointerActive = false;
         this.hoveredModel = null;
         this.intersectTargets = [];
-        this.defaultColorModel = null; // Keep 2.glb colored unless hovering another model
         this.selectedModel = null; // Click-to-select “chosen design” (visual only; camera unchanged)
         this.maxFlowStepReached = 1; // Unlocks bottom nav Step 4 after user has reached it once
 
@@ -819,8 +824,23 @@ class Scene3D {
             this.renderer.domElement.style.display = 'block';
             this.renderer.domElement.style.width = '100%';
             this.renderer.domElement.style.height = '100%';
+            /* Orbit zoom uses wheel; Lenis smooths page scroll — don’t double-handle on canvas */
+            this.renderer.domElement.setAttribute('data-lenis-prevent-wheel', '');
 
             document.getElementById('container').appendChild(this.renderer.domElement);
+
+            this._lenis = null;
+            if (typeof Lenis !== 'undefined' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                try {
+                    this._lenis = new Lenis({
+                        smoothWheel: true,
+                        syncTouch: false,
+                        lerp: 0.12
+                    });
+                } catch (lenisErr) {
+                    console.warn('Lenis init failed:', lenisErr);
+                }
+            }
 
             this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
             this.controls.enableDamping = true;
@@ -1086,7 +1106,6 @@ class Scene3D {
         this.models = [];
         this.intersectTargets = [];
         this.originalPositions = [];
-        this.defaultColorModel = null;
     }
 
     /** World-space AABB width along X after pivot + model transforms (for row spacing). */
@@ -1162,6 +1181,32 @@ class Scene3D {
             maxE = Math.max(maxE, x + hw);
         }
         return Math.max(0, maxE - minE);
+    }
+
+    /**
+     * Equalize apparent scale along the arc: chairs farther from the camera get a larger world scale so
+     * screen size matches the center reference (each model is already normalized to the same bbox max axis).
+     */
+    applyHeroPerspectiveUniformScale(pivots) {
+        if (!HERO_PERSPECTIVE_UNIFORM_SCALE || !this.camera || pivots.length < 2) return;
+        const cam = this.camera.position;
+        const v = new THREE.Vector3();
+        const centerIdx = Math.floor((pivots.length - 1) / 2);
+        pivots[centerIdx].updateMatrixWorld(true);
+        const refPos = new THREE.Vector3();
+        pivots[centerIdx].getWorldPosition(refPos);
+        const refDist = cam.distanceTo(refPos);
+        if (refDist < 1e-6) return;
+
+        pivots.forEach((pivot) => {
+            const model = pivot.children[0];
+            if (!model || !model.userData.heroRestScale) return;
+            pivot.updateMatrixWorld(true);
+            pivot.getWorldPosition(v);
+            const factor = cam.distanceTo(v) / refDist;
+            model.scale.copy(model.userData.heroRestScale).multiplyScalar(factor);
+            model.userData.heroRestScale.copy(model.scale);
+        });
     }
 
     /**
@@ -1410,15 +1455,7 @@ class Scene3D {
                     console.log(`[Arc] model ${i} world X width (AABB):`, widthX.toFixed(4));
 
                     this.enableShadows(model);
-                    try {
-                        this.setModelToGrayscale(model);
-                    } catch (grayErr) {
-                        console.warn(`[${i}] Grayscale pass skipped:`, grayErr);
-                    }
                     this.intersectTargets.push(model);
-                    if (i === 1) {
-                        this.defaultColorModel = model;
-                    }
 
                     this.originalPositions.push({
                         x: model.position.x,
@@ -1444,6 +1481,10 @@ class Scene3D {
             this.applyHeroViewCamera(layoutSpanX, pivots.length);
 
             if (pivots.length > 1) {
+                this.resolveHeroScreenOverlap(pivots, this.camera);
+                layoutSpanX = this.getHeroPivotsHorizontalSpan(pivots, widths);
+                this.applyHeroViewCamera(layoutSpanX, pivots.length);
+                this.applyHeroPerspectiveUniformScale(pivots);
                 this.resolveHeroScreenOverlap(pivots, this.camera);
                 layoutSpanX = this.getHeroPivotsHorizontalSpan(pivots, widths);
                 this.applyHeroViewCamera(layoutSpanX, pivots.length);
@@ -1599,15 +1640,7 @@ class Scene3D {
     syncHeroModelColors() {
         if (!this.intersectTargets.length) return;
         for (const model of this.intersectTargets) {
-            const inColor =
-                model === this.hoveredModel ||
-                model === this.selectedModel ||
-                (model === this.defaultColorModel && !this.hoveredModel && !this.selectedModel);
-            if (inColor) {
-                this.restoreModelColor(model);
-            } else {
-                this.setModelToGrayscale(model);
-            }
+            this.restoreModelColor(model);
         }
     }
 
@@ -3743,6 +3776,10 @@ class Scene3D {
     
     animate() {
         requestAnimationFrame(() => this.animate());
+
+        if (this._lenis) {
+            this._lenis.raf(performance.now());
+        }
 
         if (this.clock) {
             this.clock.getDelta();
