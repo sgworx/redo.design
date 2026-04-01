@@ -70,9 +70,15 @@
     /* Flat panels (non-card) */
     --panel-border: rgba(0, 0, 0, 0.12);
     --panel-border-strong: rgba(0, 0, 0, 0.18);
-    /* Reserve space for fixed .nav-steps (matches Step 4 --step-4-nav-band idea) — short iframes/embeds need this */
-    --redo-nav-clearance: calc(
-        env(safe-area-inset-bottom, 0px) + clamp(20px, 4.5vh, 52px) + clamp(138px, 17.5vh, 198px)
+    /*
+     * Reserve space for fixed .nav-steps. In short iframes, vh is tiny — clamp(..., Nvh, ...) must not shrink
+     * below the real nav stack (~120px circle + labels + bottom offset) or text/tiles sit under the bar.
+     */
+    --redo-nav-clearance: max(
+        240px,
+        calc(
+            env(safe-area-inset-bottom, 0px) + clamp(28px, 5.5vh, 56px) + clamp(168px, 22vh, 208px)
+        )
     );
     /* Photos & option tabs: embossed lift (inset highlight + layered soft shadow) */
     --photo-emboss-shadow:
@@ -2419,6 +2425,13 @@ body.redo-chrome-visible .top-logo {
     will-change: opacity, transform;
 }
 
+/* Step 2: must scroll inside the slide; generic .canvas-content overflow:hidden loses the y-axis to .step-2-content in cascade — lock it for embeds */
+.step-slide[data-step='2'] .canvas-content.step-2-content {
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
 /*
  * Adjacent step dimming on .step-slide (not .canvas-content::after).
  * Step 3 uses .step-3-content::after as a flex spacer — a second ::after on the same element is impossible,
@@ -3098,8 +3111,8 @@ body.redo-chrome-visible .top-logo {
 /* Step 4: fill column height; same vertical gutter top + bottom, bottom adds nav clearance */
 .canvas-content.step-4-content {
     --step-4-v-gutter: clamp(16px, 2.5vh, 28px);
-    /* Fixed .nav-steps: bottom offset + STEP + circle + label (see .nav-steps / .step-circle) */
-    --step-4-nav-band: calc(clamp(20px, 4.5vh, 52px) + clamp(138px, 17.5vh, 198px));
+    /* Fixed .nav-steps — same floor as --redo-nav-clearance for iframe / short dvh */
+    --step-4-nav-band: max(240px, calc(clamp(28px, 5.5vh, 56px) + clamp(168px, 22vh, 208px)));
     position: relative;
     width: 100%;
     height: 100%;
@@ -3131,9 +3144,9 @@ body.redo-chrome-visible .top-logo {
     scrollbar-color: rgba(0, 0, 0, 0.28) transparent;
 }
 
-/* Step 3 Content Styles — true vertical center via flex spacers; bottom padding clears fixed nav; no scrollbar (step 4 only scrolls) */
+/* Step 3 — flex spacers center tiles; bottom padding clears fixed nav; @media max-height enables scroll in embeds */
 .step-3-content {
-    --step-3-bottom-safe: clamp(188px, 28vh, 252px);
+    --step-3-bottom-safe: max(var(--redo-nav-clearance), clamp(200px, 28vh, 268px));
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -3170,6 +3183,28 @@ body.redo-chrome-visible .top-logo {
     min-height: 0;
     width: 0;
     pointer-events: none;
+}
+
+/* Short viewports / embedded iframes: vertical tile stack + fixed nav — enable scroll, drop flex spacers */
+@media (max-height: 720px) {
+    .step-slide[data-step='3'] .canvas-content.step-3-content {
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        justify-content: flex-start;
+        align-items: center;
+        scrollbar-width: thin;
+    }
+
+    .step-3-content::-webkit-scrollbar {
+        display: block;
+        width: 6px;
+    }
+
+    .step-3-content::before,
+    .step-3-content::after {
+        display: none;
+    }
 }
 
 .step-4-content::-webkit-scrollbar {
